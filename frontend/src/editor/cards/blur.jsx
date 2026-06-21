@@ -50,6 +50,9 @@ function attach(canvas, session, targetId, controls) {
   const filter = new fabric.filters.Blur({ blur: controls.intensity ?? 0 })
   target.filters = [...(target.filters || []), filter]
   target.applyFilters()
+  // The target-switch path runs here, not through the slider branch, so it
+  // must repaint itself or the new target's blur won't show until a jiggle.
+  canvas.requestRenderAll()
   session.attachedTo = targetId
   session.filter = filter
 }
@@ -59,6 +62,9 @@ function detach(canvas, session) {
   if (old && session.filter) {
     old.filters = (old.filters || []).filter((f) => f !== session.filter)
     old.applyFilters()
+    // Repaint so the old target reverts immediately on a target switch
+    // (cleanup also repaints after this; requestRenderAll coalesces).
+    canvas.requestRenderAll()
   }
   session.attachedTo = null
   session.filter = null

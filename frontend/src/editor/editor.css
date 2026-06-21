@@ -76,12 +76,26 @@
   max-width: 100%;
   display: flex;
 }
-.canvas-wrap canvas {
+/* Fabric wraps our <canvas> in a .canvas-container holding TWO stacked
+   canvases: the lower-canvas (where objects render) and an absolutely-
+   positioned upper-canvas (the transparent interaction layer for selection
+   handles). The frame chrome and "paper" white belong on the container, NOT
+   on the canvas elements — painting white on the canvases tints the upper
+   one opaque, and since its bitmap is transparent it would hide everything
+   on the lower canvas. The container also carries the 100% sizing so the
+   800×1000 buffer actually scales to fit the wrap (Fabric gives the
+   container a fixed inline px size otherwise, defeating the scale-to-fit). */
+.canvas-wrap .canvas-container {
   width: 100% !important;
   height: 100% !important;
   border: 1px solid #2a2a2a;
   background: white;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+.canvas-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+  background: transparent;
 }
 
 /* ---------- deck panel ---------- */

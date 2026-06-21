@@ -69,6 +69,9 @@ function attach(canvas, session, targetId, controls) {
   const bright = new fabric.filters.Brightness({ brightness: controls.v ?? 0 })
   target.filters = [...(target.filters || []), hue, sat, bright]
   target.applyFilters()
+  // The target-switch path runs here, not through the slider branch, so it
+  // must repaint itself or the new target's filters won't show until a jiggle.
+  canvas.requestRenderAll()
   session.attachedTo = targetId
   session.filters = { hue, sat, bright }
 }
@@ -79,6 +82,9 @@ function detach(canvas, session) {
     const ours = new Set([session.filters.hue, session.filters.sat, session.filters.bright])
     old.filters = (old.filters || []).filter((f) => !ours.has(f))
     old.applyFilters()
+    // Repaint so the old target reverts immediately on a target switch
+    // (cleanup also repaints after this; requestRenderAll coalesces).
+    canvas.requestRenderAll()
   }
   session.attachedTo = null
   session.filters = null

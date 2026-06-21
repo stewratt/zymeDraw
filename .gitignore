@@ -3,3 +3,10 @@ dist/
 .DS_Store
 .deck-config.json
 *.log
+output/
+*.png
+*.jpg
+
+# Debug loop artifacts (binary screenshots; the findings .md stays tracked)
+debug_loop_screenshots/
+.gstack/
