@@ -1,0 +1,13 @@
+{
+  "name": "zymedraw",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Deck — a card-constrained, destructive image editor",
+  "scripts": {
+    "install:all": "npm install && npm install --prefix frontend && npm install --prefix backend",
+    "dev": "concurrently -n frontend,backend -c blue,green \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
