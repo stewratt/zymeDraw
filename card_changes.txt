@@ -1,0 +1,20 @@
+When lots of layers are added and the layers panel overflows the menu height, it covers up the "end turn" button
+
+Vignette remove
+
+Draw pencil card remove
+
+Add option with brush for soft round brush instead of only hard round.
+
+See if there are more brush types to add and add those as separate cards
+
+Shuffle Layer order card
+
+Zoom and flatten card
+
+Flip canvas card
+
+Remove layer card
+
+
+Blur brush card
