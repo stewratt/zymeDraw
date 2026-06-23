@@ -318,7 +318,9 @@
 }
 
 .slot-stack,
-.target-stack {
+.target-stack,
+.reorder-stack,
+.display-stack {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -327,6 +329,37 @@
   /* Bounded scroll region: fill the panel's leftover height, then scroll. */
   flex: 1;
   min-height: 0;
+}
+
+/* ---------- reorder (drag-to-reorder) rows ---------- */
+
+.reorder-row {
+  cursor: grab;
+  user-select: none;
+  transition: border-color 0.15s, background 0.15s, opacity 0.15s;
+}
+.reorder-row:hover {
+  border-color: #3a3a3a;
+}
+.reorder-row.dragging {
+  opacity: 0.4;
+  cursor: grabbing;
+}
+.reorder-row.drag-over {
+  border-color: #4a6cff;
+  background: rgba(74, 108, 255, 0.1);
+  /* a clear "insert above here" cue */
+  box-shadow: inset 0 2px 0 #4a6cff;
+}
+.drag-handle {
+  color: #555;
+  font-size: 0.9rem;
+  line-height: 1;
+  letter-spacing: -2px;
+  flex-shrink: 0;
+}
+.reorder-row:hover .drag-handle {
+  color: #888;
 }
 
 .slot-chip {

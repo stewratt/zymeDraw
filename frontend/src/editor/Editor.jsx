@@ -48,12 +48,16 @@ function Editor({ config, onBackToSetup }) {
   }, [])
 
   // After each commit, refresh the canvas-layer list so the Layers panel
-  // sees newly-tagged objects.
+  // sees newly-tagged objects. Also refresh when a card becomes ready: a
+  // card's begin() can place tagged objects (e.g. Add card images) that the
+  // panel must see *during* the card, not just after commit. This is generic
+  // — getCommittedLayers filters by deckId, so untagged temp objects are
+  // ignored regardless of which card is running.
   useEffect(() => {
     const canvas = canvasStageRef.current?.getCanvas()
     if (!canvas) return
     setCommittedLayers(getCommittedLayers(canvas))
-  }, [state.history.length])
+  }, [state.history.length, cardReady])
 
   // Phase 5: when the deck transitions to ENDGAME_DRAWN, render the canvas
   // at 3× (→ 2400×3000 for the 800×1000 working canvas) and POST to the

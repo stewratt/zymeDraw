@@ -2,7 +2,41 @@
 
 > This file is the persistent context for any Claude Code session in this repo.
 > Read it top-to-bottom before doing any work. It captures the invariants and
-> architectural decisions of a project that is now feature-complete.
+> architectural decisions of a project in active iteration.
+
+---
+
+## 0. Current state — resume here (paused 2026-06-23)
+
+**Phase 8 (Layers panel redesign) is code-complete and the frontend builds
+clean, but two things are still open — do these first:**
+
+1. **Not yet browser-verified.** Stew hasn't run the Phase 8 test steps in the
+   UI. Verify before committing:
+   - Draw **Add 2 / Add 3** → drag rows in the Layers panel → canvas stacking
+     should follow live, and the order should persist after End.
+   - Draw **Eraser / HSV** → those panels unchanged (no drag handles).
+   - Draw **Shuffle** → the read-only stack list should track each "Shuffle
+     again" reroll with no one-click lag.
+   - Stack 10+ layers → panel still scrolls and the End button stays visible.
+2. **Nothing is committed.** All Phase 8 code changes *and* the recent CLAUDE.md
+   edits are uncommitted on `main`. Once verified, **branch off `main`** and
+   commit — do not commit straight to `main`.
+
+Phase 8 touched: `Editor.jsx` (added `cardReady` to the `committedLayers` effect
+deps), `LayersPanel.jsx` (new `reorder` + `display` modes), `cards/addCard.jsx`
+(`applyLayerOrder` + `updateAddCard`), `cards/registry.jsx` (Add + Shuffle
+entries), `editor.css` (drag styles). Details in §7, row 8.
+
+**After Phase 8 is verified + committed, next work (Stew picks):**
+- **Tone cleanup (small, recommended next).** Apply the new §1 "not a game"
+  invariant to existing UI copy — "SESSION COMPLETE", "Draw card", the
+  keyboard-shortcut labels, any gamey card names. Bite-sized; fits what was just
+  decided.
+- **Phase 9 — brush cards (large, research-first).** See §14. Starts with
+  research + the masked-bake vs. non-destructive architecture decision, not code.
+
+> Delete this §0 once Phase 8 is committed and the resume notes are stale.
 
 ---
 
@@ -20,6 +54,30 @@ it in. Commitment is the central mechanic, not a missing feature.
 The deck moves through three phases (beginning → midgame → endgame) so a
 composition has a natural arc: things are added, then modified, then
 finished and exported to disk at 2400×3000.
+
+### Tone — this is not a game (macro design invariant)
+
+Deck is an **artmaking tool**, not a game. It *borrows* game theory and game
+design — a deck, drawing, phases, randomness, commitment — purely as a way to
+impose **constraint** on a creative process. That is the whole reason the
+mechanics exist. But the experience must never *present* as a game.
+
+- **Language is a studio/darkroom/press, not an arcade.** Avoid "play," "win,"
+  "score," "points," "level," "player," "turn," "move," "you drew a card!"
+  Prefer neutral, creative-tool verbs: *draw, commit, compose, finish, export,
+  the stack, this round.* "Card" and "deck" stay — they're the instrument, not
+  a genre signal.
+- **No celebratory / gamer affect.** No score-ups, win-states, streaks, or
+  congratulatory copy. The endgame is a piece being *finished*, not a level
+  being *beaten*.
+- **Apply this to everything user-facing:** UI copy, button labels, card names,
+  empty/complete states, and the names of anything new. When in doubt, ask
+  "would this read as a serious creative instrument, or as a game?" and pick the
+  former.
+
+The mechanics are game-derived; the *framing* is a tool. Hold that line. (Some
+existing copy still leans gamey — e.g. "SESSION COMPLETE", "Draw card" — and
+should be eased back toward this tone when those surfaces are next touched.)
 
 ---
 
@@ -272,20 +330,18 @@ requires the folder to exist (no auto-create).
 | 5 — Endgame + export | ✅ done | Four endgame cards (Vignette, Frame, Final Grade, Grain Finish), `POST /api/export`, SESSION COMPLETE screen. |
 | 6 — Polish | ✅ done | Card-flip animation, keyboard shortcuts (Space=Draw, Enter=primary, R=Restart), saved-thumbnail in SESSION COMPLETE, "Open output folder" button (`POST /api/open-output`). |
 | 7 — Card-set revision | ✅ done | **Removed:** Vignette (deleted) + Pencil (un-pooled, code retained). **Fixed:** layers-panel overflow no longer covers the End button (`deck-panel` pinned `flex-shrink:0`, layer stack scrolls in a bounded `min-height:0` region). **Added 4 midgame cards:** Flip Canvas (mirrors each layer individually — preserves layers), Remove Layer (target picker, any kind, live hide-preview), Shuffle Layers (random stack permutation + "Shuffle again" reroll), Zoom & Flatten (flatten then random 30–50% center zoom; fixed canvas crops = the "trim"). |
+| 8 — Layers panel redesign | ✅ done | **Drag-to-reorder on Add cards** (native HTML5 DnD, no new deps): new `reorder` panel mode owns its local top-down order and persists it to `controls.layerOrder`; the Add `update` hook applies it to the canvas via `applyLayerOrder` (reverse-then-`moveObjectTo`, mirroring `shuffle.jsx`). One generic Editor fix: `committedLayers` now refreshes on `cardReady` too, so a card sees the layers its `begin` just placed (filtered by `deckId`, so it's safe for all cards). **Read-only `display` mode** mirrors the live stack for Shuffle, re-reading canvas order one `requestAnimationFrame` after each reroll to dodge child-before-parent effect ordering. Effect/target cards unchanged. |
 
-> **Next up (not yet built):** Phase 8 = Layers panel redesign (§14). Phase 9 = Brush cards (§15). Detailed standalone prompts for each are at the bottom of this file so they can be run in fresh contexts.
+> **Next up (not yet built):** Phase 9 = Brush cards (§14, research-first). Its standalone prompt is at the bottom of this file so it can be run in a fresh context.
 
 ---
 
-## 8. Stretch ideas (only if the user asks)
+## 8. Stretch ideas & design considerations (only if the user asks)
 
-These are out of scope as of the original spec and were *not* implemented.
-Treat each as its own mini-project:
+Out of scope as of the original spec. Treat each as its own mini-project.
+(Smudge brush and localized/masked brushes were here too — both promoted into
+Phase 9, see §14.)
 
-- **Smudge brush** — a midgame card that smears existing pixels.
-  *(Promoted into Phase 9 — see §15.)*
-- **Localized brushes** — restrict pencil/eraser to a per-target mask.
-  *(Promoted into Phase 9 — the masked-bake foundation — see §15.)*
 - **Real `.cube` LUTs** — replace the preset `ColorMatrix` swatches in
   Color Grade and Final Grade with cube-file parsing + 3D LUT sampling.
 - **Graphical folder browser** in Setup — currently the user types/pastes
@@ -297,28 +353,44 @@ Treat each as its own mini-project:
 - **Smudge/blend modes for the grain overlay** — currently the noise
   layer is a straight alpha overlay; could be `screen` or `overlay`.
 
+### Conditional / weighted draws (roguelike-derived) — consider, don't build yet
+
+Today `DRAW` samples **uniformly, with replacement** from `eligiblePool`. A
+future direction worth weighing: make the deck *opinionated*, so a drawn card
+reshapes the odds of others — e.g. pulling **Flatten** lowers the chance of
+**Shuffle Layers** next (less stack to shuffle), or certain cards become more
+likely after others to create a coherent arc.
+
+This is a **game-design decision to make deliberately, not drift into.** The
+open question: should the system *rail* the experience this way (smoother arcs,
+fewer dead-end/no-op states), or stay neutral and let absurd or "broken"
+sequences happen as a legitimate outcome of working under constraint? Both are
+defensible; current lean is **toward allowing breakage** unless extended use
+shows it genuinely harms the work. (Note: per §1, even if we add this, frame it
+as constraint/serendipity — *not* as roguelike "runs" or "difficulty.")
+
+If built, it lives **entirely in `deck.js`** (weighting inside `eligiblePool` /
+the sampler). That file stays pure — no Fabric, no side effects.
+
 ---
 
-## 9. Pending decisions (historical record)
+## 9. Live invariants worth knowing
 
-All §9 decisions were resolved during the original build. Kept here as a
-record of what was decided and why:
+The original build resolved a long list of design questions; most are now just
+*how the thing works* and aren't worth re-listing. The few that are still live
+knobs or non-obvious constraints:
 
-| Decision | Outcome | Resolved at |
-|---|---|---|
-| Eraser target | image layers only; pencil has no eraser sub-mode | Phase 4.2 |
-| Pencil stack insertion | "Draw on top, group on End" | Phase 4.1 |
-| Color Grade behavior | per-layer `ColorMatrix`; draw layers excluded as MVP limitation | Phase 4.7 |
-| Canvas orientation | portrait 800×1000 → export 2400×3000 | Phase 0 |
-| Canvas Grain seed | random per draw (matches "chance is part of the game") | Phase 4.6 |
-| Endgame cards | four distinct finishing effects | Phase 5 |
-| End-rate (pool composition) | kept at 4 endgame in pool of 14 (~28% per draw); to be re-evaluated after extended play | Phase 5 |
-| Safety round-cap | none — session can theoretically run forever | Phase 5 |
-
-If extended play later suggests sessions end too fast or too slow, the
-end-rate is tuned by editing the `ENDGAME_CARDS` array in `deck.js`
-(append placeholders to slow it; remove to speed it). No code change
-elsewhere needed.
+- **Canvas orientation is fixed:** portrait 800×1000 working → 2400×3000 export.
+  Not configurable without a deliberate reason (see also the export texture-size
+  caveat in §10).
+- **No safety round-cap.** A session can run indefinitely; it ends only when an
+  endgame card commits.
+- **End-rate has one tuning point.** It's the size of `ENDGAME_CARDS` relative to
+  the rest of the pool in `deck.js` (~28% per draw once unlocked). Append
+  placeholders to slow endings, remove to speed them — no other code changes.
+  This is also the natural home for the weighted-draw idea in §8.
+- **Color Grade excludes draw layers** (per-layer `ColorMatrix`, image layers
+  only) — an accepted MVP limitation, not a bug.
 
 ---
 
@@ -423,82 +495,7 @@ Backend route in `backend/server.js`. Follow the existing patterns:
 
 ---
 
-## 14. Phase 8 prompt — Layers panel redesign (drag-to-reorder)
-
-> Paste this whole section as the opening prompt of a fresh context. It is
-> self-contained. Obey §2 (one unit at a time, checkpoint, wait for "continue").
-
-**Goal.** Give the Layers panel a Photoshop/Affinity-style feel and let the
-user **drag layers to reorder the stack** — but only on cards where reordering
-is meaningful.
-
-**Decisions already locked in (do NOT re-litigate; confirmed by the user):**
-- **Contextual panel, not persistent.** Keep the current behavior where the
-  panel only shows for cards that set `needsLayersPanel: true`. Do not build an
-  always-on panel.
-- **Native HTML5 drag-and-drop. NO new dependency.** Use `draggable`,
-  `onDragStart/onDragOver/onDrop`. Do not add @dnd-kit, react-sortable, etc.
-- **Reorder is card-gated.** Manual drag-reorder is enabled ONLY on the Add
-  cards (`add1/add2/add3`). Effect cards (eraser/hsv/blur/removeLayer) keep
-  their current locked behavior. The Shuffle card gets a **read-only** stack
-  view (see below), not manual drag.
-
-**What to build, unit by unit:**
-
-1. **New panel mode `reorder` in `LayersPanel.jsx`.** A `ReorderPicker` that
-   lists committed layers **top-down** (canvas order is bottom-first — reverse
-   it for display, like `SlotPicker`/`TargetPicker` already do) with thumbnails
-   and a drag handle. Visual polish: Affinity-like rows, clear drag affordance,
-   hover/drag-over states. Reuse `.layer-row` styling; add drag styles in
-   `editor.css`.
-   - **Critical gotcha:** during a card, `committedLayers` is captured once at
-     `begin` and is NOT refreshed when controls change (Editor only re-derives
-     it on `state.history.length`, i.e. after commit). So the panel must hold
-     its **own local order state**, seeded from the `layers` prop, and render
-     from that. On each drop: (a) reorder local state, (b) apply the new order
-     to the canvas live via `canvas.moveObjectTo`, (c) persist via
-     `onControlChange('layerOrder', orderedTopDownIds)` so it survives to
-     commit. Wiring stays within the existing
-     `mode / layers / controls / onControlChange` props — **do not modify
-     Editor.jsx or DeckPanel.jsx.**
-   - Applying order to canvas: `layerOrder` is top-down; canvas indices are
-     bottom-first, so reverse before calling `moveObjectTo(obj, i)` in
-     ascending `i`. There is a working reference for this exact reverse-then-
-     moveObjectTo pattern in `shuffle.jsx`'s `shuffleStack`.
-
-2. **Enable reorder on Add cards.** In `registry.jsx`, the add entry
-   (`makeAddEntry`) gets `needsLayersPanel: true`, `layersPanelMode: 'reorder'`,
-   and an `update` hook that applies `controls.layerOrder` to the canvas (so a
-   drop reorders live). Add-card images already receive their `deckId` inside
-   `placeAddCardImages` (during `begin`), so they appear in
-   `getCommittedLayers` *during* the Add card — meaning the just-placed images
-   AND any prior committed layers are all draggable. Confirm the on-canvas
-   move/scale/rotate of Add images still works alongside panel reordering.
-
-3. **Read-only stack view for Shuffle.** Add a `display` mode (or reuse
-   `reorder` with a `readOnly` flag) so `shuffle` can set
-   `needsLayersPanel: true` and show the current order as thumbnails that
-   update when the user clicks "Shuffle again." This is the §Unit-5 follow-up
-   promised to the user. Shuffle reorders the canvas in its own `update`, so the
-   panel's local state must re-seed from `layers`/canvas whenever the order
-   changes — simplest is to read live canvas order for the display mode rather
-   than caching.
-
-**Files in play:** `LayersPanel.jsx` (new modes + polish), `registry.jsx` (add
-modes + add-card `update` hook), `addCard.jsx` (the `applyLayerOrder` update
-logic), `editor.css` (drag styling), maybe `shuffle.jsx` (opt into display
-mode). Do not touch `Editor.jsx` / `DeckPanel.jsx`.
-
-**Test steps to hand the user:** (a) Draw an Add card with several images;
-drag rows to reorder; confirm canvas stacking follows and the order persists
-after End. (b) Draw Eraser/HSV — confirm those panels are unchanged (no drag).
-(c) Draw Shuffle — confirm the read-only stack view reflects each reroll. (d)
-Stack 10+ layers and confirm the panel still scrolls and the End button stays
-visible (Phase 7 overflow fix must still hold).
-
----
-
-## 15. Phase 9 prompt — Brush cards (research, then build)
+## 14. Phase 9 prompt — Brush cards (research, then build)
 
 > Paste this whole section as the opening prompt of a fresh context. This phase
 > is RESEARCH-FIRST. Do not write feature code until the research + the one

@@ -1,12 +1,18 @@
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
+import { getCommittedLayers } from './layers.js'
 
 // The Layers panel is shown next to the deck panel for cards that need a
-// per-layer choice. It has two modes:
+// per-layer choice. It has four modes:
 //
-//   slot   — Pencil: pick where to insert the new draw layer (Top / between
-//            two existing layers / Bottom).
-//   target — (future) Eraser, Layer HSV, Layer Blur: pick a single layer
-//            to operate on. Wired up here but no consumer yet.
+//   slot    — Pencil: pick where to insert the new draw layer (Top / between
+//             two existing layers / Bottom).
+//   target  — Eraser, Layer HSV, Layer Blur, Remove Layer: pick a single
+//             layer to operate on.
+//   reorder — Add cards: drag layers to reorder the whole stack. Persists the
+//             top-down order into controls.layerOrder; the Add card's update
+//             hook applies it to the canvas.
+//   display — Shuffle: read-only stack view that re-reads the live canvas
+//             order after each reroll. No interaction.
 
 function LayersPanel({ mode, layers, controls, onControlChange }) {
   // Generate thumbnails for each layer when the layer set changes. Each is
@@ -31,7 +37,127 @@ function LayersPanel({ mode, layers, controls, onControlChange }) {
   if (mode === 'target') {
     return <TargetPicker layers={layers} thumbs={thumbs} controls={controls} onControlChange={onControlChange} />
   }
+  if (mode === 'reorder') {
+    return <ReorderPicker layers={layers} thumbs={thumbs} onControlChange={onControlChange} />
+  }
+  if (mode === 'display') {
+    return <DisplayPicker layers={layers} thumbs={thumbs} controls={controls} />
+  }
   return null
+}
+
+function DisplayPicker({ layers, thumbs, controls }) {
+  // Read-only mirror of the live stack, for Shuffle. The card reorders the
+  // canvas inside its own update hook, which runs *after* this component
+  // renders (child effects fire before the parent's), so a render-time read
+  // would show the previous order. We re-read one animation frame after each
+  // control change, by which point the reroll has landed on the canvas.
+  const canvas = layers[0]?.object?.canvas || null
+  const readView = () =>
+    canvas ? getCommittedLayers(canvas).slice().reverse() : layers.slice().reverse()
+
+  const [view, setView] = useState(readView)
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setView(readView()))
+    return () => cancelAnimationFrame(raf)
+  }, [controls, canvas])
+
+  return (
+    <aside className="layers-panel">
+      <h3>LAYER STACK</h3>
+      <p className="hint">Current order (top = front). Shuffle again to reroll.</p>
+      <div className="display-stack">
+        {view.map((layer) => (
+          <LayerChip key={layer.id} layer={layer} thumb={thumbs[layer.id]} />
+        ))}
+      </div>
+    </aside>
+  )
+}
+
+function ReorderPicker({ layers, thumbs, onControlChange }) {
+  // The panel owns its own top-down order. The `layers` prop is captured at
+  // begin and is NOT a reliable mid-card source, so we seed local order from
+  // it and only re-seed when the underlying set of layer ids changes (a new
+  // card / a new stack) — never on every render, which would clobber an
+  // in-progress drag.
+  const [order, setOrder] = useState(() => topDownIds(layers))
+  const [dragId, setDragId] = useState(null)
+  const [overId, setOverId] = useState(null)
+
+  const sig = layers.map((l) => l.id).sort().join('|')
+  const lastSig = useRef(sig)
+  useEffect(() => {
+    if (sig === lastSig.current) return
+    lastSig.current = sig
+    setOrder(topDownIds(layers))
+  }, [sig, layers])
+
+  const byId = new Map(layers.map((l) => [l.id, l]))
+
+  function reorder(next) {
+    setOrder(next)
+    onControlChange('layerOrder', next)
+  }
+
+  function handleDrop(targetId) {
+    setOverId(null)
+    if (!dragId || dragId === targetId) {
+      setDragId(null)
+      return
+    }
+    const next = order.filter((id) => id !== dragId)
+    const idx = next.indexOf(targetId)
+    next.splice(idx, 0, dragId) // dropped item takes the target's slot (above it)
+    setDragId(null)
+    reorder(next)
+  }
+
+  return (
+    <aside className="layers-panel">
+      <h3>LAYER STACK</h3>
+      <p className="hint">Drag to reorder. Top of the list is the front.</p>
+      <div className="reorder-stack">
+        {order.map((id) => {
+          const layer = byId.get(id)
+          if (!layer) return null
+          return (
+            <div
+              key={id}
+              className={`layer-row reorder-row ${dragId === id ? 'dragging' : ''} ${overId === id ? 'drag-over' : ''}`}
+              draggable
+              onDragStart={() => setDragId(id)}
+              onDragOver={(e) => {
+                e.preventDefault()
+                if (overId !== id) setOverId(id)
+              }}
+              onDragLeave={() => setOverId((cur) => (cur === id ? null : cur))}
+              onDrop={(e) => {
+                e.preventDefault()
+                handleDrop(id)
+              }}
+              onDragEnd={() => {
+                setDragId(null)
+                setOverId(null)
+              }}
+            >
+              <span className="drag-handle" aria-hidden="true">⠿</span>
+              {thumbs[id] ? <img src={thumbs[id]} alt="" /> : <div className="thumb-placeholder" />}
+              <span className="layer-label">
+                <small className="kind">{layer.kind}</small>
+                {layer.label}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </aside>
+  )
+}
+
+// canvas-order is bottom-first; the panel shows + stores top-down (front first).
+function topDownIds(layers) {
+  return layers.slice().reverse().map((l) => l.id)
 }
 
 function SlotPicker({ layers, thumbs, controls, onControlChange }) {

@@ -69,6 +69,42 @@ export async function placeAddCardImages(canvas, count, filenamePool, canvasWidt
   return { ok: true, placed, error: null }
 }
 
+// Apply a top-down ordered list of deckIds to the canvas stacking. The panel
+// stores order top-down (front first); canvas indices are bottom-first, so we
+// reverse before moveObjectTo in ascending index. Non-deck objects keep their
+// slots — same interleaving approach as shuffle.jsx's shuffleStack.
+export function applyLayerOrder(canvas, layerOrder) {
+  if (!canvas || !Array.isArray(layerOrder) || layerOrder.length === 0) return
+  const all = canvas.getObjects()
+  const deckObjs = all.filter((o) => o.deckId)
+  if (deckObjs.length < 2) return
+  const byId = new Map(deckObjs.map((o) => [o.deckId, o]))
+
+  const seen = new Set()
+  const bottomFirst = []
+  for (let i = layerOrder.length - 1; i >= 0; i--) {
+    const obj = byId.get(layerOrder[i])
+    if (obj && !seen.has(obj.deckId)) {
+      bottomFirst.push(obj)
+      seen.add(obj.deckId)
+    }
+  }
+  // Any deck object the order didn't mention keeps its relative order, on top.
+  for (const obj of deckObjs) if (!seen.has(obj.deckId)) bottomFirst.push(obj)
+
+  let k = 0
+  const target = all.map((o) => (o.deckId ? bottomFirst[k++] : o))
+  target.forEach((o, i) => canvas.moveObjectTo(o, i))
+  canvas.requestRenderAll()
+}
+
+// Update hook: a drop in the reorder panel persists controls.layerOrder; this
+// applies it to the canvas live. No-op until the first drag (layerOrder null),
+// so the initial placement from begin() is left untouched.
+export function updateAddCard(ctx) {
+  applyLayerOrder(ctx.canvas, ctx.controls.layerOrder)
+}
+
 export function commitAddCardImages(canvas, placed) {
   canvas.discardActiveObject()
   for (const { object } of placed) {

@@ -16,7 +16,8 @@
 import {
   AddCardTools,
   commitAddCardImages,
-  placeAddCardImages
+  placeAddCardImages,
+  updateAddCard
 } from './addCard.jsx'
 
 import {
@@ -131,8 +132,9 @@ import {
 function makeAddEntry(count) {
   return {
     controls: [],
-    defaultControls: {},
-    needsLayersPanel: false,
+    defaultControls: { layerOrder: null },
+    needsLayersPanel: true,
+    layersPanelMode: 'reorder',
     Tools: AddCardTools,
     begin: async (ctx) => {
       const result = await placeAddCardImages(
@@ -147,6 +149,7 @@ function makeAddEntry(count) {
       }
       return { placed: result.placed }
     },
+    update: updateAddCard,
     commit: (ctx) => {
       commitAddCardImages(ctx.canvas, ctx.session?.placed || [])
     }
@@ -269,7 +272,8 @@ export const cardRegistry = {
   shuffle: {
     controls: [],
     defaultControls: { rollCount: 0 },
-    needsLayersPanel: false,
+    needsLayersPanel: true,
+    layersPanelMode: 'display',
     Tools: ShuffleTools,
     begin: beginShuffle,
     update: updateShuffle,
