@@ -120,17 +120,21 @@ zymeDraw/
 │           └── cards/
 │               ├── registry.jsx    # one entry per card
 │               ├── addCard.jsx     # Add 1/2/3
-│               ├── pencil.jsx      # 4.1
+│               ├── pencil.jsx      # 4.1 — RETAINED as brush base; removed from draw pool (Phase 7)
 │               ├── eraser.jsx      # 4.2 — uses @erase2d/fabric
 │               ├── flatten.jsx     # 4.3
 │               ├── hsv.jsx         # 4.4
 │               ├── blur.jsx        # 4.5
 │               ├── grain.jsx       # 4.6
 │               ├── grade.jsx       # 4.7
-│               ├── vignette.jsx    # 5 endgame
 │               ├── frame.jsx       # 5 endgame
 │               ├── finalGrade.jsx  # 5 endgame
-│               └── grainFinish.jsx # 5 endgame
+│               ├── grainFinish.jsx # 5 endgame
+│               ├── flip.jsx        # 7 — Flip Canvas Horizontal (preserves layers)
+│               ├── removeLayer.jsx # 7 — Remove 1 Layer (target picker, all kinds)
+│               ├── shuffle.jsx     # 7 — Shuffle Layer Order
+│               └── zoomFlatten.jsx # 7 — Zoom & Flatten (flatten + random 30–50% zoom)
+│               # NOTE: vignette.jsx was DELETED in Phase 7.
 └── backend/
     ├── package.json          # only `express`
     ├── server.js             # all routes (see §6)
@@ -167,16 +171,20 @@ Actions:
   An endgame card commit → `ENDGAME_DRAWN` (terminal).
 - `RESTART` — back to a fresh initial state with a re-rolled threshold.
 
-Eligible pool by phase:
+Eligible pool by phase (counts as of Phase 7):
 - BEGINNING       → adds only (3 cards). Beginning is exactly 1 round.
-- MIDGAME, locked → adds + midgame (10).
-- MIDGAME, unlocked → adds + midgame + endgame (14). Unlocks when
+- MIDGAME, locked → adds + midgame (3 + 10 = 13).
+- MIDGAME, unlocked → adds + midgame + endgame (3 + 10 + 3 = 16). Unlocks when
   `midgameRounds >= endgameThreshold`.
 
-Card sets (in `deck.js`):
+Card sets (in `deck.js`) — current as of Phase 7:
 - ADD_CARDS:     `add1`, `add2`, `add3` (count=1,2,3)
-- MIDGAME_CARDS: `pencil`, `eraser`, `flatten`, `hsv`, `blur`, `grain`, `grade`
-- ENDGAME_CARDS: `vignette`, `frame`, `finalGrade`, `grainFinish`
+- MIDGAME_CARDS: `eraser`, `flatten`, `hsv`, `blur`, `grain`, `grade`,
+  `flip`, `removeLayer`, `shuffle`, `zoomFlatten`
+  (`pencil` was removed from the pool in Phase 7 but its file/registry entry
+  are retained as the base for the upcoming brush cards)
+- ENDGAME_CARDS: `frame`, `finalGrade`, `grainFinish`
+  (`vignette` was removed in Phase 7)
 
 ### 5.2 The card registry (in `editor/cards/registry.jsx`)
 
@@ -263,6 +271,9 @@ requires the folder to exist (no auto-create).
 | 4.7 — Color Grade | ✅ done | Six presets, per-layer `ColorMatrix`. Pencil/draw layers excluded (MVP limitation, accepted). |
 | 5 — Endgame + export | ✅ done | Four endgame cards (Vignette, Frame, Final Grade, Grain Finish), `POST /api/export`, SESSION COMPLETE screen. |
 | 6 — Polish | ✅ done | Card-flip animation, keyboard shortcuts (Space=Draw, Enter=primary, R=Restart), saved-thumbnail in SESSION COMPLETE, "Open output folder" button (`POST /api/open-output`). |
+| 7 — Card-set revision | ✅ done | **Removed:** Vignette (deleted) + Pencil (un-pooled, code retained). **Fixed:** layers-panel overflow no longer covers the End button (`deck-panel` pinned `flex-shrink:0`, layer stack scrolls in a bounded `min-height:0` region). **Added 4 midgame cards:** Flip Canvas (mirrors each layer individually — preserves layers), Remove Layer (target picker, any kind, live hide-preview), Shuffle Layers (random stack permutation + "Shuffle again" reroll), Zoom & Flatten (flatten then random 30–50% center zoom; fixed canvas crops = the "trim"). |
+
+> **Next up (not yet built):** Phase 8 = Layers panel redesign (§14). Phase 9 = Brush cards (§15). Detailed standalone prompts for each are at the bottom of this file so they can be run in fresh contexts.
 
 ---
 
@@ -272,7 +283,9 @@ These are out of scope as of the original spec and were *not* implemented.
 Treat each as its own mini-project:
 
 - **Smudge brush** — a midgame card that smears existing pixels.
+  *(Promoted into Phase 9 — see §15.)*
 - **Localized brushes** — restrict pencil/eraser to a per-target mask.
+  *(Promoted into Phase 9 — the masked-bake foundation — see §15.)*
 - **Real `.cube` LUTs** — replace the preset `ColorMatrix` swatches in
   Color Grade and Final Grade with cube-file parsing + 3D LUT sampling.
 - **Graphical folder browser** in Setup — currently the user types/pastes
@@ -383,7 +396,8 @@ The original phased build is complete. If you want to add something new:
    the card descriptor to the corresponding array in `deck.js`.
 2. Create `frontend/src/editor/cards/<name>.jsx`. Use `pencil.jsx` as the
    reference for a midgame card with controls; `flatten.jsx` for one with
-   no controls; `vignette.jsx` for an endgame card with an overlay.
+   no controls; `frame.jsx` for an endgame card with an overlay; `flip.jsx`
+   / `shuffle.jsx` / `zoomFlatten.jsx` (Phase 7) for recent, minimal examples.
 3. Add a registry entry in `cards/registry.jsx` pointing at your new
    file's exports.
 4. **Do not touch `Editor.jsx` or `DeckPanel.jsx`.** If your card needs
@@ -406,3 +420,154 @@ Backend route in `backend/server.js`. Follow the existing patterns:
 4. Skim one existing card file matching what you're about to build.
 5. Ask the user what they want to add. Check in before non-trivial work
    (see §2). Build one unit, checkpoint, wait for "continue."
+
+---
+
+## 14. Phase 8 prompt — Layers panel redesign (drag-to-reorder)
+
+> Paste this whole section as the opening prompt of a fresh context. It is
+> self-contained. Obey §2 (one unit at a time, checkpoint, wait for "continue").
+
+**Goal.** Give the Layers panel a Photoshop/Affinity-style feel and let the
+user **drag layers to reorder the stack** — but only on cards where reordering
+is meaningful.
+
+**Decisions already locked in (do NOT re-litigate; confirmed by the user):**
+- **Contextual panel, not persistent.** Keep the current behavior where the
+  panel only shows for cards that set `needsLayersPanel: true`. Do not build an
+  always-on panel.
+- **Native HTML5 drag-and-drop. NO new dependency.** Use `draggable`,
+  `onDragStart/onDragOver/onDrop`. Do not add @dnd-kit, react-sortable, etc.
+- **Reorder is card-gated.** Manual drag-reorder is enabled ONLY on the Add
+  cards (`add1/add2/add3`). Effect cards (eraser/hsv/blur/removeLayer) keep
+  their current locked behavior. The Shuffle card gets a **read-only** stack
+  view (see below), not manual drag.
+
+**What to build, unit by unit:**
+
+1. **New panel mode `reorder` in `LayersPanel.jsx`.** A `ReorderPicker` that
+   lists committed layers **top-down** (canvas order is bottom-first — reverse
+   it for display, like `SlotPicker`/`TargetPicker` already do) with thumbnails
+   and a drag handle. Visual polish: Affinity-like rows, clear drag affordance,
+   hover/drag-over states. Reuse `.layer-row` styling; add drag styles in
+   `editor.css`.
+   - **Critical gotcha:** during a card, `committedLayers` is captured once at
+     `begin` and is NOT refreshed when controls change (Editor only re-derives
+     it on `state.history.length`, i.e. after commit). So the panel must hold
+     its **own local order state**, seeded from the `layers` prop, and render
+     from that. On each drop: (a) reorder local state, (b) apply the new order
+     to the canvas live via `canvas.moveObjectTo`, (c) persist via
+     `onControlChange('layerOrder', orderedTopDownIds)` so it survives to
+     commit. Wiring stays within the existing
+     `mode / layers / controls / onControlChange` props — **do not modify
+     Editor.jsx or DeckPanel.jsx.**
+   - Applying order to canvas: `layerOrder` is top-down; canvas indices are
+     bottom-first, so reverse before calling `moveObjectTo(obj, i)` in
+     ascending `i`. There is a working reference for this exact reverse-then-
+     moveObjectTo pattern in `shuffle.jsx`'s `shuffleStack`.
+
+2. **Enable reorder on Add cards.** In `registry.jsx`, the add entry
+   (`makeAddEntry`) gets `needsLayersPanel: true`, `layersPanelMode: 'reorder'`,
+   and an `update` hook that applies `controls.layerOrder` to the canvas (so a
+   drop reorders live). Add-card images already receive their `deckId` inside
+   `placeAddCardImages` (during `begin`), so they appear in
+   `getCommittedLayers` *during* the Add card — meaning the just-placed images
+   AND any prior committed layers are all draggable. Confirm the on-canvas
+   move/scale/rotate of Add images still works alongside panel reordering.
+
+3. **Read-only stack view for Shuffle.** Add a `display` mode (or reuse
+   `reorder` with a `readOnly` flag) so `shuffle` can set
+   `needsLayersPanel: true` and show the current order as thumbnails that
+   update when the user clicks "Shuffle again." This is the §Unit-5 follow-up
+   promised to the user. Shuffle reorders the canvas in its own `update`, so the
+   panel's local state must re-seed from `layers`/canvas whenever the order
+   changes — simplest is to read live canvas order for the display mode rather
+   than caching.
+
+**Files in play:** `LayersPanel.jsx` (new modes + polish), `registry.jsx` (add
+modes + add-card `update` hook), `addCard.jsx` (the `applyLayerOrder` update
+logic), `editor.css` (drag styling), maybe `shuffle.jsx` (opt into display
+mode). Do not touch `Editor.jsx` / `DeckPanel.jsx`.
+
+**Test steps to hand the user:** (a) Draw an Add card with several images;
+drag rows to reorder; confirm canvas stacking follows and the order persists
+after End. (b) Draw Eraser/HSV — confirm those panels are unchanged (no drag).
+(c) Draw Shuffle — confirm the read-only stack view reflects each reroll. (d)
+Stack 10+ layers and confirm the panel still scrolls and the End button stays
+visible (Phase 7 overflow fix must still hold).
+
+---
+
+## 15. Phase 9 prompt — Brush cards (research, then build)
+
+> Paste this whole section as the opening prompt of a fresh context. This phase
+> is RESEARCH-FIRST. Do not write feature code until the research + the one
+> architecture decision below are settled with the user. Obey §2 throughout.
+
+**Goal (from `card_changes.txt`).** Turn effects into brushes:
+- A **soft round** brush option (currently only Fabric's hard-edged
+  `PencilBrush`), selectable on any card that uses a brush.
+- New **effect-brush cards**, Affinity-style: HSV brush, brightness/contrast
+  brush, blur brush, noise brush, **smudge** brush — paint the effect locally
+  instead of applying it to a whole layer.
+- A **liquify / grid-warp** card (Procreate-style) — macro mesh pulling of the
+  canvas like a grab tool. (Hardest item; do last.)
+
+`pencil.jsx` (retained, un-pooled) is the brush base to build on.
+
+**THE architecture decision to settle first (use `AskUserQuestion`).**
+`card_changes.txt` asks for effects "done as an adjustment layer, which can be
+re-positioned in the layer stack." A true **non-destructive, repositionable
+adjustment layer that composites through the stack** is NOT something Fabric 6
+does natively, and it conflicts with the project's destructive/commitment
+philosophy (§1). Two viable paths — present both, recommend the first:
+  - **(A) Destructive masked bake (recommended).** The user paints a grayscale
+    mask on a chosen target layer; on End, render the target, apply the effect
+    (Fabric filter, or pixel op for smudge) to a copy, and composite the
+    filtered pixels back through the mask into the target's pixels — replacing
+    the target image, destructively. Fits the philosophy, achievable in Fabric
+    today, and every effect brush becomes "the same masking infra + a different
+    effect." This is the recommended foundation.
+  - **(B) True non-destructive adjustment layers.** Repositionable adjustment
+    objects that filter everything beneath them. Requires a custom compositing
+    pipeline (likely a WebGL layer / different engine) — a large architectural
+    change. Only pursue if the user explicitly wants non-destructive.
+
+**Research to do BEFORE coding (use WebSearch/WebFetch; verify against the
+INSTALLED version — check `frontend/package.json`, we target Fabric 6.x):**
+- Fabric 6 custom brush API: how to subclass `PencilBrush` / `BaseBrush`,
+  and the current soft-edge options (shadow/`limitedToCanvasSize`/stamped
+  radial-gradient dabs). Confirm the real v6 method names.
+- Canvas2D masked compositing (`globalCompositeOperation`,
+  `getImageData`/`putImageData`) for the "bake effect through a painted mask"
+  step in path (A).
+- Smudge technique: per-`pointermove` grab-and-stamp with offset + partial
+  alpha (this and "localized brushes" were §8 stretch ideas — now in scope).
+- Liquify: evaluate libraries/techniques for browser mesh warp —
+  glfx.js, pixi.js (mesh/displacement filter), regl, three.js, or a
+  displacement-map shader. Decide whether to render warp to an offscreen
+  canvas and bake the result back as a Fabric `image` layer (keeps the rest of
+  the architecture intact). Report options with trade-offs and let the user pick.
+
+**Recommended build order (one card per checkpoint, smallest first):**
+1. **Soft round brush option** — a reusable hard/soft brush-shape control +
+   custom soft brush. Wire it into a brush card first; it also produces the
+   soft-edged masks the effect brushes need.
+2. **One effect brush as the masking-infra prototype** — suggest
+   brightness/contrast (simplest filter). Build the generic "paint mask → bake
+   effect through mask on End" infra here so the rest are small.
+3. **Replicate** for HSV brush, blur brush, noise brush (each = infra + one
+   filter, one small file + one registry entry).
+4. **Smudge brush** — custom pixel-grab brush.
+5. **Liquify / grid warp** — last, per chosen library.
+
+Keep each effect brush a single small file + one registry entry, mirroring the
+plug-in philosophy (§5.2, §12). Add new cards to `MIDGAME_CARDS` in `deck.js`.
+**Do not touch `Editor.jsx` / `DeckPanel.jsx`** — extend the registry shape if a
+card needs something new (e.g. a shared `brushShape` control), exactly as
+`layerKinds` did.
+
+**Test steps:** hand the user per-card UI test steps as each brush lands; for
+masked-bake brushes, verify the effect appears only where painted and that End
+bakes it destructively into the target layer (re-drawing the same card should
+see the baked result, not a live filter).

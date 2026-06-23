@@ -75,12 +75,34 @@ import {
 } from './grade.jsx'
 
 import {
-  VignetteTools,
-  beginVignette,
-  commitVignette,
-  cleanupVignette,
-  updateVignette
-} from './vignette.jsx'
+  FlipTools,
+  beginFlip,
+  commitFlip,
+  cleanupFlip
+} from './flip.jsx'
+
+import {
+  RemoveLayerTools,
+  beginRemove,
+  commitRemove,
+  cleanupRemove,
+  updateRemove
+} from './removeLayer.jsx'
+
+import {
+  ShuffleTools,
+  beginShuffle,
+  commitShuffle,
+  cleanupShuffle,
+  updateShuffle
+} from './shuffle.jsx'
+
+import {
+  ZoomFlattenTools,
+  beginZoomFlatten,
+  commitZoomFlatten,
+  cleanupZoomFlatten
+} from './zoomFlatten.jsx'
 
 import {
   FrameTools,
@@ -136,6 +158,8 @@ export const cardRegistry = {
   add2: makeAddEntry(2),
   add3: makeAddEntry(3),
 
+  // Retained as the base for the upcoming brush cards. Removed from the draw
+  // pool in deck.js, so this entry is currently unreachable by design.
   pencil: {
     controls: ['size', 'color'],
     defaultControls: { size: 8, color: '#000000', insertAt: 'top' },
@@ -219,15 +243,48 @@ export const cardRegistry = {
     cleanup: cleanupGrade
   },
 
-  vignette: {
-    controls: ['intensity'],
-    defaultControls: { intensity: 0.6 },
+  flip: {
+    controls: [],
+    defaultControls: {},
     needsLayersPanel: false,
-    Tools: VignetteTools,
-    begin: beginVignette,
-    update: updateVignette,
-    commit: commitVignette,
-    cleanup: cleanupVignette
+    Tools: FlipTools,
+    begin: beginFlip,
+    commit: commitFlip,
+    cleanup: cleanupFlip
+  },
+
+  removeLayer: {
+    controls: [],
+    defaultControls: { targetLayerId: null },
+    needsLayersPanel: true,
+    layersPanelMode: 'target',
+    // No layerKinds: any layer (image, draw, grain…) can be removed.
+    Tools: RemoveLayerTools,
+    begin: beginRemove,
+    update: updateRemove,
+    commit: commitRemove,
+    cleanup: cleanupRemove
+  },
+
+  shuffle: {
+    controls: [],
+    defaultControls: { rollCount: 0 },
+    needsLayersPanel: false,
+    Tools: ShuffleTools,
+    begin: beginShuffle,
+    update: updateShuffle,
+    commit: commitShuffle,
+    cleanup: cleanupShuffle
+  },
+
+  zoomFlatten: {
+    controls: [],
+    defaultControls: {},
+    needsLayersPanel: false,
+    Tools: ZoomFlattenTools,
+    begin: beginZoomFlatten,
+    commit: commitZoomFlatten,
+    cleanup: cleanupZoomFlatten
   },
 
   frame: {

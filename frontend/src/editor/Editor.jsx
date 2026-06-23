@@ -161,7 +161,7 @@ function Editor({ config, onBackToSetup }) {
       canvas,
       controls: cardControls,
       session: cardSessionRef.current,
-      // Overlay cards (Frame/Vignette) re-render a sized offscreen layer on
+      // Overlay cards (e.g. Frame) re-render a sized offscreen layer on
       // each control change, so they need the canvas dimensions here just
       // like the begin ctx provides them. Without these the offscreen canvas
       // is 0x0 and the overlay never updates.

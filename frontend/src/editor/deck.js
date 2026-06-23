@@ -13,17 +13,22 @@ export const ADD_CARDS = [
 ]
 
 export const MIDGAME_CARDS = [
-  { id: 'pencil',  label: 'Pencil',       kind: 'midgame' },
+  // 'pencil' was removed from the draw pool. Its behavior file (pencil.jsx)
+  // and registry entry are intentionally kept as the base for the upcoming
+  // brush cards — it just can no longer be drawn.
   { id: 'eraser',  label: 'Eraser',       kind: 'midgame' },
   { id: 'flatten', label: 'Flatten',      kind: 'midgame' },
   { id: 'hsv',     label: 'Layer HSV',    kind: 'midgame' },
   { id: 'blur',    label: 'Layer Blur',   kind: 'midgame' },
   { id: 'grain',   label: 'Canvas Grain', kind: 'midgame' },
-  { id: 'grade',   label: 'Color Grade',  kind: 'midgame' }
+  { id: 'grade',   label: 'Color Grade',  kind: 'midgame' },
+  { id: 'flip',    label: 'Flip Canvas',  kind: 'midgame' },
+  { id: 'removeLayer', label: 'Remove Layer', kind: 'midgame' },
+  { id: 'shuffle', label: 'Shuffle Layers', kind: 'midgame' },
+  { id: 'zoomFlatten', label: 'Zoom & Flatten', kind: 'midgame' }
 ]
 
 export const ENDGAME_CARDS = [
-  { id: 'vignette',    label: 'Vignette',     kind: 'endgame' },
   { id: 'frame',       label: 'Frame',        kind: 'endgame' },
   { id: 'finalGrade',  label: 'Final Grade',  kind: 'endgame' },
   { id: 'grainFinish', label: 'Grain Finish', kind: 'endgame' }
