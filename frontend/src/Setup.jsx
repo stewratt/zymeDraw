@@ -47,7 +47,7 @@ function Setup({ initial, onContinue }) {
   return (
     <form className="setup" onSubmit={handleSubmit}>
       <h1>DECK</h1>
-      <p className="muted">Phase 1 — choose folders</p>
+      <p className="muted">Choose your folders</p>
 
       <label className="field">
         <span className="field-label">Input folder</span>

@@ -26,9 +26,9 @@ function DeckPanel({
     const status = exportState?.status ?? 'idle'
     return (
       <aside className="deck-panel endgame">
-        <h2>SESSION COMPLETE</h2>
+        <h2>FINISHED</h2>
         <p className="hint">
-          Endgame card drawn: <strong>{last?.cardId}</strong>
+          Final card: <strong>{last?.cardId}</strong>
         </p>
         {status === 'exporting' && (
           <p className="hint">Writing PNG to your output folder…</p>
@@ -49,7 +49,7 @@ function DeckPanel({
           <p className="error">Export failed: {exportState.error}</p>
         )}
         <button type="button" className="primary" onClick={onRestart}>
-          Start a fresh round
+          Start a new composition
         </button>
       </aside>
     )
@@ -79,9 +79,7 @@ function DeckPanel({
             onControlChange={onControlChange}
           />
         ) : (
-          <span className="hint">
-            (no controls — Phase {card.kind === 'midgame' ? '4' : '5'} placeholder)
-          </span>
+          <span className="hint">(no controls for this card)</span>
         )}
       </div>
       <button type="button" className="primary commit" onClick={onCommit} disabled={commitDisabled}>
@@ -128,7 +126,7 @@ function AwaitingDraw({ imageList, poolSize, onDraw }) {
         {imageList.filenames.length === 1 ? '' : 's'} in folder
       </p>
       <button type="button" className="primary" onClick={onDraw}>
-        Draw card
+        Draw
       </button>
     </aside>
   )

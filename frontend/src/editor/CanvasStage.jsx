@@ -26,6 +26,9 @@ const CanvasStage = forwardRef(function CanvasStage(_props, ref) {
       height: CANVAS_HEIGHT,
       backgroundColor: '#ffffff',
       preserveObjectStacking: true,
+      // Corner handles scale x/y independently (non-uniform) by default.
+      // Aspect-ratio lock isn't wanted here; free x/y scaling is the useful one.
+      uniformScaling: false,
       // Disable rubber-band group-select. Per-object click/drag still works.
       selection: false
     })

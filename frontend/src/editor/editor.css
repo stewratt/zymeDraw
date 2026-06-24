@@ -22,24 +22,6 @@
   font-size: 1.1rem;
 }
 
-.debug-badge {
-  margin-left: auto;
-  display: flex;
-  gap: 16px;
-  font-size: 0.7rem;
-  color: #888;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  white-space: nowrap;
-}
-.debug-badge b {
-  color: #aaa;
-  margin-right: 4px;
-  font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.65rem;
-}
-
 /* ---------- main area ---------- */
 
 .editor-main {

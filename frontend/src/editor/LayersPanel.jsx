@@ -106,9 +106,15 @@ function ReorderPicker({ layers, thumbs, onControlChange }) {
       setDragId(null)
       return
     }
+    const from = order.indexOf(dragId)
+    const to = order.indexOf(targetId)
     const next = order.filter((id) => id !== dragId)
     const idx = next.indexOf(targetId)
-    next.splice(idx, 0, dragId) // dropped item takes the target's slot (above it)
+    // Direction-aware drop: dragging down (item started above the target)
+    // lands it below the target; dragging up lands it above. Without this the
+    // insert is always "above target", so downward drags stall or no-op.
+    const insertAt = from < to ? idx + 1 : idx
+    next.splice(insertAt, 0, dragId)
     setDragId(null)
     reorder(next)
   }

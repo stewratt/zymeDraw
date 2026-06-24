@@ -2,7 +2,7 @@ import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import CanvasStage, { CANVAS_WIDTH, CANVAS_HEIGHT } from './CanvasStage.jsx'
 import DeckPanel from './DeckPanel.jsx'
 import LayersPanel from './LayersPanel.jsx'
-import { deckReducer, eligiblePool, endgameUnlocked, initialState } from './deck.js'
+import { deckReducer, eligiblePool, initialState } from './deck.js'
 import { cardRegistry } from './cards/registry.jsx'
 import { getCommittedLayers } from './layers.js'
 import './editor.css'
@@ -75,7 +75,7 @@ function Editor({ config, onBackToSetup }) {
         // image's cache before we snapshot.
         canvas.renderAll()
         const pngBase64 = canvas.toDataURL({ multiplier: 3 })
-        // A tiny thumbnail for the SESSION COMPLETE screen. ~320×400 — cheap.
+        // A tiny thumbnail for the FINISHED screen. ~320×400 — cheap.
         const thumbDataUrl = canvas.toDataURL({ multiplier: 0.4 })
         const res = await fetch('/api/export', {
           method: 'POST',
@@ -273,7 +273,6 @@ function Editor({ config, onBackToSetup }) {
           ← setup
         </button>
         <h1>DECK</h1>
-        <DebugBadge state={state} pool={pool} unlocked={endgameUnlocked(state)} imageList={imageList} />
       </header>
 
       <main className="editor-main">
@@ -310,23 +309,6 @@ function Editor({ config, onBackToSetup }) {
           )}
         </aside>
       </main>
-    </div>
-  )
-}
-
-function DebugBadge({ state, pool, unlocked, imageList }) {
-  return (
-    <div className="debug-badge" title="Phase 2-4: visible state machine">
-      <span><b>phase</b> {state.phase}</span>
-      <span>
-        <b>midgame rounds</b> {state.midgameRounds} / {state.endgameThreshold}
-      </span>
-      <span><b>endgame</b> {unlocked ? 'unlocked' : 'locked'}</span>
-      <span><b>pool size</b> {pool.length}</span>
-      <span><b>history</b> {state.history.length}</span>
-      <span>
-        <b>images</b> {imageList.status === 'ready' ? imageList.filenames.length : imageList.status}
-      </span>
     </div>
   )
 }
