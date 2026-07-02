@@ -71,11 +71,20 @@ stroke-replay undo/redo (Cmd/Ctrl+Z, +Shift) that never crosses an End;
 topmost-image stroke targeting; Arrange/Erase mode toggle in the placement
 panel. Erase is live in every placement session (opening + stash return).
 
-**Next action: Phase 4 — effect-brush infrastructure + Noise brush.**
-The reveal pipeline (effected copy of the master, fully masked out,
-painting reveals it), built on brushCore's stroke engine; first deck card
-with real behavior. Riskiest canvas tech — verify bake fidelity and paint
-performance at master resolution.
+**Phase 4 is done (2026-07-02, verified by Stew):** brushCore refactored
+into a shared stroke engine with two consumers — erase (destination-out on
+placed images) and **reveal** (`createRevealSession`: full-strength
+effected copy of the master as a non-interactive overlay, fully masked
+out, painting reveals it; Influence = globalAlpha re-blend, never a
+recompute). `cards/noiseBrush.jsx` is the first real registry card; cards
+report `undo/redo/canUndo/canRedo` via ctx.report and Editor's Cmd/Ctrl+Z
+routes to them generically. Master-res painting performance confirmed fine
+on the Mac. pencil.jsx deleted (reference job done).
+
+**Next action: Phase 5 — replicate onto the rest of the non-ML deck:**
+Blur brush + HSV brush (effect-card factory on the reveal pipeline),
+Color Overlay + Global HSV (global color cards with influence sliders),
+Reposition (whole-canvas free transform + flips).
 
 > Keep this §0 updated as v2 phases land; it's the resume point for every
 > fresh session.
@@ -327,7 +336,7 @@ what to keep (registry pattern, purity, commitment) and what failed
 | 2 — Bake engine + master raster | ✅ done (2026-07-02) | masterRaster.js (offscreen 2400×3000 truth, proxy view, universal bake, direct export); layers infra + 16 v1 card files deleted; @erase2d/fabric dropped. |
 | 3a — The opening | ✅ done (2026-07-02) | Dice reveal, GridPicker overlay (thumbs, place/stash), placement.js free-transform sessions, /api/images/sample. |
 | 3b — Erase brush core | ✅ done (2026-07-02) | brushCore.js: mask-based erase, hard/soft, undo/redo, Arrange/Erase toggle in placement sessions. |
-| 4 — Effect-brush infra + Noise | ⬜ | Duplicate-mask-reveal pipeline, first effect brush. |
+| 4 — Effect-brush infra + Noise | ✅ done (2026-07-02) | Shared stroke engine + createRevealSession; Noise Brush card; generic card undo/redo via ctx.report. |
 | 5 — Brush/global replication | ⬜ | Blur brush, HSV brush, Color Overlay, Global HSV, Reposition. |
 | 6 — Ghost | ⬜ | Grid → screen-blend placement + opacity/BC + erase. |
 | 7 — ML sidecar | ⬜ | FastAPI (rembg + ESRGAN), proxy, health, degradation, README setup. |

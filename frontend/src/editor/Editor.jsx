@@ -215,6 +215,7 @@ function Editor({ config, onBackToSetup }) {
     ;(async () => {
       const ctx = {
         canvas,
+        master: masterRef.current,
         controls: defaults,
         imageList: imageList.filenames,
         canvasWidth: CANVAS_WIDTH,
@@ -243,12 +244,9 @@ function Editor({ config, onBackToSetup }) {
     if (!canvas) return
     entry.update({
       canvas,
+      master: masterRef.current,
       controls: cardControls,
       session: cardSessionRef.current,
-      // Overlay cards (e.g. Frame) re-render a sized offscreen layer on
-      // each control change, so they need the canvas dimensions here just
-      // like the begin ctx provides them. Without these the offscreen canvas
-      // is 0x0 and the overlay never updates.
       canvasWidth: CANVAS_WIDTH,
       canvasHeight: CANVAS_HEIGHT
     })
@@ -266,13 +264,18 @@ function Editor({ config, onBackToSetup }) {
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t?.isContentEditable) {
         return
       }
-      // Cmd/Ctrl+Z (+Shift for redo): within-card brush undo during
-      // placement sessions. Never crosses an End.
+      // Cmd/Ctrl+Z (+Shift for redo): within-card brush undo. Placement
+      // sessions route to the erase brush; cards route to whatever undo the
+      // card reported (effect brushes). Never crosses an End.
       if ((e.metaKey || e.ctrlKey) && (e.key === 'z' || e.key === 'Z')) {
         if (state.phase === 'PLACEMENT' || state.phase === 'STASH_RETURN') {
           e.preventDefault()
           if (e.shiftKey) eraseSessionRef.current?.redo()
           else eraseSessionRef.current?.undo()
+        } else if (state.phase === 'WORKING' && state.currentCard) {
+          e.preventDefault()
+          if (e.shiftKey) cardInfo.redo?.()
+          else cardInfo.undo?.()
         }
         return
       }
@@ -313,7 +316,7 @@ function Editor({ config, onBackToSetup }) {
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [state.currentCard, state.phase, cardReady, placementReady, imageList])
+  }, [state.currentCard, state.phase, cardReady, placementReady, imageList, cardInfo])
 
   function handleControlChange(key, value) {
     setCardControls((prev) => ({ ...prev, [key]: value }))

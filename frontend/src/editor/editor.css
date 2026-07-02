@@ -654,6 +654,12 @@
   flex-direction: column;
   gap: 10px;
 }
+/* Card Tools render centered inside .tool-area; brush controls want the
+   full width instead. */
+.tool-area .card-tools {
+  align-self: stretch;
+  width: 100%;
+}
 .undo-row {
   display: flex;
   gap: 8px;

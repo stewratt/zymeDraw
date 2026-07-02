@@ -21,9 +21,19 @@
 // the shared modules (brush core, grid picker, bake engine). Never add
 // per-card branches to Editor.jsx or DeckPanel.jsx.
 //
-// No v2 cards exist yet — every card in the deck is a placeholder that
-// Editor treats as "ready immediately, no tools". Phases 3–10 fill this in.
-// (pencil.jsx is retained on disk, unregistered, as reference for the
-// Phase 3b brush core.)
+// Cards not yet listed here are placeholders that Editor treats as "ready
+// immediately, no tools". Phases 5–10 fill in the rest.
 
-export const cardRegistry = {}
+import { NoiseTools, beginNoise, cleanupNoise, commitNoise, updateNoise } from './noiseBrush.jsx'
+
+export const cardRegistry = {
+  noiseBrush: {
+    controls: ['size', 'hardness', 'intensity'],
+    defaultControls: { size: 60, hardness: 'soft', intensity: 1 },
+    Tools: NoiseTools,
+    begin: beginNoise,
+    update: updateNoise,
+    commit: commitNoise,
+    cleanup: cleanupNoise
+  }
+}
