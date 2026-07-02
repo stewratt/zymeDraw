@@ -130,13 +130,21 @@ whole image is placed and the panel says "the erase brush is your
 scissors". The Ghost/Stamp shared Arrange/Erase block was extracted to
 `cards/arrangeEraseControls.jsx`. 8 of 10 card designs are real.
 
-**Next action: Phase 9 — Deeper:** a 4:5-locked frame rect
-(move/scale/rotate) chooses a re-frame of the piece; End maps that region
-onto the full master (2d transform at master res) and, when zoomed in,
-restores detail via `/api/ml/upscale` (input sized to true source detail,
-clamped 600–1200 w). Needs Editor support for **async commit hooks** +
-a "committing" UI state (generic, not per-card). Degradation: plain
-resample.
+**Phase 9 is done (2026-07-02, verified by Stew):** **Deeper** — a
+4:5-locked frame rect (corner-scale + rotate only; side handles hidden so
+portrait is preserved by construction) chooses the piece's re-frame; End
+maps that region onto the full master by 2d transform, then restores
+detail via `/api/ml/upscale` when zoom > 1.05 — the input is resampled at
+its *true* source detail (master/zoom, clamped 600–1200 px wide) so the
+×4 model only invents what's missing. Degradation: the plain resample
+stands. Editor gained **async commit hooks** generically: `handleCommit`
+awaits `entry.commit`, End shows "Committing…", a ref guards re-entry,
+Restart waits for an in-flight commit. 9 of 10 card designs are real.
+
+**Next action: Phase 10 — Rails:** prototype the edge/palette-clamped
+alpha look first (threshold vs. edges vs. posterize-band, on real input
+images) and check in with Stew on the recipe before building the card.
+Final implementation is pure canvas2d pixel work — no sidecar needed.
 
 > Keep this §0 updated as v2 phases land; it's the resume point for every
 > fresh session.
@@ -406,7 +414,7 @@ what to keep (registry pattern, purity, commitment) and what failed
 | 6 — Ghost | ✅ done (2026-07-02) | CardGridPicker single-pick grid; screen-blend placement + opacity/BC + erase; generic Overlay registry field; begin-awaits-user pattern. |
 | 7 — ML sidecar | ✅ done (2026-07-02) | FastAPI on onnxruntime CPU-only; ESRGAN onnx committed in-repo; /api/ml proxy; start.js auto-start; degradation verified; README setup. |
 | 8 — Stamp | ✅ done (2026-07-02) | Grid of 6 → rembg cutout via sidecar → place/opacity/erase; live degradation path; shared ArrangeEraseControls. |
-| 9 — Deeper | ⬜ | Crop/zoom/rotate re-frame + ESRGAN detail restore. |
+| 9 — Deeper | ✅ done (2026-07-02) | 4:5-locked frame → master re-frame + true-detail ESRGAN restore; generic async commit hooks + Committing… state. |
 | 10 — Rails | ⬜ | Palette-clamped alpha cutout stamp (prototype look first). |
 | 11 — Tuning + polish | ⬜ | Pacing/deck balance, death-crop decision, tone pass, merge `v2`. |
 

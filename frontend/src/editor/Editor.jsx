@@ -52,6 +52,11 @@ function Editor({ config, onBackToSetup }) {
     eraseSessionRef.current?.setActive(eraseControls.mode === 'erase')
   }, [eraseControls])
 
+  // True while an (async) card commit is running — End disabled, generic
+  // "Committing…" label. The ref guards re-entry across renders.
+  const committingRef = useRef(false)
+  const [committing, setCommitting] = useState(false)
+
   // Export state. Driven by a useEffect that fires when the deck
   // transitions to COMPLETE. Reset on Restart.
   const [exportState, setExportState] = useState({ status: 'idle', savedPath: null, error: null })
@@ -314,19 +319,28 @@ function Editor({ config, onBackToSetup }) {
   // End of a card round: the card's own commit hook finalizes its temp
   // objects, then the UNIVERSAL BAKE flattens the whole canvas into the
   // master. No card implements flattening; this is the v2 commitment step.
-  function handleCommit() {
-    if (!state.currentCard) return
+  // Commit hooks may be async (Deeper awaits the detail restore); the ref
+  // is the re-entry guard, the state drives the "committing" UI.
+  async function handleCommit() {
+    if (!state.currentCard || committingRef.current) return
     const entry = cardRegistry[state.currentCard.id]
     const canvas = canvasStageRef.current?.getCanvas()
-    if (canvas) {
-      if (entry?.commit) {
-        entry.commit({
-          canvas,
-          controls: cardControls,
-          session: cardSessionRef.current
-        })
+    committingRef.current = true
+    setCommitting(true)
+    try {
+      if (canvas) {
+        if (entry?.commit) {
+          await entry.commit({
+            canvas,
+            controls: cardControls,
+            session: cardSessionRef.current
+          })
+        }
+        masterRef.current = bake(canvas)
       }
-      masterRef.current = bake(canvas)
+    } finally {
+      committingRef.current = false
+      setCommitting(false)
     }
     cardSessionRef.current = null
     setCardControls({})
@@ -346,6 +360,7 @@ function Editor({ config, onBackToSetup }) {
   }
 
   function handleRestart() {
+    if (committingRef.current) return // a commit is landing; let it finish
     const canvas = canvasStageRef.current?.getCanvas()
     if (canvas) {
       // If a card is currently in flight, let it clean up first.
@@ -416,6 +431,7 @@ function Editor({ config, onBackToSetup }) {
             controls={cardControls}
             info={cardInfo}
             ready={cardReady}
+            committing={committing}
             placementReady={placementReady}
             eraseControls={eraseControls}
             eraseHistory={eraseHistory}

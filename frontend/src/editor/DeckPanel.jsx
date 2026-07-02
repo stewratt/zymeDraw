@@ -18,6 +18,7 @@ function DeckPanel({
   controls,
   info,
   ready,
+  committing,
   placementReady,
   eraseControls,
   eraseHistory,
@@ -60,6 +61,7 @@ function DeckPanel({
           controls={controls}
           info={info}
           ready={ready}
+          committing={committing}
           onControlChange={onControlChange}
           onCommit={onCommit}
         />
@@ -256,10 +258,10 @@ function AwaitingDeal({ state, onDeal }) {
   )
 }
 
-function CardRevealed({ state, entry, controls, info, ready, onControlChange, onCommit }) {
+function CardRevealed({ state, entry, controls, info, ready, committing, onControlChange, onCommit }) {
   const card = state.currentCard
   const ToolsComponent = entry?.Tools
-  const commitDisabled = !ready
+  const commitDisabled = !ready || committing
 
   return (
     <aside className="deck-panel">
@@ -281,7 +283,7 @@ function CardRevealed({ state, entry, controls, info, ready, onControlChange, on
         )}
       </div>
       <button type="button" className="primary commit" onClick={onCommit} disabled={commitDisabled}>
-        {commitDisabled ? 'Setting up…' : 'End — commit'}
+        {committing ? 'Committing…' : commitDisabled ? 'Setting up…' : 'End — commit'}
       </button>
     </aside>
   )

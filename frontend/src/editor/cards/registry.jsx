@@ -21,10 +21,14 @@
 // the canvas area while the card is live (Ghost's grid pick; Stamp will
 // reuse it). It receives the same props as Tools.
 //
-// Cards not yet listed (deeper, rails) are placeholders that Editor
-// treats as "ready immediately, no tools" — Phases 9–10 fill them in.
+// A card's commit hook may be async (Deeper awaits the sidecar's detail
+// restore); Editor awaits it and shows a generic "committing" state.
+//
+// The one card not yet listed (rails) is a placeholder that Editor treats
+// as "ready immediately, no tools" — Phase 10 fills it in.
 
 import { NoiseTools, noiseHooks } from './noiseBrush.jsx'
+import { DeeperTools, beginDeeper, cleanupDeeper, commitDeeper } from './deeper.jsx'
 import {
   StampOverlay,
   StampTools,
@@ -79,6 +83,15 @@ export const cardRegistry = {
     update: updateGhost,
     commit: commitGhost,
     cleanup: cleanupGhost
+  },
+
+  deeper: {
+    controls: [],
+    defaultControls: {},
+    Tools: DeeperTools,
+    begin: beginDeeper,
+    commit: commitDeeper,
+    cleanup: cleanupDeeper
   },
 
   stamp: {
