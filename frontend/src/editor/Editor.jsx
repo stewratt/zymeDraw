@@ -5,6 +5,7 @@ import GridPicker from './GridPicker.jsx'
 import { deckReducer, initialState } from './deck.js'
 import { cardRegistry } from './cards/registry.jsx'
 import { placeImages } from './placement.js'
+import { sampleImages } from './sampling.js'
 import { createEraseSession } from './brushCore.js'
 import {
   bake,
@@ -73,30 +74,15 @@ function Editor({ config, onBackToSetup }) {
   }, [])
 
   // The reducer never touches the filesystem: when the opening grid is
-  // needed, Editor asks the backend for a random sample and reports it back
-  // via SET_GRID. Falls back to sampling the already-loaded full listing if
-  // the endpoint fails.
+  // needed, Editor samples the input folder (sampling.js) and reports it
+  // back via SET_GRID.
   useEffect(() => {
     if (state.phase !== 'OPENING_PICK' || state.grid.length > 0) return
     let cancelled = false
     ;(async () => {
-      try {
-        const res = await fetch(`/api/images/sample?n=${state.rolls.gridSize}`)
-        const data = await res.json()
-        if (!cancelled && data.ok && data.filenames.length > 0) {
-          dispatch({ type: 'SET_GRID', filenames: data.filenames })
-          return
-        }
-      } catch {
-        // fall through to the client-side fallback
-      }
-      if (cancelled || imageList.status !== 'ready' || imageList.filenames.length === 0) return
-      const pool = [...imageList.filenames]
-      for (let i = pool.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1))
-        ;[pool[i], pool[j]] = [pool[j], pool[i]]
-      }
-      dispatch({ type: 'SET_GRID', filenames: pool.slice(0, Math.min(state.rolls.gridSize, pool.length)) })
+      const fallback = imageList.status === 'ready' ? imageList.filenames : []
+      const filenames = await sampleImages(state.rolls.gridSize, fallback)
+      if (!cancelled && filenames.length > 0) dispatch({ type: 'SET_GRID', filenames })
     })()
     return () => {
       cancelled = true
@@ -220,7 +206,10 @@ function Editor({ config, onBackToSetup }) {
         imageList: imageList.filenames,
         canvasWidth: CANVAS_WIDTH,
         canvasHeight: CANVAS_HEIGHT,
-        report: (patch) => setCardInfo((prev) => ({ ...prev, ...patch }))
+        report: (patch) => setCardInfo((prev) => ({ ...prev, ...patch })),
+        // Cards whose begin awaits (Ghost's pick + image load) check this
+        // after each await so a restart can't leave objects behind.
+        isCancelled: () => cancelled
       }
       const session = entry.begin ? await entry.begin(ctx) : null
       if (cancelled) return
@@ -387,6 +376,9 @@ function Editor({ config, onBackToSetup }) {
   }
 
   const currentEntry = state.currentCard ? cardRegistry[state.currentCard.id] : null
+  // Cards can declare a canvas-area overlay (Ghost's grid pick) — rendered
+  // generically, same props as Tools.
+  const CardOverlay = state.phase === 'WORKING' ? currentEntry?.Overlay : null
 
   return (
     <div className="editor">
@@ -405,6 +397,14 @@ function Editor({ config, onBackToSetup }) {
               rolls={state.rolls}
               grid={state.grid}
               onConfirm={(placed, stashed) => dispatch({ type: 'CONFIRM_PICK', placed, stashed })}
+            />
+          )}
+          {CardOverlay && (
+            <CardOverlay
+              controls={cardControls}
+              info={cardInfo}
+              ready={cardReady}
+              onControlChange={handleControlChange}
             />
           )}
         </section>

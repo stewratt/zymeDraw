@@ -93,11 +93,25 @@ at influence opacity) — both carry the mandatory influence control;
 Color Overlay's bake also proved `globalCompositeOperation` survives
 `toCanvasElement` — half of §9's Ghost spike.
 
-**Next action: Phase 6 — Ghost:** fresh grid of 8 → take one → placed in
-`screen` blend with opacity + brightness/contrast + the standing erase
-brush. Reuses the grid picker (single-pick variant) and `createEraseSession`.
-Registry gains a generic optional `Overlay` component (canvas-area UI) so
-Editor stays card-agnostic.
+**Phase 6 is done (2026-07-02, verified by Stew):** **Ghost** — the first
+multi-sequence card: fresh grid of 8 (dice-free `CardGridPicker`, the
+single-pick grid variant Stamp will reuse) → take one → placed in `screen`
+blend with opacity + brightness/contrast (2d `ctx.filter` on a redrawn
+source canvas — never Fabric WebGL filters) + the standing erase brush.
+Pattern established: a card's `begin` can *await the user* (the pick
+resolves a promise), keeping End disabled until the choice is made; the
+registry gained a generic optional `Overlay` component (canvas-area UI,
+same props as Tools) and begin's ctx gained `isCancelled` for async cards.
+`sampling.js` extracted (shared by opening grid + grid cards). The §9
+`screen`-blend spike is closed: blend modes survive the bake (verified in
+Stew's export).
+
+**Next action: Phase 7 — the ML sidecar:** Python FastAPI under
+`backend/ml/` hosting rembg (cutout) + Real-ESRGAN (upscale), proxied by
+Express at `/api/ml/*`, third `concurrently` entry in `npm run dev`,
+health endpoint, README setup for all three machines, and mandatory
+graceful degradation. Check in with Stew on the Real-ESRGAN runtime choice
+(torch vs onnxruntime) before building.
 
 > Keep this §0 updated as v2 phases land; it's the resume point for every
 > fresh session.
@@ -351,7 +365,7 @@ what to keep (registry pattern, purity, commitment) and what failed
 | 3b — Erase brush core | ✅ done (2026-07-02) | brushCore.js: mask-based erase, hard/soft, undo/redo, Arrange/Erase toggle in placement sessions. |
 | 4 — Effect-brush infra + Noise | ✅ done (2026-07-02) | Shared stroke engine + createRevealSession; Noise Brush card; generic card undo/redo via ctx.report. |
 | 5 — Brush/global replication | ✅ done (2026-07-02) | effectCardFactory; Blur brush, HSV brush, Color Overlay, Global HSV, Reposition. 6 of 10 designs real. |
-| 6 — Ghost | ⬜ | Grid → screen-blend placement + opacity/BC + erase. |
+| 6 — Ghost | ✅ done (2026-07-02) | CardGridPicker single-pick grid; screen-blend placement + opacity/BC + erase; generic Overlay registry field; begin-awaits-user pattern. |
 | 7 — ML sidecar | ⬜ | FastAPI (rembg + ESRGAN), proxy, health, degradation, README setup. |
 | 8 — Stamp | ⬜ | rembg cutout placement card. |
 | 9 — Deeper | ⬜ | Crop/zoom/rotate re-frame + ESRGAN detail restore. |
@@ -385,9 +399,15 @@ what to keep (registry pattern, purity, commitment) and what failed
   the Phase 2 master raster removed the multiplier *export*, but bakes still
   render at 3× — filter-heavy cards could hit texture caps at *bake* time.
   Verify on all three machines once the first filter card lands (Phase 4).
-- **`screen` blend + WebGL filters in Fabric 6** (Ghost card): verify
-  `toDataURL` respects `globalCompositeOperation` when filters are active on
-  the same object. Spike scheduled in Phase 6.
+- ~~**`screen` blend + WebGL filters in Fabric 6**~~ — resolved in Phase 6
+  by design: no v2 card uses Fabric's WebGL filters (Ghost/HSV/Blur redraw
+  through 2d `ctx.filter` instead), and per-object
+  `globalCompositeOperation` is confirmed to survive `toCanvasElement`
+  bakes and export (Color Overlay + Ghost, verified on screen and in the
+  exported PNG).
+- **2d `ctx.filter` needs Safari 18+** — Blur brush, HSV brush/global, and
+  Ghost's brightness/contrast silently no-op on older Safari. Fine on
+  Chrome/Firefox/Edge. Add a pixel-loop fallback only if a machine needs it.
 - **`xdg-open` on minimal Linux desktops** may be missing; `POST
   /api/open-output` fails silently and the path shown on screen is the
   fallback.

@@ -127,4 +127,42 @@ function GridPicker({ rolls, grid, onConfirm }) {
   )
 }
 
+// Single-pick variant for cards that deal their own grid (Ghost, Stamp).
+// No dice, no stash: click an image to take it (click again to put it
+// back), then confirm.
+export function CardGridPicker({ title, hint, files, confirmLabel, onConfirm }) {
+  const [chosen, setChosen] = useState(null)
+  return (
+    <div className="grid-picker">
+      <div className="grid-picker-head">
+        <h2>{title}</h2>
+        <p className="hint">{hint}</p>
+      </div>
+      {files.length === 0 ? (
+        <p className="hint">Dealing images…</p>
+      ) : (
+        <div className="grid-thumbs">
+          {files.map((f) => (
+            <button
+              key={f}
+              type="button"
+              className={`grid-thumb ${chosen === f ? 'place' : ''}`}
+              onClick={() => setChosen((c) => (c === f ? null : f))}
+            >
+              <img src={`/api/images/${encodeURIComponent(f)}`} alt={f} loading="lazy" />
+              {chosen === f && <span className="thumb-badge">TAKE</span>}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="grid-picker-foot">
+        <span className="hint">{chosen ? '1 taken' : 'take one'}</span>
+        <button type="button" className="primary" disabled={!chosen} onClick={() => onConfirm(chosen)}>
+          {confirmLabel}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default GridPicker

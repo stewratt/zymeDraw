@@ -202,7 +202,7 @@ export function createEraseSession(canvas, images, { getControls, onHistoryChang
     })
   }
 
-  return createStrokeEngine(canvas, {
+  const engine = createStrokeEngine(canvas, {
     states,
     // Topmost placed image under the pointer takes the whole stroke.
     resolveTarget(scenePoint) {
@@ -215,6 +215,15 @@ export function createEraseSession(canvas, images, { getControls, onHistoryChang
     getControls,
     onHistoryChange
   })
+
+  return {
+    ...engine,
+    // Recomposite every target. For consumers that redraw a source canvas
+    // in place (Ghost's brightness/contrast) — the mask is untouched.
+    refresh() {
+      for (const s of states.values()) s.recomposite()
+    }
+  }
 }
 
 // ---------- reveal mode (effect cards) ----------

@@ -17,10 +17,22 @@
 // the shared modules (brushCore, effectCardFactory, GridPicker, placement).
 // Never add per-card branches to Editor.jsx or DeckPanel.jsx.
 //
-// Cards not yet listed (ghost, stamp, deeper, rails) are placeholders that
-// Editor treats as "ready immediately, no tools" — Phases 6–10 fill them in.
+// Optional shape extension: `Overlay` is a component Editor renders over
+// the canvas area while the card is live (Ghost's grid pick; Stamp will
+// reuse it). It receives the same props as Tools.
+//
+// Cards not yet listed (stamp, deeper, rails) are placeholders that Editor
+// treats as "ready immediately, no tools" — Phases 8–10 fill them in.
 
 import { NoiseTools, noiseHooks } from './noiseBrush.jsx'
+import {
+  GhostOverlay,
+  GhostTools,
+  beginGhost,
+  cleanupGhost,
+  commitGhost,
+  updateGhost
+} from './ghost.jsx'
 import { BlurTools, blurHooks } from './blurBrush.jsx'
 import { HsvBrushTools, hsvBrushHooks } from './hsvBrush.jsx'
 import {
@@ -43,6 +55,24 @@ import {
 } from './reposition.jsx'
 
 export const cardRegistry = {
+  ghost: {
+    controls: ['opacity', 'brightness', 'contrast', 'mode', 'size', 'hardness'],
+    defaultControls: {
+      opacity: 1,
+      brightness: 100,
+      contrast: 100,
+      mode: 'arrange',
+      size: 40,
+      hardness: 'soft'
+    },
+    Tools: GhostTools,
+    Overlay: GhostOverlay,
+    begin: beginGhost,
+    update: updateGhost,
+    commit: commitGhost,
+    cleanup: cleanupGhost
+  },
+
   noiseBrush: {
     controls: ['size', 'hardness', 'intensity'],
     defaultControls: { size: 60, hardness: 'soft', intensity: 1 },
