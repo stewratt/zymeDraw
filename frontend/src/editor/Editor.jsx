@@ -1,32 +1,35 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
 import CanvasStage, { CANVAS_WIDTH, CANVAS_HEIGHT } from './CanvasStage.jsx'
 import DeckPanel from './DeckPanel.jsx'
-import LayersPanel from './LayersPanel.jsx'
 import { deckReducer, initialState } from './deck.js'
 import { cardRegistry } from './cards/registry.jsx'
-import { getCommittedLayers } from './layers.js'
+import {
+  bake,
+  createMaster,
+  masterThumbDataUrl,
+  masterToPngDataUrl,
+  showMaster
+} from './masterRaster.js'
 import './editor.css'
 
 // Editor is a generic dispatcher. It doesn't know what any card does — it
 // looks up the current card in cardRegistry and calls
 // begin/update/commit/cleanup at the right times. The session arc itself
 // (rolls → pick → placement → acts → Coda) lives in deck.js; Editor's only
-// arc-specific job is the impure work the reducer can't do: sampling the
-// opening grid from the image list and exporting on COMPLETE.
+// arc-specific jobs are the impure work the reducer can't do: sampling the
+// opening grid, the universal bake on every End, and exporting on COMPLETE.
 function Editor({ config, onBackToSetup }) {
   const [state, dispatch] = useReducer(deckReducer, undefined, initialState)
 
   const canvasStageRef = useRef(null)
   const cardSessionRef = useRef(null) // opaque per-card data the registry owns
+  const masterRef = useRef(null) // the full-resolution truth (masterRaster.js)
 
   // Per-card UI state: controls (slider values etc.), info (data the Tools
   // component renders), ready (true once begin has finished).
   const [cardControls, setCardControls] = useState({})
   const [cardInfo, setCardInfo] = useState({})
   const [cardReady, setCardReady] = useState(true)
-
-  // The current layer list (committed Fabric objects with deckId).
-  const [committedLayers, setCommittedLayers] = useState([])
 
   // Export state. Driven by a useEffect that fires when the deck
   // transitions to COMPLETE. Reset on Restart.
@@ -65,37 +68,30 @@ function Editor({ config, onBackToSetup }) {
     dispatch({ type: 'SET_GRID', filenames: pool.slice(0, n) })
   }, [state.phase, state.grid.length, state.rolls, imageList])
 
-  // After each commit, refresh the canvas-layer list so the Layers panel
-  // sees newly-tagged objects. Also refresh when a card becomes ready: a
-  // card's begin() can place tagged objects (e.g. Add card images) that the
-  // panel must see *during* the card, not just after commit. This is generic
-  // — getCommittedLayers filters by deckId, so untagged temp objects are
-  // ignored regardless of which card is running.
+  // Create the master raster once the Fabric canvas exists, and show it as
+  // the canvas background. The master is the only committed state; the
+  // visible canvas is a working proxy.
   useEffect(() => {
     const canvas = canvasStageRef.current?.getCanvas()
     if (!canvas) return
-    setCommittedLayers(getCommittedLayers(canvas))
-  }, [state.history.length, cardReady])
+    masterRef.current = createMaster()
+    showMaster(canvas, masterRef.current)
+  }, [])
 
-  // When a death card is dealt (phase → COMPLETE), render the canvas at 3×
-  // (→ 2400×3000 for the 800×1000 working canvas) and POST to the backend so
-  // it writes the PNG into the configured output folder. Runs exactly once
-  // per transition. (Phase 2 replaces the 3× multiplier with the master
-  // raster.)
+  // When a death card is dealt (phase → COMPLETE), write the master out —
+  // it already holds the true pixels at 2400×3000, so export is a direct
+  // read with no multiplier render. Runs exactly once per transition.
   useEffect(() => {
     if (state.phase !== 'COMPLETE') return
-    const canvas = canvasStageRef.current?.getCanvas()
-    if (!canvas) return
+    const master = masterRef.current
+    if (!master) return
     let cancelled = false
     setExportState({ status: 'exporting', savedPath: null, error: null, thumbDataUrl: null })
     ;(async () => {
       try {
-        // Force a render flush so filter pipelines have populated each
-        // image's cache before we snapshot.
-        canvas.renderAll()
-        const pngBase64 = canvas.toDataURL({ multiplier: 3 })
+        const pngBase64 = masterToPngDataUrl(master)
         // A tiny thumbnail for the FINISHED screen. ~320×400 — cheap.
-        const thumbDataUrl = canvas.toDataURL({ multiplier: 0.4 })
+        const thumbDataUrl = masterThumbDataUrl(master)
         const res = await fetch('/api/export', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -132,7 +128,7 @@ function Editor({ config, onBackToSetup }) {
 
     const entry = cardRegistry[state.currentCard.id]
     if (!entry) {
-      // Placeholder cards (eraser/flatten/etc. before their checkpoints):
+      // Placeholder cards (every deck card until its phase lands):
       // no behavior yet, ready immediately, no UI.
       cardSessionRef.current = null
       setCardControls({})
@@ -154,7 +150,6 @@ function Editor({ config, onBackToSetup }) {
       const ctx = {
         canvas,
         controls: defaults,
-        layers: getCommittedLayers(canvas),
         imageList: imageList.filenames,
         canvasWidth: CANVAS_WIDTH,
         canvasHeight: CANVAS_HEIGHT,
@@ -221,7 +216,7 @@ function Editor({ config, onBackToSetup }) {
           handleRestart()
         } else if (state.phase === 'PLACEMENT' || state.phase === 'STASH_RETURN') {
           e.preventDefault()
-          dispatch({ type: 'END_PLACEMENT' })
+          handleEndPlacement()
         } else if (state.phase === 'WORKING' && state.currentCard && cardReady) {
           e.preventDefault()
           handleCommit()
@@ -245,22 +240,37 @@ function Editor({ config, onBackToSetup }) {
     setCardControls((prev) => ({ ...prev, [key]: value }))
   }
 
+  // End of a card round: the card's own commit hook finalizes its temp
+  // objects, then the UNIVERSAL BAKE flattens the whole canvas into the
+  // master. No card implements flattening; this is the v2 commitment step.
   function handleCommit() {
     if (!state.currentCard) return
     const entry = cardRegistry[state.currentCard.id]
     const canvas = canvasStageRef.current?.getCanvas()
-    if (canvas && entry?.commit) {
-      entry.commit({
-        canvas,
-        controls: cardControls,
-        session: cardSessionRef.current,
-        layers: committedLayers
-      })
+    if (canvas) {
+      if (entry?.commit) {
+        entry.commit({
+          canvas,
+          controls: cardControls,
+          session: cardSessionRef.current
+        })
+      }
+      masterRef.current = bake(canvas)
     }
     cardSessionRef.current = null
     setCardControls({})
     setCardInfo({})
     dispatch({ type: 'COMMIT' })
+  }
+
+  // End of a placement session (opening or stash return): same universal
+  // bake, no card hook involved.
+  function handleEndPlacement() {
+    const canvas = canvasStageRef.current?.getCanvas()
+    if (canvas) {
+      masterRef.current = bake(canvas)
+    }
+    dispatch({ type: 'END_PLACEMENT' })
   }
 
   function handleRestart() {
@@ -273,12 +283,12 @@ function Editor({ config, onBackToSetup }) {
       }
       canvas.clear()
       canvas.backgroundColor = '#ffffff'
-      canvas.requestRenderAll()
+      masterRef.current = createMaster()
+      showMaster(canvas, masterRef.current)
     }
     cardSessionRef.current = null
     setCardControls({})
     setCardInfo({})
-    setCommittedLayers([])
     setExportState({ status: 'idle', savedPath: null, error: null, thumbDataUrl: null })
     dispatch({ type: 'RESTART' })
   }
@@ -293,7 +303,6 @@ function Editor({ config, onBackToSetup }) {
   }
 
   const currentEntry = state.currentCard ? cardRegistry[state.currentCard.id] : null
-  const showLayersPanel = !!currentEntry?.needsLayersPanel && !!state.currentCard
 
   return (
     <div className="editor">
@@ -320,24 +329,12 @@ function Editor({ config, onBackToSetup }) {
             onControlChange={handleControlChange}
             onRoll={() => dispatch({ type: 'ROLL_OPENING' })}
             onConfirmPick={(placed, stashed) => dispatch({ type: 'CONFIRM_PICK', placed, stashed })}
-            onEndPlacement={() => dispatch({ type: 'END_PLACEMENT' })}
+            onEndPlacement={handleEndPlacement}
             onDeal={() => dispatch({ type: 'DEAL' })}
             onCommit={handleCommit}
             onRestart={handleRestart}
             onOpenOutput={handleOpenOutput}
           />
-          {showLayersPanel && (
-            <LayersPanel
-              mode={currentEntry.layersPanelMode}
-              layers={
-                currentEntry.layerKinds
-                  ? committedLayers.filter((l) => currentEntry.layerKinds.includes(l.kind))
-                  : committedLayers
-              }
-              controls={cardControls}
-              onControlChange={handleControlChange}
-            />
-          )}
         </aside>
       </main>
     </div>

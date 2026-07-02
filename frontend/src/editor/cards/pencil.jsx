@@ -1,6 +1,11 @@
 import * as fabric from 'fabric'
 
-// Pencil — Phase 4 first midgame card.
+// Pencil — RETAINED v1 REFERENCE CODE, not registered and not drawable.
+// Kept on disk as the starting point for the v2 universal brush core
+// (Phase 3b): free-drawing setup, stroke collection, live control updates.
+// Delete once the brush core lands.
+//
+// Original notes (v1 Phase 4 first midgame card):
 //
 // Lifecycle:
 //   begin    enables freeDrawingMode with the default brush, attaches a

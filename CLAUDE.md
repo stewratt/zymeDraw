@@ -43,10 +43,23 @@ in `DeckPanel.jsx` so the whole arc is clickable. Decisions made in Phase 1:
 death card displays as **Coda**; stash returns as **one placement session**;
 rolls are grid `8+d8` (9–16), pick `1+d3` (take up to 2–4).
 
-**Next action: Phase 2 — bake engine + master raster.** Starts with the
-mandatory check-in on the master-raster design (plan §2.1) before any code.
-Then: universal flatten-on-End, offscreen full-res master, delete the layers
-infrastructure and obsolete v1 cards.
+**Phase 2 is done (2026-07-02):** the master-raster design was approved and
+built — `editor/masterRaster.js` holds the offscreen 2400×3000 truth; the
+visible canvas is a scaled proxy showing it as a background image whose
+*source* stays full-res, so bakes never degrade. Editor runs the universal
+bake after every card commit and placement End; export writes the master
+directly (no multiplier — the v1 blank-PNG export bug path is gone). The
+layers infrastructure (`LayersPanel.jsx`, `layers.js`) and all obsolete v1
+card files were deleted; `@erase2d/fabric` was uninstalled; the registry is
+an empty object documenting the v2 contract; `pencil.jsx` survives
+unregistered as brush-core reference.
+
+**Next action: Phase 3 — the opening**, split in two checkpoints:
+3a — roll reveal UI (confirm dice presentation with Stew first — plan §0.4
+is still marked "assumed"), backend `GET /api/images/sample?n=`, real image
+grid with thumbnails, place-or-stash, actual canvas placement
+(move/scale/rotate). 3b — the brush core in erase mode (hard/soft,
+within-card undo/redo).
 
 > Keep this §0 updated as v2 phases land; it's the resume point for every
 > fresh session.
@@ -157,9 +170,8 @@ no hardcoded paths.
   JavaScript (no TypeScript). React `StrictMode` is *intentionally disabled*
   in `main.jsx` because Fabric doesn't tolerate the double-effect dev
   behavior.
-- **`@erase2d/fabric`** — used by the v1 Eraser card. **Expected to be
-  dropped in v2**: the universal mask-based erase brush replaces it. Don't
-  build new work on it.
+- **`@erase2d/fabric`** — dropped in v2 Phase 2 (uninstalled). The universal
+  mask-based erase brush (Phase 3b) replaces it.
 - **Backend**: Node 20+ + Express 4. Reads/serves images, writes the export
   PNG, reveals the output folder, persists folder config. No deck logic.
 - **Planned (v2 Phase 7): Python 3 + FastAPI sidecar** hosting rembg
@@ -196,15 +208,13 @@ zymeDraw/
 │       └── editor/
 │           ├── Editor.jsx       # registry dispatcher (no per-card logic!)
 │           ├── CanvasStage.jsx  # Fabric canvas, forwarded ref
-│           ├── DeckPanel.jsx    # right sidebar: card face + Tools + End
-│           ├── LayersPanel.jsx  # v1 layers UI — DIES in v2 Phase 2
-│           ├── deck.js          # PURE state machine — rewritten in v2 Phase 1
-│           ├── layers.js        # v1 helper — DIES in v2 Phase 2
+│           ├── DeckPanel.jsx    # right sidebar: per-phase panels + Tools + End
+│           ├── deck.js          # PURE state machine — the v2 session script
+│           ├── masterRaster.js  # offscreen 2400×3000 truth + universal bake
 │           ├── editor.css
 │           └── cards/
-│               ├── registry.jsx # one entry per card (pattern survives v2)
-│               └── *.jsx        # v1 card files — most die or transform in v2;
-│                                # see the plan's §1 keep/kill/transform tables
+│               ├── registry.jsx # one entry per card (empty until Phase 3+)
+│               └── pencil.jsx   # unregistered v1 reference for the brush core
 └── backend/
     ├── server.js             # all Express routes (see §6)
     ├── config-store.js       # reads/writes ~/.deck-config.json
@@ -298,7 +308,7 @@ what to keep (registry pattern, purity, commitment) and what failed
 |---|---|---|
 | 0 — Plan lock + docs | ✅ done (2026-07-02) | Decisions locked, plan committed, this file rewritten. |
 | 1 — deck.js v2 | ✅ done (2026-07-02) | New state machine, clickable end-to-end with stub cards. Coda / one-session stash return / grid 8+d8, pick 1+d3. |
-| 2 — Bake engine + master raster | ⬜ next | Universal flatten-on-End; offscreen full-res master; delete layers infra + obsolete cards. |
+| 2 — Bake engine + master raster | ✅ done (2026-07-02) | masterRaster.js (offscreen 2400×3000 truth, proxy view, universal bake, direct export); layers infra + 16 v1 card files deleted; @erase2d/fabric dropped. |
 | 3 — The opening | ⬜ | Roll UI, image grid + stash, placement session; brush core in erase mode. |
 | 4 — Effect-brush infra + Noise | ⬜ | Duplicate-mask-reveal pipeline, first effect brush. |
 | 5 — Brush/global replication | ⬜ | Blur brush, HSV brush, Color Overlay, Global HSV, Reposition. |
@@ -332,9 +342,10 @@ what to keep (registry pattern, purity, commitment) and what failed
 
 ## 9. Known issues / things to verify
 
-- **v1's 3× export WebGL texture cap** (blank PNG on conservative devices)
-  applies until Phase 2 lands; the master raster removes the multiplier
-  export entirely. Verify the bug is actually gone on all three machines.
+- **v1's 3× export WebGL texture cap** (blank PNG on conservative devices):
+  the Phase 2 master raster removed the multiplier *export*, but bakes still
+  render at 3× — filter-heavy cards could hit texture caps at *bake* time.
+  Verify on all three machines once the first filter card lands (Phase 4).
 - **`screen` blend + WebGL filters in Fabric 6** (Ghost card): verify
   `toDataURL` respects `globalCompositeOperation` when filters are active on
   the same object. Spike scheduled in Phase 6.
