@@ -81,10 +81,23 @@ report `undo/redo/canUndo/canRedo` via ctx.report and Editor's Cmd/Ctrl+Z
 routes to them generically. Master-res painting performance confirmed fine
 on the Mac. pencil.jsx deleted (reference job done).
 
-**Next action: Phase 5 — replicate onto the rest of the non-ML deck:**
-Blur brush + HSV brush (effect-card factory on the reveal pipeline),
-Color Overlay + Global HSV (global color cards with influence sliders),
-Reposition (whole-canvas free transform + flips).
+**Phase 5 is done (2026-07-02, verified by Stew):** the non-ML deck is
+playable — 6 of 10 card designs are real. `cards/effectCardFactory.jsx`
+(an effect card = one `applyEffect` function + sliders; shared
+`BrushControls`); Noise migrated onto it; **Blur brush** and **HSV brush**
+(canvas-2d `ctx.filter` — needs Safari 18+, note in the card files);
+**Color Overlay** (full-canvas blended Rect: color / influence /
+multiply·screen·overlay·color) and **Global HSV** (shifted-master overlay
+at influence opacity) — both carry the mandatory influence control;
+**Reposition** (master becomes a free-transform object + Flip H/V).
+Color Overlay's bake also proved `globalCompositeOperation` survives
+`toCanvasElement` — half of §9's Ghost spike.
+
+**Next action: Phase 6 — Ghost:** fresh grid of 8 → take one → placed in
+`screen` blend with opacity + brightness/contrast + the standing erase
+brush. Reuses the grid picker (single-pick variant) and `createEraseSession`.
+Registry gains a generic optional `Overlay` component (canvas-area UI) so
+Editor stays card-agnostic.
 
 > Keep this §0 updated as v2 phases land; it's the resume point for every
 > fresh session.
@@ -337,7 +350,7 @@ what to keep (registry pattern, purity, commitment) and what failed
 | 3a — The opening | ✅ done (2026-07-02) | Dice reveal, GridPicker overlay (thumbs, place/stash), placement.js free-transform sessions, /api/images/sample. |
 | 3b — Erase brush core | ✅ done (2026-07-02) | brushCore.js: mask-based erase, hard/soft, undo/redo, Arrange/Erase toggle in placement sessions. |
 | 4 — Effect-brush infra + Noise | ✅ done (2026-07-02) | Shared stroke engine + createRevealSession; Noise Brush card; generic card undo/redo via ctx.report. |
-| 5 — Brush/global replication | ⬜ | Blur brush, HSV brush, Color Overlay, Global HSV, Reposition. |
+| 5 — Brush/global replication | ✅ done (2026-07-02) | effectCardFactory; Blur brush, HSV brush, Color Overlay, Global HSV, Reposition. 6 of 10 designs real. |
 | 6 — Ghost | ⬜ | Grid → screen-blend placement + opacity/BC + erase. |
 | 7 — ML sidecar | ⬜ | FastAPI (rembg + ESRGAN), proxy, health, degradation, README setup. |
 | 8 — Stamp | ⬜ | rembg cutout placement card. |
