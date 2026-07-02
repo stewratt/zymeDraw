@@ -54,12 +54,19 @@ card files were deleted; `@erase2d/fabric` was uninstalled; the registry is
 an empty object documenting the v2 contract; `pencil.jsx` survives
 unregistered as brush-core reference.
 
-**Next action: Phase 3 — the opening**, split in two checkpoints:
-3a — roll reveal UI (confirm dice presentation with Stew first — plan §0.4
-is still marked "assumed"), backend `GET /api/images/sample?n=`, real image
-grid with thumbnails, place-or-stash, actual canvas placement
-(move/scale/rotate). 3b — the brush core in erase mode (hard/soft,
-within-card undo/redo).
+**Phase 3a is done (2026-07-02):** dice-styled roll reveal confirmed with
+Stew (plan §0.4 no longer assumed) and built — `GridPicker.jsx` is a shared
+canvas-area overlay (dice tumble → thumbnail grid → place/stash cycling);
+`placement.js` loads chosen images as free-transform objects (Ghost/Stamp
+will reuse both); backend gained `GET /api/images/sample?n=` (registered
+before `/api/images/:filename`); `deck.js` rolls now store individual die
+faces (`gridDie`/`pickDie`) so the reveal shows the arithmetic and a manual
+physical-dice mode stays a drop-in. End is disabled until placement images
+finish loading.
+
+**Next action: Phase 3b — the universal brush core in erase mode.**
+Hard/soft round brush, strokes into an offscreen mask (never source
+pixels), within-card undo/redo, live during every placement session.
 
 > Keep this §0 updated as v2 phases land; it's the resume point for every
 > fresh session.
@@ -309,7 +316,8 @@ what to keep (registry pattern, purity, commitment) and what failed
 | 0 — Plan lock + docs | ✅ done (2026-07-02) | Decisions locked, plan committed, this file rewritten. |
 | 1 — deck.js v2 | ✅ done (2026-07-02) | New state machine, clickable end-to-end with stub cards. Coda / one-session stash return / grid 8+d8, pick 1+d3. |
 | 2 — Bake engine + master raster | ✅ done (2026-07-02) | masterRaster.js (offscreen 2400×3000 truth, proxy view, universal bake, direct export); layers infra + 16 v1 card files deleted; @erase2d/fabric dropped. |
-| 3 — The opening | ⬜ | Roll UI, image grid + stash, placement session; brush core in erase mode. |
+| 3a — The opening | ✅ done (2026-07-02) | Dice reveal, GridPicker overlay (thumbs, place/stash), placement.js free-transform sessions, /api/images/sample. |
+| 3b — Erase brush core | ⬜ next | Universal brush core in erase mode: hard/soft, mask-based, within-card undo/redo. |
 | 4 — Effect-brush infra + Noise | ⬜ | Duplicate-mask-reveal pipeline, first effect brush. |
 | 5 — Brush/global replication | ⬜ | Blur brush, HSV brush, Color Overlay, Global HSV, Reposition. |
 | 6 — Ghost | ⬜ | Grid → screen-blend placement + opacity/BC + erase. |

@@ -46,6 +46,8 @@ export function showMaster(canvas, master) {
 // The result IS the new master. The card's objects are then cleared and the
 // new master becomes the background — cards never implement flattening.
 export function bake(canvas) {
+  // Drop any live selection so its handles/state never affect the snapshot.
+  canvas.discardActiveObject?.()
   // Flush filter pipelines before snapshotting (CLAUDE.md §9's timing note).
   canvas.renderAll()
   const next = canvas.toCanvasElement(MASTER_SCALE)

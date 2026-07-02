@@ -1,15 +1,14 @@
 // The deck panel renders one view per session phase:
-//   OPENING_ROLLS  → the two dice rolls (or folder loading/error states)
-//   OPENING_PICK   → the image grid: take up to pickCount, place or stash each
+//   OPENING_ROLLS  → the roll invitation (or folder loading/error states)
+//   OPENING_PICK   → a summary; the actual grid is GridPicker over the canvas
 //   PLACEMENT /
-//   STASH_RETURN   → the placement session (stub until Phase 3) + End
+//   STASH_RETURN   → the placement session instructions + End
 //   WORKING        → Deal button, or the revealed card + Tools + End
 //   COMPLETE       → the Coda: export status + restart
 //
 // It knows nothing about specific cards — it renders whatever Tools
-// component the current registry entry provides (none yet in Phase 1).
+// component the current registry entry provides.
 
-import { useState } from 'react'
 import { TUNING, progressLabel, rollNotation } from './deck.js'
 
 function DeckPanel({
@@ -19,10 +18,10 @@ function DeckPanel({
   controls,
   info,
   ready,
+  placementReady,
   exportState,
   onControlChange,
   onRoll,
-  onConfirmPick,
   onEndPlacement,
   onDeal,
   onCommit,
@@ -33,10 +32,10 @@ function DeckPanel({
     case 'OPENING_ROLLS':
       return <OpeningRolls imageList={imageList} onRoll={onRoll} />
     case 'OPENING_PICK':
-      return <OpeningPick state={state} onConfirmPick={onConfirmPick} />
+      return <OpeningPickPanel state={state} />
     case 'PLACEMENT':
     case 'STASH_RETURN':
-      return <Placement state={state} onEndPlacement={onEndPlacement} />
+      return <Placement state={state} placementReady={placementReady} onEndPlacement={onEndPlacement} />
     case 'WORKING':
       return state.currentCard ? (
         <CardRevealed
@@ -113,79 +112,19 @@ function OpeningRolls({ imageList, onRoll }) {
   )
 }
 
-function OpeningPick({ state, onConfirmPick }) {
-  // filename → 'place' | 'stash'. Clicking a chip cycles
-  // unselected → place → stash → unselected.
-  const [selection, setSelection] = useState({})
-
-  const { grid, rolls } = state
-  const placed = grid.filter((f) => selection[f] === 'place')
-  const stashed = grid.filter((f) => selection[f] === 'stash')
-  const taken = placed.length + stashed.length
-
-  function cycle(filename) {
-    setSelection((prev) => {
-      const cur = prev[filename]
-      if (!cur) {
-        if (Object.keys(prev).length >= rolls.pickCount) return prev // hand is full
-        return { ...prev, [filename]: 'place' }
-      }
-      if (cur === 'place') return { ...prev, [filename]: 'stash' }
-      const next = { ...prev }
-      delete next[filename]
-      return next
-    })
-  }
-
-  if (grid.length === 0) {
-    return (
-      <aside className="deck-panel">
-        <h2>THE OPENING</h2>
-        <p className="hint">Dealing images…</p>
-      </aside>
-    )
-  }
-
+function OpeningPickPanel({ state }) {
   return (
     <aside className="deck-panel">
       <h2>THE OPENING</h2>
       <p className="hint">
-        {grid.length} images dealt — take up to <strong>{rolls.pickCount}</strong>.
-        Click each pick to cycle: <em>place now</em> → <em>stash for later</em> →
-        back. At least one must be placed. (Thumbnails arrive in Phase 3.)
+        Take up to <strong>{state.rolls.pickCount}</strong> from the grid. Each pick is
+        placed now or stashed for later; at least one must be placed.
       </p>
-      <div className="pick-grid">
-        {grid.map((f) => (
-          <button
-            key={f}
-            type="button"
-            className={`pick-chip ${selection[f] || ''}`}
-            onClick={() => cycle(f)}
-          >
-            <span className="pick-mark">
-              {selection[f] === 'place' ? 'PLACE' : selection[f] === 'stash' ? 'STASH' : '·'}
-            </span>
-            <span className="pick-name">{f}</span>
-          </button>
-        ))}
-      </div>
-      <p className="hint">
-        {placed.length} to place · {stashed.length} stashed · {taken} of{' '}
-        {rolls.pickCount} taken
-      </p>
-      <button
-        type="button"
-        className="primary"
-        disabled={placed.length < 1}
-        onClick={() => onConfirmPick(placed, stashed)}
-      >
-        Continue — begin placement
-      </button>
     </aside>
   )
 }
 
-function Placement({ state, onEndPlacement }) {
+function Placement({ state, placementReady, onEndPlacement }) {
   const returning = state.phase === 'STASH_RETURN'
   return (
     <aside className="deck-panel">
@@ -193,17 +132,22 @@ function Placement({ state, onEndPlacement }) {
       <p className="hint">
         {returning
           ? 'Your stashed images come back — arrange them like the opening.'
-          : 'Arrange your images on the canvas.'}{' '}
-        Move, scale, rotate, and erase freely; End bakes them in.
+          : 'Arrange your images.'}{' '}
+        Drag to move, corner handles to scale, top handle to rotate. End bakes
+        them into the image for good.
       </p>
-      <p className="hint">(Placement tools arrive in Phase 3 — this round is a stub.)</p>
       <ul className="placed-files">
         {state.toPlace.map((f) => (
           <li key={f}>{f}</li>
         ))}
       </ul>
-      <button type="button" className="primary commit" onClick={onEndPlacement}>
-        End — commit
+      <button
+        type="button"
+        className="primary commit"
+        disabled={!placementReady}
+        onClick={onEndPlacement}
+      >
+        {placementReady ? 'End — commit' : 'Loading images…'}
       </button>
     </aside>
   )

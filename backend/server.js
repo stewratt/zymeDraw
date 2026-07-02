@@ -97,6 +97,31 @@ app.get('/api/images', async (req, res) => {
   }
 })
 
+// v2: a random sample of n image filenames — the opening grid (and later
+// the Ghost/Stamp grids). Must be registered BEFORE /api/images/:filename,
+// or Express would treat "sample" as a filename.
+app.get('/api/images/sample', async (req, res) => {
+  const { inputFolder } = await loadConfig()
+  if (!inputFolder) {
+    return res.status(400).json({ ok: false, error: 'Input folder is not configured.' })
+  }
+  const n = Math.max(1, Math.min(64, parseInt(req.query.n, 10) || 1))
+  try {
+    const entries = await fs.readdir(inputFolder, { withFileTypes: true })
+    const filenames = entries
+      .filter((e) => e.isFile() && IMAGE_EXTENSIONS.has(path.extname(e.name).toLowerCase()))
+      .map((e) => e.name)
+    // Fisher–Yates, then take the first n (all of them if the folder holds fewer).
+    for (let i = filenames.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[filenames[i], filenames[j]] = [filenames[j], filenames[i]]
+    }
+    res.json({ ok: true, filenames: filenames.slice(0, n) })
+  } catch (err) {
+    res.status(400).json({ ok: false, error: `Cannot read input folder: ${err.message}` })
+  }
+})
+
 // Defence in depth: basename() strips any "../" before we resolve, and we
 // re-verify the resolved path is inside the configured folder. Together they
 // rule out path-traversal attacks even if one check is bypassed somehow.

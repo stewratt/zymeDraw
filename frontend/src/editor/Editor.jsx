@@ -1,8 +1,10 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
 import CanvasStage, { CANVAS_WIDTH, CANVAS_HEIGHT } from './CanvasStage.jsx'
 import DeckPanel from './DeckPanel.jsx'
+import GridPicker from './GridPicker.jsx'
 import { deckReducer, initialState } from './deck.js'
 import { cardRegistry } from './cards/registry.jsx'
+import { placeImages } from './placement.js'
 import {
   bake,
   createMaster,
@@ -31,6 +33,10 @@ function Editor({ config, onBackToSetup }) {
   const [cardInfo, setCardInfo] = useState({})
   const [cardReady, setCardReady] = useState(true)
 
+  // False while a placement session's images are still loading, so End
+  // can't bake a half-loaded arrangement.
+  const [placementReady, setPlacementReady] = useState(true)
+
   // Export state. Driven by a useEffect that fires when the deck
   // transitions to COMPLETE. Reset on Restart.
   const [exportState, setExportState] = useState({ status: 'idle', savedPath: null, error: null })
@@ -53,20 +59,54 @@ function Editor({ config, onBackToSetup }) {
   }, [])
 
   // The reducer never touches the filesystem: when the opening grid is
-  // needed, Editor samples filenames and reports them back via SET_GRID.
-  // Phase 1 samples client-side from the full listing; Phase 3 swaps this
-  // for the backend's /api/images/sample endpoint.
+  // needed, Editor asks the backend for a random sample and reports it back
+  // via SET_GRID. Falls back to sampling the already-loaded full listing if
+  // the endpoint fails.
   useEffect(() => {
     if (state.phase !== 'OPENING_PICK' || state.grid.length > 0) return
-    if (imageList.status !== 'ready' || imageList.filenames.length === 0) return
-    const pool = [...imageList.filenames]
-    for (let i = pool.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[pool[i], pool[j]] = [pool[j], pool[i]]
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch(`/api/images/sample?n=${state.rolls.gridSize}`)
+        const data = await res.json()
+        if (!cancelled && data.ok && data.filenames.length > 0) {
+          dispatch({ type: 'SET_GRID', filenames: data.filenames })
+          return
+        }
+      } catch {
+        // fall through to the client-side fallback
+      }
+      if (cancelled || imageList.status !== 'ready' || imageList.filenames.length === 0) return
+      const pool = [...imageList.filenames]
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[pool[i], pool[j]] = [pool[j], pool[i]]
+      }
+      dispatch({ type: 'SET_GRID', filenames: pool.slice(0, Math.min(state.rolls.gridSize, pool.length)) })
+    })()
+    return () => {
+      cancelled = true
     }
-    const n = Math.min(state.rolls.gridSize, pool.length)
-    dispatch({ type: 'SET_GRID', filenames: pool.slice(0, n) })
   }, [state.phase, state.grid.length, state.rolls, imageList])
+
+  // Entering a placement session (opening or stash return) loads the chosen
+  // images onto the canvas as free-transform objects. The cancelled flag
+  // covers restarts while images are still in flight.
+  useEffect(() => {
+    if (state.phase !== 'PLACEMENT' && state.phase !== 'STASH_RETURN') return
+    const canvas = canvasStageRef.current?.getCanvas()
+    if (!canvas) return
+    let cancelled = false
+    setPlacementReady(false)
+    placeImages(canvas, state.toPlace, () => cancelled)
+      .catch((err) => console.warn('Placement image failed to load:', err))
+      .finally(() => {
+        if (!cancelled) setPlacementReady(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [state.phase])
 
   // Create the master raster once the Fabric canvas exists, and show it as
   // the canvas background. The master is the only committed state; the
@@ -214,7 +254,10 @@ function Editor({ config, onBackToSetup }) {
         if (state.phase === 'COMPLETE') {
           e.preventDefault()
           handleRestart()
-        } else if (state.phase === 'PLACEMENT' || state.phase === 'STASH_RETURN') {
+        } else if (
+          (state.phase === 'PLACEMENT' || state.phase === 'STASH_RETURN') &&
+          placementReady
+        ) {
           e.preventDefault()
           handleEndPlacement()
         } else if (state.phase === 'WORKING' && state.currentCard && cardReady) {
@@ -234,7 +277,7 @@ function Editor({ config, onBackToSetup }) {
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [state.currentCard, state.phase, cardReady, imageList])
+  }, [state.currentCard, state.phase, cardReady, placementReady, imageList])
 
   function handleControlChange(key, value) {
     setCardControls((prev) => ({ ...prev, [key]: value }))
@@ -266,6 +309,7 @@ function Editor({ config, onBackToSetup }) {
   // End of a placement session (opening or stash return): same universal
   // bake, no card hook involved.
   function handleEndPlacement() {
+    if (!placementReady) return
     const canvas = canvasStageRef.current?.getCanvas()
     if (canvas) {
       masterRef.current = bake(canvas)
@@ -289,6 +333,7 @@ function Editor({ config, onBackToSetup }) {
     cardSessionRef.current = null
     setCardControls({})
     setCardInfo({})
+    setPlacementReady(true)
     setExportState({ status: 'idle', savedPath: null, error: null, thumbDataUrl: null })
     dispatch({ type: 'RESTART' })
   }
@@ -316,6 +361,13 @@ function Editor({ config, onBackToSetup }) {
       <main className="editor-main">
         <section className="canvas-area">
           <CanvasStage ref={canvasStageRef} />
+          {state.phase === 'OPENING_PICK' && (
+            <GridPicker
+              rolls={state.rolls}
+              grid={state.grid}
+              onConfirm={(placed, stashed) => dispatch({ type: 'CONFIRM_PICK', placed, stashed })}
+            />
+          )}
         </section>
         <aside className="side-stack">
           <DeckPanel
@@ -325,10 +377,10 @@ function Editor({ config, onBackToSetup }) {
             controls={cardControls}
             info={cardInfo}
             ready={cardReady}
+            placementReady={placementReady}
             exportState={exportState}
             onControlChange={handleControlChange}
             onRoll={() => dispatch({ type: 'ROLL_OPENING' })}
-            onConfirmPick={(placed, stashed) => dispatch({ type: 'CONFIRM_PICK', placed, stashed })}
             onEndPlacement={handleEndPlacement}
             onDeal={() => dispatch({ type: 'DEAL' })}
             onCommit={handleCommit}

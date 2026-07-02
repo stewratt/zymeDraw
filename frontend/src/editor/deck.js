@@ -46,10 +46,6 @@ function rollDie(sides) {
   return 1 + Math.floor(Math.random() * sides)
 }
 
-export function roll(spec) {
-  return spec.base + rollDie(spec.die)
-}
-
 export function rollNotation(spec) {
   return `${spec.base} + d${spec.die}`
 }
@@ -103,12 +99,19 @@ export function deckReducer(state, action) {
   switch (action.type) {
     case 'ROLL_OPENING': {
       if (state.phase !== 'OPENING_ROLLS') return state
+      // The individual die faces are kept so the reveal UI can show the
+      // roll ("8 + 4 = 12"), and so a manual physical-dice mode can slot in
+      // later by supplying the faces itself.
+      const gridDie = rollDie(TUNING.gridRoll.die)
+      const pickDie = rollDie(TUNING.pickRoll.die)
       return {
         ...state,
         phase: 'OPENING_PICK',
         rolls: {
-          gridSize: roll(TUNING.gridRoll),
-          pickCount: roll(TUNING.pickRoll)
+          gridDie,
+          pickDie,
+          gridSize: TUNING.gridRoll.base + gridDie,
+          pickCount: TUNING.pickRoll.base + pickDie
         }
       }
     }
