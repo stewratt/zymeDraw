@@ -1,105 +1,221 @@
-// The deck — Phase 2 version.
+// The deck — v2 session script. A PURE reducer: no Fabric, no DOM, no React.
+// It holds card ids and filenames, never images or canvas objects. All the
+// session's randomness (dice rolls, deck shuffles) also lives here, so this
+// one file is the complete rulebook.
 //
-// Cards are still placeholders: each one knows its id, label, and kind
-// (add / midgame / endgame). Phase 4 will expand each entry into a full
-// "card registry" item describing the controls it shows, the commit
-// behavior, etc. For now, drawing a card and committing one does nothing
-// to the canvas — it just advances the state machine.
+// The arc:
+//   OPENING_ROLLS  two dice rolls: grid size + how many you may take
+//   OPENING_PICK   choose images from the grid; each is placed now or stashed
+//   PLACEMENT      arrange the placed images; End bakes
+//   WORKING        deal cards from the literal shuffled deck, one round each
+//   STASH_RETURN   after Act I, the stash comes back as one placement session
+//   WORKING        Act II; then death cards are shuffled into whatever deck
+//                  remains — dealing one ends the session instantly
+//   COMPLETE       the piece is finished; export
+//
+// "Death card" is the design term; on screen the card is called Coda.
 
-export const ADD_CARDS = [
-  { id: 'add1', label: 'Add 1', kind: 'add', count: 1 },
-  { id: 'add2', label: 'Add 2', kind: 'add', count: 2 },
-  { id: 'add3', label: 'Add 3', kind: 'add', count: 3 }
+// Every pacing number lives here. Rolls are dice-expressible ({ base, die })
+// so a manual physical-dice mode can be added later without rework.
+export const TUNING = {
+  gridRoll: { base: 8, die: 8 }, // images dealt into the opening grid: 9–16
+  pickRoll: { base: 1, die: 3 }, // how many you may take from it: 2–4
+  actOneRounds: 4, // card rounds before the stash returns
+  actTwoRounds: 2, // rounds after that before death cards are shuffled in
+  deathCount: 3 // death cards shuffled into the remaining deck
+}
+
+// The mod deck: one entry per card design, expanded by copy count and
+// shuffled at session start. Rebalancing the deck = editing this array.
+export const MOD_CARDS = [
+  { id: 'ghost', label: 'Ghost', copies: 2 },
+  { id: 'stamp', label: 'Stamp', copies: 2 },
+  { id: 'deeper', label: 'Deeper', copies: 2 },
+  { id: 'noiseBrush', label: 'Noise Brush', copies: 1 },
+  { id: 'blurBrush', label: 'Blur Brush', copies: 1 },
+  { id: 'hsvBrush', label: 'HSV Brush', copies: 1 },
+  { id: 'colorOverlay', label: 'Color Overlay', copies: 1 },
+  { id: 'globalHsv', label: 'HSV', copies: 1 },
+  { id: 'reposition', label: 'Reposition', copies: 1 },
+  { id: 'rails', label: 'Rails', copies: 1 }
 ]
 
-export const MIDGAME_CARDS = [
-  // 'pencil' was removed from the draw pool. Its behavior file (pencil.jsx)
-  // and registry entry are intentionally kept as the base for the upcoming
-  // brush cards — it just can no longer be drawn.
-  { id: 'eraser',  label: 'Eraser',       kind: 'midgame' },
-  { id: 'flatten', label: 'Flatten',      kind: 'midgame' },
-  { id: 'hsv',     label: 'Layer HSV',    kind: 'midgame' },
-  { id: 'blur',    label: 'Layer Blur',   kind: 'midgame' },
-  { id: 'grain',   label: 'Canvas Grain', kind: 'midgame' },
-  { id: 'grade',   label: 'Color Grade',  kind: 'midgame' },
-  { id: 'flip',    label: 'Flip Canvas',  kind: 'midgame' },
-  { id: 'removeLayer', label: 'Remove Layer', kind: 'midgame' },
-  { id: 'shuffle', label: 'Shuffle Layers', kind: 'midgame' },
-  { id: 'zoomFlatten', label: 'Zoom & Flatten', kind: 'midgame' }
-]
+export const DEATH_CARD = { id: 'coda', label: 'Coda' }
 
-export const ENDGAME_CARDS = [
-  { id: 'frame',       label: 'Frame',        kind: 'endgame' },
-  { id: 'finalGrade',  label: 'Final Grade',  kind: 'endgame' },
-  { id: 'grainFinish', label: 'Grain Finish', kind: 'endgame' }
-]
+function rollDie(sides) {
+  return 1 + Math.floor(Math.random() * sides)
+}
 
-// Picked once per session. Random integer in {3, 4, 5}.
-function pickEndgameThreshold() {
-  return 3 + Math.floor(Math.random() * 3)
+export function roll(spec) {
+  return spec.base + rollDie(spec.die)
+}
+
+export function rollNotation(spec) {
+  return `${spec.base} + d${spec.die}`
+}
+
+// Fisher–Yates on a copy.
+function shuffle(cards) {
+  const out = [...cards]
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[out[i], out[j]] = [out[j], out[i]]
+  }
+  return out
+}
+
+function buildDeck() {
+  const cards = []
+  for (const { id, label, copies } of MOD_CARDS) {
+    for (let n = 0; n < copies; n++) cards.push({ id, label, kind: 'mod' })
+  }
+  return shuffle(cards)
+}
+
+function deathCards() {
+  return Array.from({ length: TUNING.deathCount }, () => ({
+    ...DEATH_CARD,
+    kind: 'death'
+  }))
 }
 
 export function initialState() {
   return {
-    phase: 'BEGINNING',
-    midgameRounds: 0,
-    endgameThreshold: pickEndgameThreshold(),
+    phase: 'OPENING_ROLLS',
+    rolls: null, // { gridSize, pickCount } once rolled
+    grid: [], // filenames offered in the opening pick (Editor samples them
+    //           and reports back via SET_GRID — fetching is not deck logic)
+    toPlace: [], // filenames being arranged in the current placement session
+    stash: [], // filenames held back for the stash return
+    deck: buildDeck(), // the literal shuffled deck, dealt from the front
+    roundsDealt: 0,
+    stashReturned: false,
+    deathShuffled: false,
     currentCard: null,
     history: []
   }
 }
 
-// The eligible-pool function is the heart of the rule "which cards can come
-// up next." Beginning = only adds. Midgame = adds + midgame, until the
-// threshold flips, then adds + midgame + endgame too. Endgame_drawn has no
-// further draws (the session is over).
-export function eligiblePool(state) {
-  if (state.phase === 'BEGINNING') return ADD_CARDS
-  if (state.phase === 'MIDGAME') {
-    const endgameUnlocked = state.midgameRounds >= state.endgameThreshold
-    return endgameUnlocked
-      ? [...ADD_CARDS, ...MIDGAME_CARDS, ...ENDGAME_CARDS]
-      : [...ADD_CARDS, ...MIDGAME_CARDS]
-  }
-  return []
-}
-
-export function endgameUnlocked(state) {
-  return state.phase === 'MIDGAME' && state.midgameRounds >= state.endgameThreshold
-}
-
 // Pure reducer. Every transition is atomic — read one case to see exactly
-// which fields change. Draw with replacement: a sample from `eligiblePool`.
+// which fields change. Illegal actions (wrong phase, over-picking) return
+// the state unchanged rather than throwing.
 export function deckReducer(state, action) {
   switch (action.type) {
-    case 'DRAW': {
-      if (state.currentCard) return state
-      const pool = eligiblePool(state)
-      if (pool.length === 0) return state
-      const card = pool[Math.floor(Math.random() * pool.length)]
-      return { ...state, currentCard: card }
+    case 'ROLL_OPENING': {
+      if (state.phase !== 'OPENING_ROLLS') return state
+      return {
+        ...state,
+        phase: 'OPENING_PICK',
+        rolls: {
+          gridSize: roll(TUNING.gridRoll),
+          pickCount: roll(TUNING.pickRoll)
+        }
+      }
+    }
+
+    case 'SET_GRID': {
+      if (state.phase !== 'OPENING_PICK') return state
+      return { ...state, grid: action.filenames }
+    }
+
+    case 'CONFIRM_PICK': {
+      if (state.phase !== 'OPENING_PICK' || !state.rolls) return state
+      const placed = action.placed ?? []
+      const stashed = action.stashed ?? []
+      const legal =
+        placed.length >= 1 &&
+        placed.length + stashed.length <= state.rolls.pickCount &&
+        [...placed, ...stashed].every((f) => state.grid.includes(f))
+      if (!legal) return state
+      return {
+        ...state,
+        phase: 'PLACEMENT',
+        toPlace: placed,
+        stash: stashed,
+        history: [
+          ...state.history,
+          { event: 'pick', placed, stashed, ts: Date.now() }
+        ]
+      }
+    }
+
+    case 'END_PLACEMENT': {
+      if (state.phase === 'PLACEMENT') {
+        return {
+          ...state,
+          phase: 'WORKING',
+          toPlace: [],
+          history: [...state.history, { event: 'placement', ts: Date.now() }]
+        }
+      }
+      if (state.phase === 'STASH_RETURN') {
+        return {
+          ...state,
+          phase: 'WORKING',
+          toPlace: [],
+          stash: [],
+          stashReturned: true,
+          history: [...state.history, { event: 'stash-return', ts: Date.now() }]
+        }
+      }
+      return state
+    }
+
+    case 'DEAL': {
+      if (state.phase !== 'WORKING' || state.currentCard) return state
+      if (state.deck.length === 0) return state
+      const [card, ...deck] = state.deck
+      if (card.kind === 'death') {
+        // Instant end: no End press, no final modification.
+        return {
+          ...state,
+          phase: 'COMPLETE',
+          deck,
+          currentCard: card,
+          history: [
+            ...state.history,
+            { event: 'death', cardId: card.id, ts: Date.now() }
+          ]
+        }
+      }
+      return { ...state, deck, currentCard: card }
     }
 
     case 'COMMIT': {
-      if (!state.currentCard) return state
-      const card = state.currentCard
-      const history = [...state.history, { cardId: card.id, kind: card.kind, ts: Date.now() }]
-
-      if (state.phase === 'BEGINNING') {
-        // Beginning phase is always exactly one committed round.
-        return { ...state, phase: 'MIDGAME', currentCard: null, history }
+      if (state.phase !== 'WORKING' || !state.currentCard) return state
+      const roundsDealt = state.roundsDealt + 1
+      const next = {
+        ...state,
+        roundsDealt,
+        currentCard: null,
+        history: [
+          ...state.history,
+          { event: 'card', cardId: state.currentCard.id, ts: Date.now() }
+        ]
       }
 
-      if (state.phase === 'MIDGAME') {
-        if (card.kind === 'endgame') {
-          // Drawing and committing an endgame card ends the session.
-          // Phase 5 will hook export off this transition.
-          return { ...state, phase: 'ENDGAME_DRAWN', currentCard: null, history }
+      // End of Act I: the stash comes back as one placement session.
+      if (
+        roundsDealt === TUNING.actOneRounds &&
+        !state.stashReturned &&
+        state.stash.length > 0
+      ) {
+        return { ...next, phase: 'STASH_RETURN', toPlace: state.stash }
+      }
+
+      // End of Act II (or an empty deck, if the knobs ever outrun it):
+      // shuffle the death cards into whatever remains. From here the session
+      // ends whenever one surfaces — odds rise naturally as the deck thins.
+      const actsDone =
+        roundsDealt >= TUNING.actOneRounds + TUNING.actTwoRounds
+      if (!state.deathShuffled && (actsDone || next.deck.length === 0)) {
+        return {
+          ...next,
+          deck: shuffle([...next.deck, ...deathCards()]),
+          deathShuffled: true
         }
-        return { ...state, midgameRounds: state.midgameRounds + 1, currentCard: null, history }
       }
-
-      return state
+      return next
     }
 
     case 'RESTART':
@@ -108,4 +224,15 @@ export function deckReducer(state, action) {
     default:
       return state
   }
+}
+
+// Short human label for where the session stands. Derived, never stored.
+export function progressLabel(state) {
+  if (state.phase !== 'WORKING') return null
+  if (state.deathShuffled) return 'late — the Coda is in the deck'
+  const { actOneRounds, actTwoRounds } = TUNING
+  if (state.roundsDealt < actOneRounds) {
+    return `Act I · round ${state.roundsDealt + 1} of ${actOneRounds}`
+  }
+  return `Act II · round ${state.roundsDealt - actOneRounds + 1} of ${actTwoRounds}`
 }

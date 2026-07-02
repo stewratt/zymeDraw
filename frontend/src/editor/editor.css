@@ -95,8 +95,62 @@
      must stay fully visible no matter how many layers fill the panel below. */
   flex-shrink: 0;
 }
-.deck-panel.endgame {
+.deck-panel.endgame,
+.deck-panel.complete {
   border-color: #ff8a4a;
+}
+
+/* ---------- opening pick grid ---------- */
+
+.pick-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  max-height: 40vh;
+  padding: 2px;
+}
+.pick-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px dashed #2a2a2a;
+  border-radius: 4px;
+  background: transparent;
+  font-size: 0.72rem;
+  color: #888;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+}
+.pick-chip:hover {
+  background: #1f1f1f;
+  border-color: #3a3a3a;
+}
+.pick-chip .pick-mark {
+  flex-shrink: 0;
+  width: 44px;
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+}
+.pick-chip .pick-name {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pick-chip.place {
+  border-style: solid;
+  border-color: #4a6cff;
+  background: rgba(74, 108, 255, 0.12);
+  color: #cfd6ff;
+}
+.pick-chip.stash {
+  border-style: solid;
+  border-color: #b98a3a;
+  background: rgba(185, 138, 58, 0.12);
+  color: #f0d9a8;
 }
 
 .deck-panel h2 {
@@ -184,6 +238,8 @@
 .card-face.card-add     { border-color: #4a6cff; box-shadow: 0 0 0 1px rgba(74, 108, 255, 0.12) inset; }
 .card-face.card-midgame { border-color: #8a4aff; box-shadow: 0 0 0 1px rgba(138, 74, 255, 0.12) inset; }
 .card-face.card-endgame { border-color: #ff8a4a; box-shadow: 0 0 0 1px rgba(255, 138, 74, 0.12) inset; }
+.card-face.card-mod     { border-color: #8a4aff; box-shadow: 0 0 0 1px rgba(138, 74, 255, 0.12) inset; }
+.card-face.card-death   { border-color: #ff8a4a; box-shadow: 0 0 0 1px rgba(255, 138, 74, 0.12) inset; }
 
 .tool-area {
   flex: 1;

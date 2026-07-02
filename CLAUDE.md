@@ -36,9 +36,17 @@ documents — read both before doing v2 work:
 4. **In-app dice-styled rolls** (assumed, not explicitly confirmed — cheap to
    change until Phase 3's roll UI exists).
 
-**Next action: Phase 1 of the plan — rewrite `deck.js` as the v2 state
-machine, clickable end-to-end with placeholder cards.** Create a `v2` branch
-off `main` for all v2 code work. Check in with Stew before starting (§2).
+**Phase 1 is done (2026-07-02, on the `v2` branch):** `deck.js` is the v2
+session-script reducer (literal shuffled deck, opening rolls, pick/stash,
+placement, acts, stash return, Coda instant-end), with stub per-phase panels
+in `DeckPanel.jsx` so the whole arc is clickable. Decisions made in Phase 1:
+death card displays as **Coda**; stash returns as **one placement session**;
+rolls are grid `8+d8` (9–16), pick `1+d3` (take up to 2–4).
+
+**Next action: Phase 2 — bake engine + master raster.** Starts with the
+mandatory check-in on the master-raster design (plan §2.1) before any code.
+Then: universal flatten-on-End, offscreen full-res master, delete the layers
+infrastructure and obsolete v1 cards.
 
 > Keep this §0 updated as v2 phases land; it's the resume point for every
 > fresh session.
@@ -95,8 +103,8 @@ a game.
   they're the instrument, not a genre signal.
 - **No celebratory / gamer affect.** No win-states or congratulatory copy.
   The end is a piece being *finished*, not a level being *beaten*.
-- **"Death card" is a design-conversation term, not UI copy.** On screen use
-  a neutral name — current candidates: **Fin** or **Coda** (decide in Phase 1).
+- **"Death card" is a design-conversation term, not UI copy.** On screen the
+  card is named **Coda** (decided in Phase 1).
 - **Apply this to everything user-facing:** copy, labels, card names, states,
   and the names of anything new.
 
@@ -289,8 +297,8 @@ what to keep (registry pattern, purity, commitment) and what failed
 | Phase | Status | What it ships |
 |---|---|---|
 | 0 — Plan lock + docs | ✅ done (2026-07-02) | Decisions locked, plan committed, this file rewritten. |
-| 1 — deck.js v2 | ⬜ next | New state machine, clickable end-to-end with stub cards. `v2` branch. |
-| 2 — Bake engine + master raster | ⬜ | Universal flatten-on-End; offscreen full-res master; delete layers infra + obsolete cards. |
+| 1 — deck.js v2 | ✅ done (2026-07-02) | New state machine, clickable end-to-end with stub cards. Coda / one-session stash return / grid 8+d8, pick 1+d3. |
+| 2 — Bake engine + master raster | ⬜ next | Universal flatten-on-End; offscreen full-res master; delete layers infra + obsolete cards. |
 | 3 — The opening | ⬜ | Roll UI, image grid + stash, placement session; brush core in erase mode. |
 | 4 — Effect-brush infra + Noise | ⬜ | Duplicate-mask-reveal pipeline, first effect brush. |
 | 5 — Brush/global replication | ⬜ | Blur brush, HSV brush, Color Overlay, Global HSV, Reposition. |

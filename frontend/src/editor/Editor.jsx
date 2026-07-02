@@ -1,18 +1,20 @@
-import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { useEffect, useReducer, useRef, useState } from 'react'
 import CanvasStage, { CANVAS_WIDTH, CANVAS_HEIGHT } from './CanvasStage.jsx'
 import DeckPanel from './DeckPanel.jsx'
 import LayersPanel from './LayersPanel.jsx'
-import { deckReducer, eligiblePool, initialState } from './deck.js'
+import { deckReducer, initialState } from './deck.js'
 import { cardRegistry } from './cards/registry.jsx'
 import { getCommittedLayers } from './layers.js'
 import './editor.css'
 
-// Editor is a generic dispatcher now. It doesn't know what Pencil does or
-// what an Add card does — it just looks up the current card in cardRegistry
-// and calls begin/update/commit/cleanup at the right times.
+// Editor is a generic dispatcher. It doesn't know what any card does — it
+// looks up the current card in cardRegistry and calls
+// begin/update/commit/cleanup at the right times. The session arc itself
+// (rolls → pick → placement → acts → Coda) lives in deck.js; Editor's only
+// arc-specific job is the impure work the reducer can't do: sampling the
+// opening grid from the image list and exporting on COMPLETE.
 function Editor({ config, onBackToSetup }) {
   const [state, dispatch] = useReducer(deckReducer, undefined, initialState)
-  const pool = useMemo(() => eligiblePool(state), [state])
 
   const canvasStageRef = useRef(null)
   const cardSessionRef = useRef(null) // opaque per-card data the registry owns
@@ -26,8 +28,8 @@ function Editor({ config, onBackToSetup }) {
   // The current layer list (committed Fabric objects with deckId).
   const [committedLayers, setCommittedLayers] = useState([])
 
-  // Phase 5 export state. Driven by a useEffect that fires when the deck
-  // transitions to ENDGAME_DRAWN. Reset on Restart.
+  // Export state. Driven by a useEffect that fires when the deck
+  // transitions to COMPLETE. Reset on Restart.
   const [exportState, setExportState] = useState({ status: 'idle', savedPath: null, error: null })
 
   const [imageList, setImageList] = useState({
@@ -47,6 +49,22 @@ function Editor({ config, onBackToSetup }) {
       .catch((err) => setImageList({ status: 'error', filenames: [], error: err.message }))
   }, [])
 
+  // The reducer never touches the filesystem: when the opening grid is
+  // needed, Editor samples filenames and reports them back via SET_GRID.
+  // Phase 1 samples client-side from the full listing; Phase 3 swaps this
+  // for the backend's /api/images/sample endpoint.
+  useEffect(() => {
+    if (state.phase !== 'OPENING_PICK' || state.grid.length > 0) return
+    if (imageList.status !== 'ready' || imageList.filenames.length === 0) return
+    const pool = [...imageList.filenames]
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[pool[i], pool[j]] = [pool[j], pool[i]]
+    }
+    const n = Math.min(state.rolls.gridSize, pool.length)
+    dispatch({ type: 'SET_GRID', filenames: pool.slice(0, n) })
+  }, [state.phase, state.grid.length, state.rolls, imageList])
+
   // After each commit, refresh the canvas-layer list so the Layers panel
   // sees newly-tagged objects. Also refresh when a card becomes ready: a
   // card's begin() can place tagged objects (e.g. Add card images) that the
@@ -59,12 +77,13 @@ function Editor({ config, onBackToSetup }) {
     setCommittedLayers(getCommittedLayers(canvas))
   }, [state.history.length, cardReady])
 
-  // Phase 5: when the deck transitions to ENDGAME_DRAWN, render the canvas
-  // at 3× (→ 2400×3000 for the 800×1000 working canvas) and POST to the
-  // backend so it writes the PNG into the configured output folder. Runs
-  // exactly once per transition.
+  // When a death card is dealt (phase → COMPLETE), render the canvas at 3×
+  // (→ 2400×3000 for the 800×1000 working canvas) and POST to the backend so
+  // it writes the PNG into the configured output folder. Runs exactly once
+  // per transition. (Phase 2 replaces the 3× multiplier with the master
+  // raster.)
   useEffect(() => {
-    if (state.phase !== 'ENDGAME_DRAWN') return
+    if (state.phase !== 'COMPLETE') return
     const canvas = canvasStageRef.current?.getCanvas()
     if (!canvas) return
     let cancelled = false
@@ -174,11 +193,12 @@ function Editor({ config, onBackToSetup }) {
     })
   }, [cardControls, state.currentCard, cardReady])
 
-  // Keyboard shortcuts. Space = Draw, Enter = primary action (Draw / End /
-  // Restart depending on phase), R = Restart. Disabled while focus is in
-  // any form control so sliders, color pickers and text inputs behave
-  // normally.
+  // Keyboard shortcuts. Space = advance (roll / deal), Enter = primary
+  // action (End / restart — never confirms the opening pick, which needs an
+  // explicit choice), R = Restart. Disabled while focus is in any form
+  // control so sliders, color pickers and text inputs behave normally.
   useEffect(() => {
+    const imagesReady = imageList.status === 'ready' && imageList.filenames.length > 0
     const handler = (e) => {
       const t = e.target
       const tag = t?.tagName
@@ -188,20 +208,29 @@ function Editor({ config, onBackToSetup }) {
       if (e.metaKey || e.ctrlKey || e.altKey) return
 
       if (e.key === ' ' || e.code === 'Space') {
-        if (!state.currentCard && state.phase !== 'ENDGAME_DRAWN' && imageList.status === 'ready' && imageList.filenames.length > 0) {
+        if (state.phase === 'OPENING_ROLLS' && imagesReady) {
           e.preventDefault()
-          dispatch({ type: 'DRAW' })
+          dispatch({ type: 'ROLL_OPENING' })
+        } else if (state.phase === 'WORKING' && !state.currentCard) {
+          e.preventDefault()
+          dispatch({ type: 'DEAL' })
         }
       } else if (e.key === 'Enter') {
-        if (state.phase === 'ENDGAME_DRAWN') {
+        if (state.phase === 'COMPLETE') {
           e.preventDefault()
           handleRestart()
-        } else if (state.currentCard && cardReady) {
+        } else if (state.phase === 'PLACEMENT' || state.phase === 'STASH_RETURN') {
+          e.preventDefault()
+          dispatch({ type: 'END_PLACEMENT' })
+        } else if (state.phase === 'WORKING' && state.currentCard && cardReady) {
           e.preventDefault()
           handleCommit()
-        } else if (!state.currentCard && imageList.status === 'ready' && imageList.filenames.length > 0) {
+        } else if (state.phase === 'WORKING' && !state.currentCard) {
           e.preventDefault()
-          dispatch({ type: 'DRAW' })
+          dispatch({ type: 'DEAL' })
+        } else if (state.phase === 'OPENING_ROLLS' && imagesReady) {
+          e.preventDefault()
+          dispatch({ type: 'ROLL_OPENING' })
         }
       } else if (e.key === 'r' || e.key === 'R') {
         e.preventDefault()
@@ -282,7 +311,6 @@ function Editor({ config, onBackToSetup }) {
         <aside className="side-stack">
           <DeckPanel
             state={state}
-            poolSize={pool.length}
             imageList={imageList}
             entry={currentEntry}
             controls={cardControls}
@@ -290,7 +318,10 @@ function Editor({ config, onBackToSetup }) {
             ready={cardReady}
             exportState={exportState}
             onControlChange={handleControlChange}
-            onDraw={() => dispatch({ type: 'DRAW' })}
+            onRoll={() => dispatch({ type: 'ROLL_OPENING' })}
+            onConfirmPick={(placed, stashed) => dispatch({ type: 'CONFIRM_PICK', placed, stashed })}
+            onEndPlacement={() => dispatch({ type: 'END_PLACEMENT' })}
+            onDeal={() => dispatch({ type: 'DEAL' })}
             onCommit={handleCommit}
             onRestart={handleRestart}
             onOpenOutput={handleOpenOutput}
