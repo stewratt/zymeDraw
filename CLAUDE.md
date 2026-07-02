@@ -121,11 +121,22 @@ once-per-machine venv setup; the Mac's venv is already set up. Measured
 on the Mac (CPU): 400×500→×4 upscale in ~2 s; cutout in seconds once the
 model is cached.
 
-**Next action: Phase 8 — Stamp:** grid of 6 → take one → sidecar rembg
-cutout placed for arrange/scale/rotate/opacity + the standing erase brush.
-Reuses Ghost's whole pattern (CardGridPicker, Overlay, begin-awaits-user,
-erase session). Degradation path: sidecar down → the full image is placed
-and the erase brush becomes the scissors.
+**Phase 8 is done (2026-07-02, verified by Stew):** **Stamp** — grid of 6
+→ take one → its bytes go through `/api/ml/cutout` and the rembg cutout is
+placed for arrange/opacity + the standing erase brush. Three-stage chain
+(pick → cutting → work) with the cutting wait explained in the panel while
+End stays disabled. Degradation live: sidecar down / cutout failure → the
+whole image is placed and the panel says "the erase brush is your
+scissors". The Ghost/Stamp shared Arrange/Erase block was extracted to
+`cards/arrangeEraseControls.jsx`. 8 of 10 card designs are real.
+
+**Next action: Phase 9 — Deeper:** a 4:5-locked frame rect
+(move/scale/rotate) chooses a re-frame of the piece; End maps that region
+onto the full master (2d transform at master res) and, when zoomed in,
+restores detail via `/api/ml/upscale` (input sized to true source detail,
+clamped 600–1200 w). Needs Editor support for **async commit hooks** +
+a "committing" UI state (generic, not per-card). Degradation: plain
+resample.
 
 > Keep this §0 updated as v2 phases land; it's the resume point for every
 > fresh session.
@@ -394,7 +405,7 @@ what to keep (registry pattern, purity, commitment) and what failed
 | 5 — Brush/global replication | ✅ done (2026-07-02) | effectCardFactory; Blur brush, HSV brush, Color Overlay, Global HSV, Reposition. 6 of 10 designs real. |
 | 6 — Ghost | ✅ done (2026-07-02) | CardGridPicker single-pick grid; screen-blend placement + opacity/BC + erase; generic Overlay registry field; begin-awaits-user pattern. |
 | 7 — ML sidecar | ✅ done (2026-07-02) | FastAPI on onnxruntime CPU-only; ESRGAN onnx committed in-repo; /api/ml proxy; start.js auto-start; degradation verified; README setup. |
-| 8 — Stamp | ⬜ | rembg cutout placement card. |
+| 8 — Stamp | ✅ done (2026-07-02) | Grid of 6 → rembg cutout via sidecar → place/opacity/erase; live degradation path; shared ArrangeEraseControls. |
 | 9 — Deeper | ⬜ | Crop/zoom/rotate re-frame + ESRGAN detail restore. |
 | 10 — Rails | ⬜ | Palette-clamped alpha cutout stamp (prototype look first). |
 | 11 — Tuning + polish | ⬜ | Pacing/deck balance, death-crop decision, tone pass, merge `v2`. |

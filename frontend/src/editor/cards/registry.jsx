@@ -21,10 +21,18 @@
 // the canvas area while the card is live (Ghost's grid pick; Stamp will
 // reuse it). It receives the same props as Tools.
 //
-// Cards not yet listed (stamp, deeper, rails) are placeholders that Editor
-// treats as "ready immediately, no tools" — Phases 8–10 fill them in.
+// Cards not yet listed (deeper, rails) are placeholders that Editor
+// treats as "ready immediately, no tools" — Phases 9–10 fill them in.
 
 import { NoiseTools, noiseHooks } from './noiseBrush.jsx'
+import {
+  StampOverlay,
+  StampTools,
+  beginStamp,
+  cleanupStamp,
+  commitStamp,
+  updateStamp
+} from './stamp.jsx'
 import {
   GhostOverlay,
   GhostTools,
@@ -71,6 +79,17 @@ export const cardRegistry = {
     update: updateGhost,
     commit: commitGhost,
     cleanup: cleanupGhost
+  },
+
+  stamp: {
+    controls: ['opacity', 'mode', 'size', 'hardness'],
+    defaultControls: { opacity: 1, mode: 'arrange', size: 40, hardness: 'soft' },
+    Tools: StampTools,
+    Overlay: StampOverlay,
+    begin: beginStamp,
+    update: updateStamp,
+    commit: commitStamp,
+    cleanup: cleanupStamp
   },
 
   noiseBrush: {
