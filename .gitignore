@@ -10,3 +10,8 @@ output/
 # Debug loop artifacts (binary screenshots; the findings .md stays tracked)
 debug_loop_screenshots/
 .gstack/
+
+# ML sidecar (Phase 7): per-machine Python env + caches. The .onnx model
+# in backend/ml/models/ IS tracked — it ships with the repo.
+backend/ml/.venv/
+__pycache__/

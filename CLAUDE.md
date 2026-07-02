@@ -106,12 +106,26 @@ same props as Tools) and begin's ctx gained `isCancelled` for async cards.
 `screen`-blend spike is closed: blend modes survive the bake (verified in
 Stew's export).
 
-**Next action: Phase 7 — the ML sidecar:** Python FastAPI under
-`backend/ml/` hosting rembg (cutout) + Real-ESRGAN (upscale), proxied by
-Express at `/api/ml/*`, third `concurrently` entry in `npm run dev`,
-health endpoint, README setup for all three machines, and mandatory
-graceful degradation. Check in with Stew on the Real-ESRGAN runtime choice
-(torch vs onnxruntime) before building.
+**Phase 7 is done (2026-07-02, verified by Stew):** the ML sidecar —
+`backend/ml/` FastAPI app (`/health`, `/cutout` via rembg, `/upscale` via
+Real-ESRGAN), all on **ONNX Runtime, CPU-only** (decision locked with
+Stew: no torch). The ESRGAN model (`realesr-general-x4v3`) is **committed
+in-repo** (~5 MB onnx, converted from the official xinntao release —
+conversion + verification script in `backend/ml/tools/`); rembg's u2net
+(~170 MB) auto-downloads to `~/.u2net` on first cutout. Express proxies
+`/api/ml/*` (raw-byte passthrough, no new npm deps); `npm run dev` gained
+an `ml` process via `backend/ml/start.js`, which exits politely when
+`backend/ml/.venv` is missing. Degradation verified: sidecar down →
+health `{ok:false}` + fast 503s, nothing blocks. README documents the
+once-per-machine venv setup; the Mac's venv is already set up. Measured
+on the Mac (CPU): 400×500→×4 upscale in ~2 s; cutout in seconds once the
+model is cached.
+
+**Next action: Phase 8 — Stamp:** grid of 6 → take one → sidecar rembg
+cutout placed for arrange/scale/rotate/opacity + the standing erase brush.
+Reuses Ghost's whole pattern (CardGridPicker, Overlay, begin-awaits-user,
+erase session). Degradation path: sidecar down → the full image is placed
+and the erase brush becomes the scissors.
 
 > Keep this §0 updated as v2 phases land; it's the resume point for every
 > fresh session.
@@ -226,10 +240,14 @@ no hardcoded paths.
   mask-based erase brush (Phase 3b) replaces it.
 - **Backend**: Node 20+ + Express 4. Reads/serves images, writes the export
   PNG, reveals the output folder, persists folder config. No deck logic.
-- **Planned (v2 Phase 7): Python 3 + FastAPI sidecar** hosting rembg
-  (cutouts) and Real-ESRGAN (4× upscale). Auto-started by `npm run dev`,
-  proxied by Express under `/api/ml/*`. CPU-only works; GPU accelerates.
-  **Graceful degradation is a requirement**: the session never blocks on ML.
+- **Python 3.10+ + FastAPI sidecar** (shipped in v2 Phase 7): rembg
+  (cutouts) + Real-ESRGAN 4× upscale, both on **ONNX Runtime, CPU-only**
+  (~150 MB venv, no torch). The ESRGAN onnx model is committed in-repo
+  (`backend/ml/models/`; provenance script in `backend/ml/tools/`). Venv
+  lives at `backend/ml/.venv` per machine (README); auto-started by
+  `npm run dev` via `backend/ml/start.js` (exits politely if no venv).
+  Proxied by Express under `/api/ml/*`. **Graceful degradation is a
+  requirement**: the session never blocks on ML.
 - **Communication**: plain REST on localhost. Vite proxies `/api/*` → Express
   on port 5174. JSON body limit 64 MB (holds one full-res base64 export).
 - **Dev runtime**: `npm run dev` at repo root uses `concurrently`;
@@ -248,10 +266,10 @@ or a model, it doesn't belong in the backend.
 ```
 zymeDraw/
 ├── CLAUDE.md                 # this file
-├── README.md                 # install/run instructions (gains Python setup in Phase 7)
+├── README.md                 # install/run + once-per-machine Python setup
 ├── design_changes_july2.md   # v2 design notes (source of truth for the why)
 ├── redesign_v2_plan.md       # v2 plan of attack (source of truth for the how)
-├── package.json              # root: `concurrently` + scripts
+├── package.json              # root: `concurrently` + scripts (3 dev processes)
 ├── frontend/
 │   └── src/
 │       ├── main.jsx          # React entry; StrictMode disabled by choice
@@ -263,14 +281,27 @@ zymeDraw/
 │           ├── DeckPanel.jsx    # right sidebar: per-phase panels + Tools + End
 │           ├── deck.js          # PURE state machine — the v2 session script
 │           ├── masterRaster.js  # offscreen 2400×3000 truth + universal bake
+│           ├── brushCore.js     # stroke engine: erase + reveal sessions
+│           ├── GridPicker.jsx   # opening pick overlay + CardGridPicker (single-pick)
+│           ├── placement.js     # free-transform placement sessions
+│           ├── sampling.js      # random-sample fetch w/ client fallback
 │           ├── editor.css
 │           └── cards/
-│               ├── registry.jsx # one entry per card (empty until Phase 3+)
-│               └── pencil.jsx   # unregistered v1 reference for the brush core
+│               ├── registry.jsx        # one entry per card
+│               ├── effectCardFactory.jsx  # effect card = applyEffect + sliders
+│               ├── noiseBrush.jsx / blurBrush.jsx / hsvBrush.jsx
+│               ├── colorOverlay.jsx / globalHsv.jsx / reposition.jsx
+│               └── ghost.jsx           # the begin-awaits-user pattern
 └── backend/
-    ├── server.js             # all Express routes (see §6)
+    ├── server.js             # all Express routes (see §6) + /api/ml proxy
     ├── config-store.js       # reads/writes ~/.deck-config.json
-    └── ml/                   # PLANNED (Phase 7): FastAPI sidecar
+    └── ml/                   # the sidecar (Phase 7)
+        ├── main.py           # FastAPI: /health /cutout /upscale
+        ├── upscaler.py       # tiled Real-ESRGAN x4 on onnxruntime
+        ├── requirements.txt  # venv deps (install per machine, README)
+        ├── start.js          # npm-run-dev launcher; no venv → polite exit
+        ├── models/           # realesr-general-x4v3.onnx (committed, ~5 MB)
+        └── tools/            # one-time pth→onnx conversion (provenance)
 ```
 
 The config file `~/.deck-config.json` lives in the user's home directory,
@@ -325,16 +356,12 @@ an optional field that Editor applies generically.
 | `GET /api/config`            | Returns `{ inputFolder, outputFolder, homedir }`. |
 | `POST /api/config`           | Validates both paths, persists `~/.deck-config.json`. |
 | `GET /api/images`            | Lists images in the configured input folder. |
+| `GET /api/images/sample?n=`  | Random sample of n filenames (opening grid, Ghost/Stamp grids). Registered BEFORE `:filename`. |
 | `GET /api/images/:filename`  | Streams one image. Path-traversal-safe. |
 | `POST /api/export`           | `{ pngBase64 }` → writes `composition_YYYYMMDD_HHMMSS.png` to the output folder. |
 | `POST /api/open-output`      | Reveals the output folder in the OS file manager. |
-
-**Planned for v2:**
-
-| Route | Phase | Purpose |
-|---|---|---|
-| `GET /api/images/sample?n=` | 3 | Random sample of n filenames (opening grid, Ghost, Stamp grids). |
-| `/api/ml/*` → sidecar proxy | 7 | `POST cutout` (rembg), `POST upscale` (Real-ESRGAN), `GET health`. |
+| `GET /api/ml/health`         | Sidecar health; answers `{ok:false}` fast (1.5 s timeout) when down. |
+| `POST /api/ml/cutout` `/upscale` | Raw image bytes in → PNG bytes out (proxied to the sidecar; 503 when down). |
 
 Backend patterns to follow: tilde expansion via `expandTilde`, path-traversal
 safety (`path.basename()` + `startsWith` check), re-validate folders on every
@@ -366,7 +393,7 @@ what to keep (registry pattern, purity, commitment) and what failed
 | 4 — Effect-brush infra + Noise | ✅ done (2026-07-02) | Shared stroke engine + createRevealSession; Noise Brush card; generic card undo/redo via ctx.report. |
 | 5 — Brush/global replication | ✅ done (2026-07-02) | effectCardFactory; Blur brush, HSV brush, Color Overlay, Global HSV, Reposition. 6 of 10 designs real. |
 | 6 — Ghost | ✅ done (2026-07-02) | CardGridPicker single-pick grid; screen-blend placement + opacity/BC + erase; generic Overlay registry field; begin-awaits-user pattern. |
-| 7 — ML sidecar | ⬜ | FastAPI (rembg + ESRGAN), proxy, health, degradation, README setup. |
+| 7 — ML sidecar | ✅ done (2026-07-02) | FastAPI on onnxruntime CPU-only; ESRGAN onnx committed in-repo; /api/ml proxy; start.js auto-start; degradation verified; README setup. |
 | 8 — Stamp | ⬜ | rembg cutout placement card. |
 | 9 — Deeper | ⬜ | Crop/zoom/rotate re-frame + ESRGAN detail restore. |
 | 10 — Rails | ⬜ | Palette-clamped alpha cutout stamp (prototype look first). |

@@ -1,0 +1,8 @@
+# The Deck ML sidecar. Install into backend/ml/.venv — see README.md
+# ("The ML sidecar" section) for the three-machine setup steps.
+fastapi>=0.115
+uvicorn>=0.30
+rembg>=2.0.60
+onnxruntime>=1.20
+numpy>=1.26
+pillow>=10.0

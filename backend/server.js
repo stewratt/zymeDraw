@@ -190,6 +190,41 @@ app.post('/api/export', async (req, res) => {
   res.json({ ok: true, savedPath })
 })
 
+// v2 Phase 7: the ML sidecar proxy. Express stays "hands" — it forwards
+// raw bytes to the Python process and never inspects them. When the
+// sidecar is down these routes answer quickly with ok:false / 503; the
+// frontend treats that as "degrade, don't block" (mandatory, CLAUDE.md §3).
+const ML_BASE = process.env.DECK_ML_URL || 'http://127.0.0.1:5175'
+
+app.get('/api/ml/health', async (req, res) => {
+  try {
+    const r = await fetch(`${ML_BASE}/health`, { signal: AbortSignal.timeout(1500) })
+    res.json(await r.json())
+  } catch {
+    res.json({ ok: false })
+  }
+})
+
+// Body is the image itself (blob), not JSON — hence express.raw here.
+// Generous timeout: a cold model load + CPU inference can take minutes.
+app.post('/api/ml/:op(cutout|upscale)', express.raw({ type: '*/*', limit: '64mb' }), async (req, res) => {
+  try {
+    const r = await fetch(`${ML_BASE}/${req.params.op}`, {
+      method: 'POST',
+      headers: { 'content-type': req.get('content-type') || 'application/octet-stream' },
+      body: req.body,
+      signal: AbortSignal.timeout(300000)
+    })
+    const buf = Buffer.from(await r.arrayBuffer())
+    res
+      .status(r.status)
+      .type(r.headers.get('content-type') || 'application/octet-stream')
+      .send(buf)
+  } catch {
+    res.status(503).json({ ok: false, error: 'ML sidecar unavailable.' })
+  }
+})
+
 // Reveal the configured output folder in the user's native file manager.
 // macOS = `open`, Windows = `explorer`, everywhere else = `xdg-open`.
 // We spawn detached/unref'd so the file manager outlives this request.
