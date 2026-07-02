@@ -64,9 +64,18 @@ faces (`gridDie`/`pickDie`) so the reveal shows the arithmetic and a manual
 physical-dice mode stays a drop-in. End is disabled until placement images
 finish loading.
 
-**Next action: Phase 3b — the universal brush core in erase mode.**
-Hard/soft round brush, strokes into an offscreen mask (never source
-pixels), within-card undo/redo, live during every placement session.
+**Phase 3b is done (2026-07-02):** `brushCore.js` — the universal brush
+core in erase mode. Per-image native-resolution mask + composite
+(destination-out); strokes never touch source pixels; hard/soft dabs;
+stroke-replay undo/redo (Cmd/Ctrl+Z, +Shift) that never crosses an End;
+topmost-image stroke targeting; Arrange/Erase mode toggle in the placement
+panel. Erase is live in every placement session (opening + stash return).
+
+**Next action: Phase 4 — effect-brush infrastructure + Noise brush.**
+The reveal pipeline (effected copy of the master, fully masked out,
+painting reveals it), built on brushCore's stroke engine; first deck card
+with real behavior. Riskiest canvas tech — verify bake fidelity and paint
+performance at master resolution.
 
 > Keep this §0 updated as v2 phases land; it's the resume point for every
 > fresh session.
@@ -317,7 +326,7 @@ what to keep (registry pattern, purity, commitment) and what failed
 | 1 — deck.js v2 | ✅ done (2026-07-02) | New state machine, clickable end-to-end with stub cards. Coda / one-session stash return / grid 8+d8, pick 1+d3. |
 | 2 — Bake engine + master raster | ✅ done (2026-07-02) | masterRaster.js (offscreen 2400×3000 truth, proxy view, universal bake, direct export); layers infra + 16 v1 card files deleted; @erase2d/fabric dropped. |
 | 3a — The opening | ✅ done (2026-07-02) | Dice reveal, GridPicker overlay (thumbs, place/stash), placement.js free-transform sessions, /api/images/sample. |
-| 3b — Erase brush core | ⬜ next | Universal brush core in erase mode: hard/soft, mask-based, within-card undo/redo. |
+| 3b — Erase brush core | ✅ done (2026-07-02) | brushCore.js: mask-based erase, hard/soft, undo/redo, Arrange/Erase toggle in placement sessions. |
 | 4 — Effect-brush infra + Noise | ⬜ | Duplicate-mask-reveal pipeline, first effect brush. |
 | 5 — Brush/global replication | ⬜ | Blur brush, HSV brush, Color Overlay, Global HSV, Reposition. |
 | 6 — Ghost | ⬜ | Grid → screen-blend placement + opacity/BC + erase. |

@@ -19,6 +19,11 @@ function DeckPanel({
   info,
   ready,
   placementReady,
+  eraseControls,
+  eraseHistory,
+  onEraseControlsChange,
+  onEraseUndo,
+  onEraseRedo,
   exportState,
   onControlChange,
   onRoll,
@@ -35,7 +40,18 @@ function DeckPanel({
       return <OpeningPickPanel state={state} />
     case 'PLACEMENT':
     case 'STASH_RETURN':
-      return <Placement state={state} placementReady={placementReady} onEndPlacement={onEndPlacement} />
+      return (
+        <Placement
+          state={state}
+          placementReady={placementReady}
+          eraseControls={eraseControls}
+          eraseHistory={eraseHistory}
+          onEraseControlsChange={onEraseControlsChange}
+          onEraseUndo={onEraseUndo}
+          onEraseRedo={onEraseRedo}
+          onEndPlacement={onEndPlacement}
+        />
+      )
     case 'WORKING':
       return state.currentCard ? (
         <CardRevealed
@@ -124,8 +140,18 @@ function OpeningPickPanel({ state }) {
   )
 }
 
-function Placement({ state, placementReady, onEndPlacement }) {
+function Placement({
+  state,
+  placementReady,
+  eraseControls,
+  eraseHistory,
+  onEraseControlsChange,
+  onEraseUndo,
+  onEraseRedo,
+  onEndPlacement
+}) {
   const returning = state.phase === 'STASH_RETURN'
+  const erasing = eraseControls.mode === 'erase'
   return (
     <aside className="deck-panel">
       <h2>{returning ? 'STASH RETURN' : 'PLACEMENT'}</h2>
@@ -133,9 +159,70 @@ function Placement({ state, placementReady, onEndPlacement }) {
         {returning
           ? 'Your stashed images come back — arrange them like the opening.'
           : 'Arrange your images.'}{' '}
-        Drag to move, corner handles to scale, top handle to rotate. End bakes
-        them into the image for good.
+        {erasing
+          ? 'Paint over an image to erase it; the topmost image under your first touch takes the whole stroke.'
+          : 'Drag to move, corner handles to scale, top handle to rotate.'}{' '}
+        End bakes everything in for good.
       </p>
+
+      <div className="mode-toggle">
+        <button
+          type="button"
+          className={erasing ? '' : 'active'}
+          onClick={() => onEraseControlsChange({ mode: 'arrange' })}
+        >
+          Arrange
+        </button>
+        <button
+          type="button"
+          className={erasing ? 'active' : ''}
+          disabled={!placementReady}
+          onClick={() => onEraseControlsChange({ mode: 'erase' })}
+        >
+          Erase
+        </button>
+      </div>
+
+      {erasing && (
+        <div className="brush-tools">
+          <label className="ctrl">
+            <span className="ctrl-label">Size</span>
+            <input
+              type="range"
+              min="6"
+              max="150"
+              value={eraseControls.size}
+              onChange={(e) => onEraseControlsChange({ size: Number(e.target.value) })}
+            />
+            <span className="ctrl-value mono">{eraseControls.size}px</span>
+          </label>
+          <div className="mode-toggle small">
+            <button
+              type="button"
+              className={eraseControls.hardness === 'soft' ? 'active' : ''}
+              onClick={() => onEraseControlsChange({ hardness: 'soft' })}
+            >
+              Soft
+            </button>
+            <button
+              type="button"
+              className={eraseControls.hardness === 'hard' ? 'active' : ''}
+              onClick={() => onEraseControlsChange({ hardness: 'hard' })}
+            >
+              Hard
+            </button>
+          </div>
+          <div className="undo-row">
+            <button type="button" className="secondary" disabled={!eraseHistory.canUndo} onClick={onEraseUndo}>
+              Undo
+            </button>
+            <button type="button" className="secondary" disabled={!eraseHistory.canRedo} onClick={onEraseRedo}>
+              Redo
+            </button>
+          </div>
+        </div>
+      )}
+
       <ul className="placed-files">
         {state.toPlace.map((f) => (
           <li key={f}>{f}</li>

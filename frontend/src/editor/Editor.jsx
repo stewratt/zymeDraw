@@ -5,6 +5,7 @@ import GridPicker from './GridPicker.jsx'
 import { deckReducer, initialState } from './deck.js'
 import { cardRegistry } from './cards/registry.jsx'
 import { placeImages } from './placement.js'
+import { createEraseSession } from './brushCore.js'
 import {
   bake,
   createMaster,
@@ -36,6 +37,19 @@ function Editor({ config, onBackToSetup }) {
   // False while a placement session's images are still loading, so End
   // can't bake a half-loaded arrangement.
   const [placementReady, setPlacementReady] = useState(true)
+
+  // The erase brush (brushCore.js), live during placement sessions.
+  // Controls live in React; the session reads them through a ref so
+  // mid-stroke slider changes don't rebuild anything.
+  const eraseSessionRef = useRef(null)
+  const eraseControlsRef = useRef(null)
+  const [eraseControls, setEraseControls] = useState({ mode: 'arrange', size: 40, hardness: 'soft' })
+  const [eraseHistory, setEraseHistory] = useState({ canUndo: false, canRedo: false })
+
+  useEffect(() => {
+    eraseControlsRef.current = eraseControls
+    eraseSessionRef.current?.setActive(eraseControls.mode === 'erase')
+  }, [eraseControls])
 
   // Export state. Driven by a useEffect that fires when the deck
   // transitions to COMPLETE. Reset on Restart.
@@ -90,21 +104,33 @@ function Editor({ config, onBackToSetup }) {
   }, [state.phase, state.grid.length, state.rolls, imageList])
 
   // Entering a placement session (opening or stash return) loads the chosen
-  // images onto the canvas as free-transform objects. The cancelled flag
-  // covers restarts while images are still in flight.
+  // images onto the canvas as free-transform objects and arms the erase
+  // brush over them. The cancelled flag covers restarts while images are
+  // still in flight.
   useEffect(() => {
     if (state.phase !== 'PLACEMENT' && state.phase !== 'STASH_RETURN') return
     const canvas = canvasStageRef.current?.getCanvas()
     if (!canvas) return
     let cancelled = false
     setPlacementReady(false)
+    setEraseControls({ mode: 'arrange', size: 40, hardness: 'soft' })
+    setEraseHistory({ canUndo: false, canRedo: false })
     placeImages(canvas, state.toPlace, () => cancelled)
+      .then((imgs) => {
+        if (cancelled || imgs.length === 0) return
+        eraseSessionRef.current = createEraseSession(canvas, imgs, {
+          getControls: () => eraseControlsRef.current,
+          onHistoryChange: (canUndo, canRedo) => setEraseHistory({ canUndo, canRedo })
+        })
+      })
       .catch((err) => console.warn('Placement image failed to load:', err))
       .finally(() => {
         if (!cancelled) setPlacementReady(true)
       })
     return () => {
       cancelled = true
+      eraseSessionRef.current?.dispose()
+      eraseSessionRef.current = null
     }
   }, [state.phase])
 
@@ -238,6 +264,16 @@ function Editor({ config, onBackToSetup }) {
       const t = e.target
       const tag = t?.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t?.isContentEditable) {
+        return
+      }
+      // Cmd/Ctrl+Z (+Shift for redo): within-card brush undo during
+      // placement sessions. Never crosses an End.
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'z' || e.key === 'Z')) {
+        if (state.phase === 'PLACEMENT' || state.phase === 'STASH_RETURN') {
+          e.preventDefault()
+          if (e.shiftKey) eraseSessionRef.current?.redo()
+          else eraseSessionRef.current?.undo()
+        }
         return
       }
       if (e.metaKey || e.ctrlKey || e.altKey) return
@@ -378,6 +414,11 @@ function Editor({ config, onBackToSetup }) {
             info={cardInfo}
             ready={cardReady}
             placementReady={placementReady}
+            eraseControls={eraseControls}
+            eraseHistory={eraseHistory}
+            onEraseControlsChange={(patch) => setEraseControls((prev) => ({ ...prev, ...patch }))}
+            onEraseUndo={() => eraseSessionRef.current?.undo()}
+            onEraseRedo={() => eraseSessionRef.current?.redo()}
             exportState={exportState}
             onControlChange={handleControlChange}
             onRoll={() => dispatch({ type: 'ROLL_OPENING' })}

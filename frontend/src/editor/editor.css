@@ -614,6 +614,60 @@
   letter-spacing: 0.05em;
 }
 
+/* ---------- placement: mode toggle + brush tools ---------- */
+
+.mode-toggle {
+  display: flex;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.mode-toggle button {
+  flex: 1;
+  background: transparent;
+  color: #888;
+  border: none;
+  padding: 8px;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.mode-toggle button + button {
+  border-left: 1px solid #2a2a2a;
+}
+.mode-toggle button.active {
+  background: rgba(74, 108, 255, 0.15);
+  color: #cfd6ff;
+}
+.mode-toggle button:disabled {
+  color: #444;
+  cursor: not-allowed;
+}
+.mode-toggle.small button {
+  padding: 6px;
+  font-size: 0.62rem;
+}
+
+.brush-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.undo-row {
+  display: flex;
+  gap: 8px;
+}
+.undo-row button {
+  flex: 1;
+}
+.deck-panel button.secondary:disabled {
+  border-color: #2a2a2a;
+  color: #555;
+  cursor: not-allowed;
+  background: transparent;
+}
+
 /* ---------- session complete ---------- */
 
 .deck-panel .export-path {
