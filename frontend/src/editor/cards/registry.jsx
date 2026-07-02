@@ -24,10 +24,10 @@
 // A card's commit hook may be async (Deeper awaits the sidecar's detail
 // restore); Editor awaits it and shows a generic "committing" state.
 //
-// The one card not yet listed (rails) is a placeholder that Editor treats
-// as "ready immediately, no tools" — Phase 10 fills it in.
+// All ten card designs are registered — the deck is complete.
 
 import { NoiseTools, noiseHooks } from './noiseBrush.jsx'
+import { RailsTools, beginRails, cleanupRails, commitRails, updateRails } from './rails.jsx'
 import { DeeperTools, beginDeeper, cleanupDeeper, commitDeeper } from './deeper.jsx'
 import {
   StampOverlay,
@@ -83,6 +83,16 @@ export const cardRegistry = {
     update: updateGhost,
     commit: commitGhost,
     cleanup: cleanupGhost
+  },
+
+  rails: {
+    controls: ['color', 'opacity', 'mode', 'size', 'hardness'],
+    defaultControls: { color: '#c43c28', opacity: 1, mode: 'arrange', size: 40, hardness: 'soft' },
+    Tools: RailsTools,
+    begin: beginRails,
+    update: updateRails,
+    commit: commitRails,
+    cleanup: cleanupRails
   },
 
   deeper: {
