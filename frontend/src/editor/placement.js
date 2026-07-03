@@ -35,3 +35,20 @@ export async function placeImages(canvas, filenames, isCancelled = () => false) 
   canvas.requestRenderAll()
   return imgs
 }
+
+// A small preview (data URL) of a placed image's source pixels, for the
+// placement layers panel. Drawn from the image's own element at a fitted
+// size, so it reads like a Photoshop layer thumbnail.
+export function layerThumbUrl(img, box = 44) {
+  const src = img.getElement()
+  const sw = src.width || src.naturalWidth || 1
+  const sh = src.height || src.naturalHeight || 1
+  const scale = Math.min(box / sw, box / sh)
+  const w = Math.max(1, Math.round(sw * scale))
+  const h = Math.max(1, Math.round(sh * scale))
+  const el = document.createElement('canvas')
+  el.width = w
+  el.height = h
+  el.getContext('2d').drawImage(src, 0, 0, w, h)
+  return el.toDataURL('image/png')
+}

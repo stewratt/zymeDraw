@@ -10,6 +10,7 @@
 // component the current registry entry provides.
 
 import { TUNING, progressLabel, rollNotation } from './deck.js'
+import PlacementLayers from './PlacementLayers.jsx'
 
 function DeckPanel({
   state,
@@ -20,6 +21,8 @@ function DeckPanel({
   ready,
   committing,
   placementReady,
+  placedLayers,
+  onReorderLayer,
   eraseControls,
   eraseHistory,
   onEraseControlsChange,
@@ -45,6 +48,8 @@ function DeckPanel({
         <Placement
           state={state}
           placementReady={placementReady}
+          placedLayers={placedLayers}
+          onReorderLayer={onReorderLayer}
           eraseControls={eraseControls}
           eraseHistory={eraseHistory}
           onEraseControlsChange={onEraseControlsChange}
@@ -145,6 +150,8 @@ function OpeningPickPanel({ state }) {
 function Placement({
   state,
   placementReady,
+  placedLayers,
+  onReorderLayer,
   eraseControls,
   eraseHistory,
   onEraseControlsChange,
@@ -225,11 +232,20 @@ function Placement({
         </div>
       )}
 
-      <ul className="placed-files">
-        {state.toPlace.map((f) => (
-          <li key={f}>{f}</li>
-        ))}
-      </ul>
+      {placedLayers.length > 0 ? (
+        <>
+          {placedLayers.length >= 2 && (
+            <p className="hint layers-hint">Drag to reorder the stack.</p>
+          )}
+          <PlacementLayers layers={placedLayers} onReorder={onReorderLayer} />
+        </>
+      ) : (
+        <ul className="placed-files">
+          {state.toPlace.map((f) => (
+            <li key={f}>{f}</li>
+          ))}
+        </ul>
+      )}
       <button
         type="button"
         className="primary commit"

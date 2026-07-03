@@ -4,7 +4,7 @@ import DeckPanel from './DeckPanel.jsx'
 import GridPicker from './GridPicker.jsx'
 import { deckReducer, initialState } from './deck.js'
 import { cardRegistry } from './cards/registry.jsx'
-import { placeImages } from './placement.js'
+import { placeImages, layerThumbUrl } from './placement.js'
 import { sampleImages } from './sampling.js'
 import { createEraseSession } from './brushCore.js'
 import {
@@ -38,6 +38,11 @@ function Editor({ config, onBackToSetup }) {
   // False while a placement session's images are still loading, so End
   // can't bake a half-loaded arrangement.
   const [placementReady, setPlacementReady] = useState(true)
+
+  // The images being placed this session, top-to-bottom, for the layers
+  // panel. Each: { id, name, thumb, img (the Fabric object) }. Reordering
+  // restacks the Fabric objects; only meaningful with two or more images.
+  const [placedLayers, setPlacedLayers] = useState([])
 
   // The erase brush (brushCore.js), live during placement sessions.
   // Controls live in React; the session reads them through a ref so
@@ -104,6 +109,7 @@ function Editor({ config, onBackToSetup }) {
     if (!canvas) return
     let cancelled = false
     setPlacementReady(false)
+    setPlacedLayers([])
     setEraseControls({ mode: 'arrange', size: 40, hardness: 'soft' })
     setEraseHistory({ canUndo: false, canRedo: false })
     placeImages(canvas, state.toPlace, () => cancelled)
@@ -113,6 +119,15 @@ function Editor({ config, onBackToSetup }) {
           getControls: () => eraseControlsRef.current,
           onHistoryChange: (canUndo, canRedo) => setEraseHistory({ canUndo, canRedo })
         })
+        // placeImages adds bottom-to-top; the panel reads top-to-bottom.
+        const layers = imgs.map((img, i) => ({
+          id: `${state.toPlace[i]}#${i}`,
+          name: state.toPlace[i],
+          thumb: layerThumbUrl(img),
+          img
+        }))
+        layers.reverse()
+        setPlacedLayers(layers)
       })
       .catch((err) => console.warn('Placement image failed to load:', err))
       .finally(() => {
@@ -122,6 +137,7 @@ function Editor({ config, onBackToSetup }) {
       cancelled = true
       eraseSessionRef.current?.dispose()
       eraseSessionRef.current = null
+      setPlacedLayers([])
     }
   }, [state.phase])
 
@@ -348,6 +364,23 @@ function Editor({ config, onBackToSetup }) {
     dispatch({ type: 'COMMIT' })
   }
 
+  // Reorder the placement layers panel (top-to-bottom). Restack the Fabric
+  // objects to match: the canvas list is bottom-to-top, so the reversed panel
+  // order is the target index sequence. moveObjectTo removes-then-inserts, so
+  // walking the stack bottom-up lands each object in its final slot.
+  function handleReorderLayer(from, to) {
+    if (from === to) return
+    const next = [...placedLayers]
+    const [moved] = next.splice(from, 1)
+    next.splice(to, 0, moved)
+    const canvas = canvasStageRef.current?.getCanvas()
+    if (canvas) {
+      ;[...next].reverse().forEach((layer, i) => canvas.moveObjectTo(layer.img, i))
+      canvas.requestRenderAll()
+    }
+    setPlacedLayers(next)
+  }
+
   // End of a placement session (opening or stash return): same universal
   // bake, no card hook involved.
   function handleEndPlacement() {
@@ -433,6 +466,8 @@ function Editor({ config, onBackToSetup }) {
             ready={cardReady}
             committing={committing}
             placementReady={placementReady}
+            placedLayers={placedLayers}
+            onReorderLayer={handleReorderLayer}
             eraseControls={eraseControls}
             eraseHistory={eraseHistory}
             onEraseControlsChange={(patch) => setEraseControls((prev) => ({ ...prev, ...patch }))}
