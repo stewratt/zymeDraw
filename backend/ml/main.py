@@ -13,12 +13,13 @@ import threading
 from fastapi import FastAPI, Request, Response
 from starlette.concurrency import run_in_threadpool
 
+from styler import STYLES, Styler
 from upscaler import Upscaler
 
 app = FastAPI(title="Deck ML sidecar")
 
 _lock = threading.Lock()
-_models = {"rembg": None, "upscaler": None}
+_models = {"rembg": None, "upscaler": None, "styler": None}
 
 
 def _rembg_session():
@@ -37,12 +38,20 @@ def _upscaler():
     return _models["upscaler"]
 
 
+def _styler():
+    with _lock:
+        if _models["styler"] is None:
+            _models["styler"] = Styler()
+    return _models["styler"]
+
+
 @app.get("/health")
 def health():
     return {
         "ok": True,
         "cutoutLoaded": _models["rembg"] is not None,
         "upscaleLoaded": _models["upscaler"] is not None,
+        "styles": sorted(STYLES),
     }
 
 
@@ -68,6 +77,18 @@ async def upscale(request: Request):
         return Response(status_code=400, content="Empty body.")
     try:
         png = await run_in_threadpool(lambda: _upscaler().upscale_png(data))
+    except ValueError as err:
+        return Response(status_code=400, content=str(err))
+    return Response(content=png, media_type="image/png")
+
+
+@app.post("/style")
+async def style(request: Request, style: str = "pointilism"):
+    data = await request.body()
+    if not data:
+        return Response(status_code=400, content="Empty body.")
+    try:
+        png = await run_in_threadpool(lambda: _styler().stylize_png(style, data))
     except ValueError as err:
         return Response(status_code=400, content=str(err))
     return Response(content=png, media_type="image/png")

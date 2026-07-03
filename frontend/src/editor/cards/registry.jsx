@@ -24,7 +24,8 @@
 // A card's commit hook may be async (Deeper awaits the sidecar's detail
 // restore); Editor awaits it and shows a generic "committing" state.
 //
-// All ten card designs are registered — the deck is complete.
+// All ten planned card designs are registered, plus the style-transfer
+// experiment (Transfer, this branch).
 
 import { NoiseTools, noiseHooks } from './noiseBrush.jsx'
 import { RailsTools, beginRails, cleanupRails, commitRails, updateRails } from './rails.jsx'
@@ -65,6 +66,21 @@ import {
   cleanupReposition,
   updateReposition
 } from './reposition.jsx'
+import {
+  TransferTools,
+  beginTransfer,
+  cleanupTransfer,
+  commitTransfer,
+  updateTransfer
+} from './transfer.jsx'
+import {
+  ShatteredTransferOverlay,
+  ShatteredTransferTools,
+  beginShatteredTransfer,
+  cleanupShatteredTransfer,
+  commitShatteredTransfer,
+  updateShatteredTransfer
+} from './shatteredTransfer.jsx'
 
 export const cardRegistry = {
   ghost: {
@@ -162,5 +178,26 @@ export const cardRegistry = {
     begin: beginReposition,
     update: updateReposition,
     cleanup: cleanupReposition
+  },
+
+  transfer: {
+    controls: ['opacity', 'size', 'hardness', 'strength'],
+    defaultControls: { opacity: 1, size: 60, hardness: 'soft', strength: 1 },
+    Tools: TransferTools,
+    begin: beginTransfer,
+    update: updateTransfer,
+    commit: commitTransfer,
+    cleanup: cleanupTransfer
+  },
+
+  shatteredTransfer: {
+    controls: ['opacity', 'mode', 'size', 'hardness', 'strength'],
+    defaultControls: { opacity: 1, mode: 'arrange', size: 40, hardness: 'soft', strength: 1 },
+    Tools: ShatteredTransferTools,
+    Overlay: ShatteredTransferOverlay,
+    begin: beginShatteredTransfer,
+    update: updateShatteredTransfer,
+    commit: commitShatteredTransfer,
+    cleanup: cleanupShatteredTransfer
   }
 }

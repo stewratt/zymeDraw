@@ -38,6 +38,12 @@ export const MOD_CARDS = [
   { id: 'globalHsv', label: 'HSV', copies: 1 },
   { id: 'reposition', label: 'Reposition', copies: 1 },
   { id: 'rails', label: 'Rails', copies: 1 }
+  // Stashed until Stew trains his own style model — the demo ONNX styles
+  // don't look good enough to ship. Card files, registry entries, and the
+  // /style sidecar endpoint all stay in place; re-add these lines to deal
+  // them again. See CLAUDE.md §0 (style-transfer experiment).
+  // { id: 'transfer', label: 'Transfer', copies: 2 },
+  // { id: 'shatteredTransfer', label: 'Shattered Transfer', copies: 2 }
 ]
 
 export const DEATH_CARD = { id: 'coda', label: 'Coda' }

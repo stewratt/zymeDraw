@@ -146,6 +146,31 @@ alpha look first (threshold vs. edges vs. posterize-band, on real input
 images) and check in with Stew on the recipe before building the card.
 Final implementation is pure canvas2d pixel work — no sidecar needed.
 
+**Style-transfer experiment (branch `style-transfer`, off `v2`,
+2026-07-03):** fast-neural-style (ONNX zoo, pointillism to start; Stew
+plans to train his own styles later) added to the sidecar — model
+committed at `backend/ml/models/style-pointilism.onnx` (patched to
+dynamic input dims, provenance in `tools/patch_style_model_dynamic.py`),
+`/style` endpoint in `styler.py`/`main.py`, Express proxy extended
+(`style` op + query-string forwarding). Two experiment cards:
+**Transfer** (`cards/transfer.jsx` — whole-canvas styled overlay,
+influence + standing erase brush) and **Shattered Transfer**
+(`cards/shatteredTransfer.jsx` — grid pick → the image is read as a
+stencil via the shared `editor/shatter.js` (extracted from Rails) → a
+live free-transform window through which the styled redraw shows;
+plan in `shattered_transfer_plan.md`). Shared `editor/styleTransfer.js`
+fetch; `createStrokeEngine`/`makeLayer`/`clearLayer` now exported from
+brushCore for card-owned composites.
+
+**Status — stashed for later (2026-07-03):** both Transfer cards have been
+**removed from the deck** — the demo ONNX styles (pointillism, rain-princess)
+don't look good enough to ship. **Stew intends to return to this feature once
+he has trained his own style model.** Nothing was deleted: the two card files,
+their registry entries, the shared `styleTransfer.js`/`shatter.js` modules,
+the `/style` sidecar endpoint, and the committed demo models all remain in
+place. Only the two `MOD_CARDS` lines in `deck.js` are commented out — re-add
+them (and swap in the trained model) to bring the feature back.
+
 > Keep this §0 updated as v2 phases land; it's the resume point for every
 > fresh session.
 
@@ -434,6 +459,12 @@ what to keep (registry pattern, purity, commitment) and what failed
 - **Within-card undo/redo exists for brushes only, never across End.**
 - **Global modifiers are banned except color adjustments**, which must carry
   an influence/opacity slider.
+- **Color pickers start on a random hue every time.** Any control named
+  `color` (Color Overlay, Rails, and any future card) is seeded with a fresh
+  random color when the card is dealt — its `defaultControls` value is only a
+  placeholder. Randomization is centralized in `Editor.jsx`
+  (`randomizeColors`, keyed on the control name `color`), so a new color card
+  gets this for free just by naming its control `color`.
 - **Browser tab dependency**: closing the tab loses in-progress work. By
   design — commitment is the mechanic.
 

@@ -12,7 +12,9 @@
 // touches what's already painted. Layer up as many settings as you like in
 // one pass.
 //
-// One stroke engine, two consumers:
+// One stroke engine, two built-in consumers (plus card-owned ones —
+// createStrokeEngine is exported for cards whose composite the built-ins
+// can't express, e.g. Shattered Transfer's styled-window overlay):
 //   - ERASE mode  (placement sessions): each stroke punches OUT of a placed
 //     image (destination-out) at its own strength — a 50% stroke erases
 //     half. A stroke never stacks with itself; crossing strokes accumulate.
@@ -38,14 +40,14 @@ function toLocal(img, scenePoint) {
   return { x: p.x + img.width / 2, y: p.y + img.height / 2 }
 }
 
-function makeLayer(width, height) {
+export function makeLayer(width, height) {
   const c = document.createElement('canvas')
   c.width = width
   c.height = height
   return c
 }
 
-function clearLayer(layer) {
+export function clearLayer(layer) {
   layer.getContext('2d').clearRect(0, 0, layer.width, layer.height)
 }
 
@@ -138,9 +140,12 @@ function createBrushCursor(canvas, getControls) {
 //
 // A stroke record: { points, radius, hardness, settings }. `settings` is
 // snapshotSettings(controls) — the consumer's per-stroke snapshot (erase:
-// strength; reveal: influence + effect params). `resolveTarget(scenePoint)`
-// picks which object a stroke sticks to (the whole stroke stays on it).
-function createStrokeEngine(canvas, { states, resolveTarget, getControls, snapshotSettings, onHistoryChange }) {
+// strength; reveal: influence + effect params).
+// `resolveTarget(scenePoint, brushRadius)` picks which object a stroke
+// sticks to (the whole stroke stays on it). It may say "none yet": a stroke
+// begun on empty canvas keeps recording and attaches to the first target it
+// resolves to mid-drag, so strokes can start outside every image.
+export function createStrokeEngine(canvas, { states, resolveTarget, getControls, snapshotSettings, onHistoryChange }) {
   const undoStack = [] // { img, stroke } in global stroke order
   let redoStack = []
   let active = false
@@ -168,18 +173,16 @@ function createStrokeEngine(canvas, { states, resolveTarget, getControls, snapsh
     s.recomposite(null)
   }
 
-  function onMouseDown(opt) {
-    if (!active || drawing) return
-    const scenePoint = opt.scenePoint ?? canvas.getScenePoint(opt.e)
-    const img = resolveTarget(scenePoint)
-    if (!img) return
-    const controls = getControls()
+  // Attach a stroke to `img`, replaying every scene point recorded so far —
+  // a stroke may have travelled over empty canvas before reaching a target,
+  // and the path segment that crosses the edge must still land.
+  function beginStroke(img, scenePoints, controls) {
     // Brush size is felt in display pixels; convert to source pixels so the
     // dab matches what's under the cursor regardless of the target's scale.
     const radius = controls.size / 2 / ((Math.abs(img.scaleX) + Math.abs(img.scaleY)) / 2)
-    const point = toLocal(img, scenePoint)
+    const points = scenePoints.map((sp) => toLocal(img, sp))
     const stroke = {
-      points: [point],
+      points,
       radius,
       hardness: controls.hardness,
       settings: snapshotSettings(controls)
@@ -187,14 +190,36 @@ function createStrokeEngine(canvas, { states, resolveTarget, getControls, snapsh
     const s = states.get(img)
     clearLayer(s.strokeMask)
     const maskCtx = s.strokeMask.getContext('2d')
-    drawDab(maskCtx, point.x, point.y, stroke.radius, stroke.hardness)
-    drawing = { img, stroke, maskCtx, lastPoint: point }
+    for (let i = 0; i < points.length; i++) {
+      drawSegment(maskCtx, points[Math.max(0, i - 1)], points[i], radius, stroke.hardness)
+    }
+    drawing = { img, stroke, maskCtx, lastPoint: points[points.length - 1] }
     s.recomposite(stroke)
+  }
+
+  function onMouseDown(opt) {
+    if (!active || drawing) return
+    const scenePoint = opt.scenePoint ?? canvas.getScenePoint(opt.e)
+    const controls = getControls()
+    const img = resolveTarget(scenePoint, controls.size / 2)
+    if (img) {
+      beginStroke(img, [scenePoint], controls)
+    } else {
+      // Pressed on empty canvas: keep recording the path and attach it to
+      // the first target the brush circle touches mid-drag.
+      drawing = { img: null, controls, scenePoints: [scenePoint] }
+    }
   }
 
   function onMouseMove(opt) {
     if (!active || !drawing) return
     const scenePoint = opt.scenePoint ?? canvas.getScenePoint(opt.e)
+    if (!drawing.img) {
+      drawing.scenePoints.push(scenePoint)
+      const img = resolveTarget(scenePoint, drawing.controls.size / 2)
+      if (img) beginStroke(img, drawing.scenePoints, drawing.controls)
+      return
+    }
     const point = toLocal(drawing.img, scenePoint)
     drawSegment(drawing.maskCtx, drawing.lastPoint, point, drawing.stroke.radius, drawing.stroke.hardness)
     drawing.stroke.points.push(point)
@@ -204,6 +229,11 @@ function createStrokeEngine(canvas, { states, resolveTarget, getControls, snapsh
 
   function onMouseUp() {
     if (!drawing) return
+    if (!drawing.img) {
+      // The stroke never reached a target — nothing to lock in.
+      drawing = null
+      return
+    }
     const { img, stroke } = drawing
     const s = states.get(img)
     // The stroke locks at release: baked with the settings it was painted
@@ -329,11 +359,19 @@ export function createEraseSession(canvas, images, { getControls, onHistoryChang
 
   return createStrokeEngine(canvas, {
     states,
-    // Topmost placed image under the pointer takes the whole stroke.
-    resolveTarget(scenePoint) {
+    // Topmost placed image the brush circle touches takes the whole stroke —
+    // circle, not pointer point, so a big soft brush hovering just outside an
+    // edge can graze it with only its falloff.
+    resolveTarget(scenePoint, brushRadius) {
       const objects = canvas.getObjects()
       for (let i = objects.length - 1; i >= 0; i--) {
-        if (states.has(objects[i]) && objects[i].containsPoint(scenePoint)) return objects[i]
+        const img = objects[i]
+        if (!states.has(img)) continue
+        const p = toLocal(img, scenePoint)
+        const r = brushRadius / ((Math.abs(img.scaleX) + Math.abs(img.scaleY)) / 2)
+        const dx = Math.max(-p.x, p.x - img.width, 0)
+        const dy = Math.max(-p.y, p.y - img.height, 0)
+        if (Math.hypot(dx, dy) <= r) return img
       }
       return null
     },

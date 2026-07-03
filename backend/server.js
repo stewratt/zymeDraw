@@ -207,9 +207,10 @@ app.get('/api/ml/health', async (req, res) => {
 
 // Body is the image itself (blob), not JSON — hence express.raw here.
 // Generous timeout: a cold model load + CPU inference can take minutes.
-app.post('/api/ml/:op(cutout|upscale)', express.raw({ type: '*/*', limit: '64mb' }), async (req, res) => {
+app.post('/api/ml/:op(cutout|upscale|style)', express.raw({ type: '*/*', limit: '64mb' }), async (req, res) => {
   try {
-    const r = await fetch(`${ML_BASE}/${req.params.op}`, {
+    const query = req.originalUrl.includes('?') ? '?' + req.originalUrl.split('?')[1] : ''
+    const r = await fetch(`${ML_BASE}/${req.params.op}${query}`, {
       method: 'POST',
       headers: { 'content-type': req.get('content-type') || 'application/octet-stream' },
       body: req.body,

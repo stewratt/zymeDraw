@@ -61,10 +61,13 @@ export async function beginStamp(ctx) {
   if (url) URL.revokeObjectURL(url)
   if (ctx.isCancelled?.()) return null
 
-  const scale = Math.min(
-    (ctx.canvasWidth * 0.65) / img.width,
-    (ctx.canvasHeight * 0.65) / img.height
-  )
+  // Start small — a stamp on the canvas, not a whole new image. Scale to
+  // fit 65% of the canvas, then take half of that; resize up as needed.
+  const scale =
+    Math.min(
+      (ctx.canvasWidth * 0.65) / img.width,
+      (ctx.canvasHeight * 0.65) / img.height
+    ) / 2
   img.set({
     originX: 'center',
     originY: 'center',
