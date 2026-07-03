@@ -205,6 +205,17 @@ function Placement({
             />
             <span className="ctrl-value mono">{eraseControls.size}px</span>
           </label>
+          <label className="ctrl">
+            <span className="ctrl-label">Strength</span>
+            <input
+              type="range"
+              min="5"
+              max="100"
+              value={Math.round((eraseControls.strength ?? 1) * 100)}
+              onChange={(e) => onEraseControlsChange({ strength: Number(e.target.value) / 100 })}
+            />
+            <span className="ctrl-value mono">{Math.round((eraseControls.strength ?? 1) * 100)}%</span>
+          </label>
           <div className="mode-toggle small">
             <button
               type="button"

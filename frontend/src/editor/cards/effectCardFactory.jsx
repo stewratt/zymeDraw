@@ -5,41 +5,31 @@
 // session, undo/redo reporting, control plumbing — is identical, so it
 // lives here and each card file stays tiny.
 //
-// applyEffect(effectedEl, master, controls) is called once at begin and
-// again whenever a non-brush control changes (e.g. the HSV sliders). The
-// brush controls (size / hardness / intensity) never trigger a recompute:
-// intensity is a globalAlpha re-blend inside the reveal session.
+// Settings are PER STROKE (brushCore.js): the sliders configure the brush
+// in your hand — only the next stroke. The session calls applyEffect per
+// unique effect-params combo and caches the copies; painted strokes never
+// change.
 
 import { createRevealSession } from '../brushCore.js'
 
-const BRUSH_KEYS = new Set(['size', 'hardness', 'intensity'])
-
 export function makeEffectCardHooks(applyEffect) {
   function begin(ctx) {
-    const effected = document.createElement('canvas')
-    effected.width = ctx.master.width
-    effected.height = ctx.master.height
-    applyEffect(effected, ctx.master, ctx.controls)
     const controlsRef = { current: ctx.controls }
-    const session = createRevealSession(ctx.canvas, effected, {
+    const session = createRevealSession(ctx.canvas, {
+      applyEffect,
+      master: ctx.master,
       getControls: () => controlsRef.current,
-      getIntensity: () => controlsRef.current.intensity,
       onHistoryChange: (canUndo, canRedo) => ctx.report({ canUndo, canRedo })
     })
     ctx.report({ undo: session.undo, redo: session.redo, canUndo: false, canRedo: false })
-    return { session, controlsRef, effected, master: ctx.master, lastControls: ctx.controls }
+    return { session, controlsRef }
   }
 
   function update(ctx) {
     const s = ctx.session
     if (!s) return
-    const effectChanged = Object.keys(ctx.controls).some(
-      (k) => !BRUSH_KEYS.has(k) && ctx.controls[k] !== s.lastControls[k]
-    )
+    // The next stroke reads the ref when it begins; nothing repaints now.
     s.controlsRef.current = ctx.controls
-    s.lastControls = ctx.controls
-    if (effectChanged) applyEffect(s.effected, s.master, ctx.controls)
-    s.session.refresh()
   }
 
   function commit(ctx) {
@@ -58,7 +48,7 @@ export function makeEffectCardHooks(applyEffect) {
 }
 
 // The brush controls every effect card shares. Card Tools render their own
-// effect sliders above this.
+// effect sliders above this. All of it configures the next stroke only.
 export function BrushControls({ controls, info, onControlChange }) {
   return (
     <>

@@ -36,6 +36,17 @@ export function ArrangeEraseControls({ controls, info, onControlChange }) {
             />
             <span className="ctrl-value mono">{controls.size}px</span>
           </label>
+          <label className="ctrl">
+            <span className="ctrl-label">Strength</span>
+            <input
+              type="range"
+              min="5"
+              max="100"
+              value={Math.round((controls.strength ?? 1) * 100)}
+              onChange={(e) => onControlChange('strength', Number(e.target.value) / 100)}
+            />
+            <span className="ctrl-value mono">{Math.round((controls.strength ?? 1) * 100)}%</span>
+          </label>
           <div className="mode-toggle small">
             <button
               type="button"

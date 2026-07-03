@@ -1,22 +1,32 @@
 // The universal brush core.
 //
 // The rule that makes everything else work: STROKES NEVER TOUCH SOURCE
-// PIXELS. Every brush target has an offscreen grayscale MASK canvas at the
-// target's native resolution; strokes paint dabs into the mask, and a
-// COMPOSITE canvas derived from (source, mask) is what Fabric actually
-// renders. Because composites live at native resolution, the 3× bake picks
-// up brushwork at full detail for free.
+// PIXELS. Every brush target has offscreen canvases at the target's native
+// resolution; strokes paint dabs into masks, and a COMPOSITE canvas derived
+// from them is what Fabric actually renders. Because composites live at
+// native resolution, the 3× bake picks up brushwork at full detail for free.
+//
+// PER-STROKE SETTINGS: the sliders describe the brush in your hand, not the
+// picture. Each stroke snapshots its settings the moment it begins and locks
+// them at release — sliding a slider sets up the NEXT stroke, it never
+// touches what's already painted. Layer up as many settings as you like in
+// one pass.
 //
 // One stroke engine, two consumers:
-//   - ERASE mode  (placement sessions): mask is punched OUT of a placed
-//     image (destination-out). Painting hides pixels.
-//   - REVEAL mode (effect cards): an effected copy of the master sits over
-//     the canvas, fully masked out; painting reveals it (destination-in).
-//     An intensity control scales the whole reveal via globalAlpha.
+//   - ERASE mode  (placement sessions): each stroke punches OUT of a placed
+//     image (destination-out) at its own strength — a 50% stroke erases
+//     half. A stroke never stacks with itself; crossing strokes accumulate.
+//   - REVEAL mode (effect cards): each stroke stamps effected pixels — the
+//     effect computed FROM THE MASTER at that stroke's own settings — into
+//     an accumulation layer at that stroke's influence. Strokes are agnostic
+//     of each other: blur over blur covers, it doesn't compound.
 //
-// Within-card undo/redo falls out of the same design: a stroke is recorded
-// points, so undo = drop the last stroke and replay the rest into a fresh
-// mask. History never survives an End — commitment stays absolute.
+// While a brush is active, a thin circle follows the pointer at the brush's
+// on-screen size, so coverage is visible before and during a stroke.
+//
+// Within-card undo/redo: a stroke is recorded points + settings, so undo =
+// drop the last stroke and replay the rest into a fresh committed layer.
+// History never survives an End — commitment stays absolute.
 
 import * as fabric from 'fabric'
 
@@ -26,6 +36,17 @@ function toLocal(img, scenePoint) {
   const inv = fabric.util.invertTransform(img.calcTransformMatrix())
   const p = fabric.util.transformPoint(scenePoint, inv)
   return { x: p.x + img.width / 2, y: p.y + img.height / 2 }
+}
+
+function makeLayer(width, height) {
+  const c = document.createElement('canvas')
+  c.width = width
+  c.height = height
+  return c
+}
+
+function clearLayer(layer) {
+  layer.getContext('2d').clearRect(0, 0, layer.width, layer.height)
 }
 
 function drawDab(ctx, x, y, radius, hardness) {
@@ -54,14 +75,77 @@ function drawSegment(ctx, from, to, radius, hardness) {
   }
 }
 
+// Render a whole recorded stroke into a mask canvas (undo/redo replay; live
+// drawing stamps dabs incrementally instead).
+function renderStroke(mask, stroke) {
+  const ctx = mask.getContext('2d')
+  ctx.clearRect(0, 0, mask.width, mask.height)
+  for (let i = 0; i < stroke.points.length; i++) {
+    const from = stroke.points[Math.max(0, i - 1)]
+    drawSegment(ctx, from, stroke.points[i], stroke.radius, stroke.hardness)
+  }
+}
+
+// The brush-size circle. It lives in Fabric's wrapper div and follows the
+// pointer via DOM events (which keep firing mid-drag). The canvas buffer is
+// CSS-scaled to fit the viewport, so the brush's logical size converts to
+// on-screen pixels on every move.
+function createBrushCursor(canvas, getControls) {
+  const el = document.createElement('div')
+  el.className = 'brush-cursor'
+  canvas.wrapperEl.appendChild(el)
+  let enabled = false
+
+  function move(e) {
+    if (!enabled) return
+    const rect = canvas.wrapperEl.getBoundingClientRect()
+    const d = Math.max(4, getControls().size * (rect.width / canvas.getWidth()))
+    el.style.width = `${d}px`
+    el.style.height = `${d}px`
+    el.style.left = `${e.clientX - rect.left}px`
+    el.style.top = `${e.clientY - rect.top}px`
+    el.style.display = 'block'
+  }
+  function hide() {
+    el.style.display = 'none'
+  }
+
+  canvas.wrapperEl.addEventListener('pointermove', move)
+  canvas.wrapperEl.addEventListener('pointerleave', hide)
+
+  return {
+    setEnabled(next) {
+      enabled = next
+      if (!next) hide()
+    },
+    dispose() {
+      canvas.wrapperEl.removeEventListener('pointermove', move)
+      canvas.wrapperEl.removeEventListener('pointerleave', hide)
+      el.remove()
+    }
+  }
+}
+
 // The shared stroke engine. `states` maps each brushable Fabric object to
-// { mask, strokes, recomposite }; `resolveTarget(scenePoint)` picks which
-// object a stroke sticks to (the whole stroke stays on it).
-function createStrokeEngine(canvas, { states, resolveTarget, getControls, onHistoryChange }) {
+// its consumer state:
+//   strokeMask       : scratch canvas holding the ONE live stroke, full alpha
+//   strokes          : this target's locked stroke records, in order
+//   bakeStroke(s)    : stamp strokeMask into the committed layer using
+//                      s.settings (exactly once per stroke, at release)
+//   clearCommitted() : reset the committed layer (undo/redo replay)
+//   recomposite(live): rebuild the visible composite; `live` is the stroke
+//                      record still riding on strokeMask, or null
+//
+// A stroke record: { points, radius, hardness, settings }. `settings` is
+// snapshotSettings(controls) — the consumer's per-stroke snapshot (erase:
+// strength; reveal: influence + effect params). `resolveTarget(scenePoint)`
+// picks which object a stroke sticks to (the whole stroke stays on it).
+function createStrokeEngine(canvas, { states, resolveTarget, getControls, snapshotSettings, onHistoryChange }) {
   const undoStack = [] // { img, stroke } in global stroke order
   let redoStack = []
   let active = false
-  let current = null // { img, stroke, maskCtx, lastPoint } while the pointer is down
+  let drawing = null // { img, stroke, maskCtx, lastPoint } while the pointer is down
+  const cursor = createBrushCursor(canvas, getControls)
   const savedCanvasProps = {
     skipTargetFind: canvas.skipTargetFind,
     defaultCursor: canvas.defaultCursor
@@ -71,51 +155,66 @@ function createStrokeEngine(canvas, { states, resolveTarget, getControls, onHist
     onHistoryChange?.(undoStack.length > 0, redoStack.length > 0)
   }
 
-  function rebuildMask(img) {
+  // Rebuild a target's committed layer by replaying its recorded strokes,
+  // each at its own settings.
+  function rebuild(img) {
     const s = states.get(img)
-    const ctx = s.mask.getContext('2d')
-    ctx.clearRect(0, 0, s.mask.width, s.mask.height)
+    s.clearCommitted()
     for (const stroke of s.strokes) {
-      for (let i = 0; i < stroke.points.length; i++) {
-        const from = stroke.points[Math.max(0, i - 1)]
-        drawSegment(ctx, from, stroke.points[i], stroke.radius, stroke.hardness)
-      }
+      renderStroke(s.strokeMask, stroke)
+      s.bakeStroke(stroke)
     }
-    s.recomposite()
+    clearLayer(s.strokeMask)
+    s.recomposite(null)
   }
 
   function onMouseDown(opt) {
-    if (!active) return
+    if (!active || drawing) return
     const scenePoint = opt.scenePoint ?? canvas.getScenePoint(opt.e)
     const img = resolveTarget(scenePoint)
     if (!img) return
-    const { size, hardness } = getControls()
+    const controls = getControls()
     // Brush size is felt in display pixels; convert to source pixels so the
     // dab matches what's under the cursor regardless of the target's scale.
-    const radius = size / 2 / ((Math.abs(img.scaleX) + Math.abs(img.scaleY)) / 2)
+    const radius = controls.size / 2 / ((Math.abs(img.scaleX) + Math.abs(img.scaleY)) / 2)
     const point = toLocal(img, scenePoint)
-    const stroke = { points: [point], radius, hardness }
-    current = { img, stroke, maskCtx: states.get(img).mask.getContext('2d'), lastPoint: point }
-    drawDab(current.maskCtx, point.x, point.y, radius, hardness)
-    states.get(img).recomposite()
+    const stroke = {
+      points: [point],
+      radius,
+      hardness: controls.hardness,
+      settings: snapshotSettings(controls)
+    }
+    const s = states.get(img)
+    clearLayer(s.strokeMask)
+    const maskCtx = s.strokeMask.getContext('2d')
+    drawDab(maskCtx, point.x, point.y, stroke.radius, stroke.hardness)
+    drawing = { img, stroke, maskCtx, lastPoint: point }
+    s.recomposite(stroke)
   }
 
   function onMouseMove(opt) {
-    if (!active || !current) return
+    if (!active || !drawing) return
     const scenePoint = opt.scenePoint ?? canvas.getScenePoint(opt.e)
-    const point = toLocal(current.img, scenePoint)
-    drawSegment(current.maskCtx, current.lastPoint, point, current.stroke.radius, current.stroke.hardness)
-    current.stroke.points.push(point)
-    current.lastPoint = point
-    states.get(current.img).recomposite()
+    const point = toLocal(drawing.img, scenePoint)
+    drawSegment(drawing.maskCtx, drawing.lastPoint, point, drawing.stroke.radius, drawing.stroke.hardness)
+    drawing.stroke.points.push(point)
+    drawing.lastPoint = point
+    states.get(drawing.img).recomposite(drawing.stroke)
   }
 
   function onMouseUp() {
-    if (!current) return
-    states.get(current.img).strokes.push(current.stroke)
-    undoStack.push({ img: current.img, stroke: current.stroke })
+    if (!drawing) return
+    const { img, stroke } = drawing
+    const s = states.get(img)
+    // The stroke locks at release: baked with the settings it was painted
+    // with. Sliders only configure the next one.
+    s.strokes.push(stroke)
+    s.bakeStroke(stroke)
+    clearLayer(s.strokeMask)
+    s.recomposite(null)
+    undoStack.push({ img, stroke })
     redoStack = []
-    current = null
+    drawing = null
     notify()
   }
 
@@ -125,44 +224,57 @@ function createStrokeEngine(canvas, { states, resolveTarget, getControls, onHist
 
   return {
     setActive(next) {
+      if (next === active) return
       active = next
+      cursor.setEnabled(next)
       if (next) {
         canvas.discardActiveObject()
         canvas.skipTargetFind = true
-        canvas.defaultCursor = 'crosshair'
+        canvas.defaultCursor = 'none' // the circle is the cursor
       } else {
-        current = null
+        drawing = null
         canvas.skipTargetFind = savedCanvasProps.skipTargetFind
         canvas.defaultCursor = savedCanvasProps.defaultCursor
       }
       canvas.requestRenderAll()
     },
 
+    // Recomposite every target. For consumers that redraw a source canvas
+    // in place (Ghost's brightness/contrast, Rails' tint) — masks untouched.
+    refresh() {
+      for (const img of states.keys()) states.get(img).recomposite(null)
+    },
+
     undo() {
       const entry = undoStack.pop()
       if (!entry) return
-      states.get(entry.img).strokes.pop()
       redoStack.push(entry)
-      rebuildMask(entry.img)
+      states.get(entry.img).strokes.pop()
+      rebuild(entry.img)
       notify()
     },
 
     redo() {
       const entry = redoStack.pop()
       if (!entry) return
-      states.get(entry.img).strokes.push(entry.stroke)
+      const s = states.get(entry.img)
+      s.strokes.push(entry.stroke)
       undoStack.push(entry)
-      rebuildMask(entry.img)
+      renderStroke(s.strokeMask, entry.stroke)
+      s.bakeStroke(entry.stroke)
+      clearLayer(s.strokeMask)
+      s.recomposite(null)
       notify()
     },
 
     dispose() {
+      cursor.dispose()
       canvas.off('mouse:down', onMouseDown)
       canvas.off('mouse:move', onMouseMove)
       canvas.off('mouse:up', onMouseUp)
       canvas.skipTargetFind = savedCanvasProps.skipTargetFind
       canvas.defaultCursor = savedCanvasProps.defaultCursor
-      current = null
+      drawing = null
     }
   }
 }
@@ -172,29 +284,42 @@ function createStrokeEngine(canvas, { states, resolveTarget, getControls, onHist
 export function createEraseSession(canvas, images, { getControls, onHistoryChange }) {
   // Per-image erase state, set up front: the Fabric object's element is
   // swapped for a same-size composite canvas so display and bake both
-  // render the erased result from full-resolution pixels.
+  // render the erased result from full-resolution pixels. committedMask
+  // holds graded alpha — how much past strokes erased each pixel; the live
+  // stroke rides separately at its own strength.
   const states = new Map()
   for (const img of images) {
     const source = img.getElement()
-    const mask = document.createElement('canvas')
-    mask.width = img.width
-    mask.height = img.height
-    const composite = document.createElement('canvas')
-    composite.width = img.width
-    composite.height = img.height
+    const committedMask = makeLayer(img.width, img.height)
+    const strokeMask = makeLayer(img.width, img.height)
+    const composite = makeLayer(img.width, img.height)
     composite.getContext('2d').drawImage(source, 0, 0)
     img.setElement(composite)
     states.set(img, {
-      mask,
+      strokeMask,
       strokes: [],
-      recomposite() {
+      bakeStroke(stroke) {
+        const ctx = committedMask.getContext('2d')
+        ctx.save()
+        ctx.globalAlpha = stroke.settings.strength
+        ctx.drawImage(strokeMask, 0, 0)
+        ctx.restore()
+      },
+      clearCommitted() {
+        clearLayer(committedMask)
+      },
+      recomposite(liveStroke) {
         const ctx = composite.getContext('2d')
         ctx.save()
         ctx.globalCompositeOperation = 'source-over'
         ctx.clearRect(0, 0, composite.width, composite.height)
         ctx.drawImage(source, 0, 0)
         ctx.globalCompositeOperation = 'destination-out'
-        ctx.drawImage(mask, 0, 0)
+        ctx.drawImage(committedMask, 0, 0)
+        if (liveStroke) {
+          ctx.globalAlpha = liveStroke.settings.strength
+          ctx.drawImage(strokeMask, 0, 0)
+        }
         ctx.restore()
         img.dirty = true // invalidate Fabric's object cache
         canvas.requestRenderAll()
@@ -202,7 +327,7 @@ export function createEraseSession(canvas, images, { getControls, onHistoryChang
     })
   }
 
-  const engine = createStrokeEngine(canvas, {
+  return createStrokeEngine(canvas, {
     states,
     // Topmost placed image under the pointer takes the whole stroke.
     resolveTarget(scenePoint) {
@@ -213,75 +338,124 @@ export function createEraseSession(canvas, images, { getControls, onHistoryChang
       return null
     },
     getControls,
+    snapshotSettings: (c) => ({ strength: c.strength ?? 1 }),
     onHistoryChange
   })
-
-  return {
-    ...engine,
-    // Recomposite every target. For consumers that redraw a source canvas
-    // in place (Ghost's brightness/contrast) — the mask is untouched.
-    refresh() {
-      for (const s of states.values()) s.recomposite()
-    }
-  }
 }
 
 // ---------- reveal mode (effect cards) ----------
 
-// `effected` is a full-strength effected copy of the master, same size.
-// It goes on the canvas as a non-interactive overlay, fully masked out;
-// painting reveals it. Intensity scales the reveal via globalAlpha, so the
-// slider is instant — the effect is never recomputed.
-export function createRevealSession(canvas, effected, { getControls, getIntensity, onHistoryChange }) {
-  const mask = document.createElement('canvas')
-  mask.width = effected.width
-  mask.height = effected.height
-  const composite = document.createElement('canvas')
-  composite.width = effected.width
-  composite.height = effected.height
+// Everything a control panel shows that isn't the brush itself is an effect
+// param, snapshotted per stroke.
+const BRUSH_KEYS = new Set(['size', 'hardness', 'intensity'])
+
+function effectParams(controls) {
+  const params = {}
+  for (const k of Object.keys(controls)) {
+    if (!BRUSH_KEYS.has(k)) params[k] = controls[k]
+  }
+  return params
+}
+
+const clampAlpha = (v) => Math.max(0, Math.min(1, v))
+
+// `applyEffect(effectedEl, master, params)` draws a full-strength effected
+// copy of the master. The session calls it lazily per unique params combo
+// and caches the copies, so a stroke's first dab and undo replay stay fast
+// — and Noise's grain (params never change) doesn't re-roll.
+export function createRevealSession(canvas, { applyEffect, master, getControls, onHistoryChange }) {
+  const accumulated = makeLayer(master.width, master.height) // locked strokes
+  const strokeMask = makeLayer(master.width, master.height)
+  const scratch = makeLayer(master.width, master.height)
+  const composite = makeLayer(master.width, master.height)
+
+  const cache = new Map() // params key → effected copy, LRU
+  const CACHE_LIMIT = 4
+  function effectedFor(params) {
+    const key = JSON.stringify(params)
+    let el = cache.get(key)
+    if (el) {
+      cache.delete(key)
+      cache.set(key, el)
+      return el
+    }
+    el = makeLayer(master.width, master.height)
+    applyEffect(el, master, params)
+    cache.set(key, el)
+    if (cache.size > CACHE_LIMIT) cache.delete(cache.keys().next().value)
+    return el
+  }
+
+  // scratch = one stroke's effected pixels: the effect at its params,
+  // clipped to its strokeMask.
+  function maskEffected(params) {
+    const ctx = scratch.getContext('2d')
+    ctx.save()
+    ctx.globalCompositeOperation = 'source-over'
+    ctx.clearRect(0, 0, scratch.width, scratch.height)
+    ctx.drawImage(effectedFor(params), 0, 0)
+    ctx.globalCompositeOperation = 'destination-in'
+    ctx.drawImage(strokeMask, 0, 0)
+    ctx.restore()
+    return scratch
+  }
 
   const overlay = new fabric.FabricImage(composite, {
     left: 0,
     top: 0,
     originX: 'left',
     originY: 'top',
-    scaleX: canvas.getWidth() / effected.width,
-    scaleY: canvas.getHeight() / effected.height,
+    scaleX: canvas.getWidth() / composite.width,
+    scaleY: canvas.getHeight() / composite.height,
     selectable: false,
     evented: false
   })
   canvas.add(overlay)
 
-  function recomposite() {
-    const ctx = composite.getContext('2d')
-    ctx.save()
-    ctx.globalCompositeOperation = 'source-over'
-    ctx.clearRect(0, 0, composite.width, composite.height)
-    ctx.globalAlpha = Math.max(0, Math.min(1, getIntensity()))
-    ctx.drawImage(effected, 0, 0)
-    ctx.globalAlpha = 1
-    ctx.globalCompositeOperation = 'destination-in'
-    ctx.drawImage(mask, 0, 0)
-    ctx.restore()
-    overlay.dirty = true
-    canvas.requestRenderAll()
+  const state = {
+    strokeMask,
+    strokes: [],
+    bakeStroke(stroke) {
+      const ctx = accumulated.getContext('2d')
+      ctx.save()
+      ctx.globalAlpha = clampAlpha(stroke.settings.intensity)
+      ctx.drawImage(maskEffected(stroke.settings.params), 0, 0)
+      ctx.restore()
+    },
+    clearCommitted() {
+      clearLayer(accumulated)
+    },
+    recomposite(liveStroke) {
+      const ctx = composite.getContext('2d')
+      ctx.clearRect(0, 0, composite.width, composite.height)
+      ctx.drawImage(accumulated, 0, 0)
+      if (liveStroke) {
+        ctx.save()
+        ctx.globalAlpha = clampAlpha(liveStroke.settings.intensity)
+        ctx.drawImage(maskEffected(liveStroke.settings.params), 0, 0)
+        ctx.restore()
+      }
+      overlay.dirty = true
+      canvas.requestRenderAll()
+    }
   }
 
-  const states = new Map([[overlay, { mask, strokes: [], recomposite }]])
   const engine = createStrokeEngine(canvas, {
-    states,
+    states: new Map([[overlay, state]]),
     // The overlay covers the whole canvas; every stroke belongs to it.
     resolveTarget: () => overlay,
     getControls,
+    snapshotSettings: (c) => ({ intensity: c.intensity, params: effectParams(c) }),
     onHistoryChange
   })
   engine.setActive(true)
+  // Warm the cache at the default settings so the first stroke doesn't pay
+  // the effect compute (Noise's pixel loop is the slow one) at mouse-down.
+  effectedFor(effectParams(getControls()))
 
   return {
     ...engine,
     overlay,
-    // Re-blend after an intensity change; the effect itself is untouched.
-    refresh: recomposite,
     // Restart abandons the card: take the overlay with us.
     removeOverlay() {
       canvas.remove(overlay)

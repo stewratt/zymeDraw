@@ -49,7 +49,7 @@ function Editor({ config, onBackToSetup }) {
   // mid-stroke slider changes don't rebuild anything.
   const eraseSessionRef = useRef(null)
   const eraseControlsRef = useRef(null)
-  const [eraseControls, setEraseControls] = useState({ mode: 'arrange', size: 40, hardness: 'soft' })
+  const [eraseControls, setEraseControls] = useState({ mode: 'arrange', size: 40, hardness: 'soft', strength: 1 })
   const [eraseHistory, setEraseHistory] = useState({ canUndo: false, canRedo: false })
 
   useEffect(() => {
@@ -110,7 +110,7 @@ function Editor({ config, onBackToSetup }) {
     let cancelled = false
     setPlacementReady(false)
     setPlacedLayers([])
-    setEraseControls({ mode: 'arrange', size: 40, hardness: 'soft' })
+    setEraseControls({ mode: 'arrange', size: 40, hardness: 'soft', strength: 1 })
     setEraseHistory({ canUndo: false, canRedo: false })
     placeImages(canvas, state.toPlace, () => cancelled)
       .then((imgs) => {

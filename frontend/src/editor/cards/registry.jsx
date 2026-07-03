@@ -68,14 +68,15 @@ import {
 
 export const cardRegistry = {
   ghost: {
-    controls: ['opacity', 'brightness', 'contrast', 'mode', 'size', 'hardness'],
+    controls: ['opacity', 'brightness', 'contrast', 'mode', 'size', 'hardness', 'strength'],
     defaultControls: {
       opacity: 1,
       brightness: 100,
       contrast: 100,
       mode: 'arrange',
       size: 40,
-      hardness: 'soft'
+      hardness: 'soft',
+      strength: 1
     },
     Tools: GhostTools,
     Overlay: GhostOverlay,
@@ -86,8 +87,8 @@ export const cardRegistry = {
   },
 
   rails: {
-    controls: ['color', 'opacity', 'mode', 'size', 'hardness'],
-    defaultControls: { color: '#c43c28', opacity: 1, mode: 'arrange', size: 40, hardness: 'soft' },
+    controls: ['color', 'opacity', 'mode', 'size', 'hardness', 'strength'],
+    defaultControls: { color: '#c43c28', opacity: 1, mode: 'arrange', size: 40, hardness: 'soft', strength: 1 },
     Tools: RailsTools,
     begin: beginRails,
     update: updateRails,
@@ -105,8 +106,8 @@ export const cardRegistry = {
   },
 
   stamp: {
-    controls: ['opacity', 'mode', 'size', 'hardness'],
-    defaultControls: { opacity: 1, mode: 'arrange', size: 40, hardness: 'soft' },
+    controls: ['opacity', 'mode', 'size', 'hardness', 'strength'],
+    defaultControls: { opacity: 1, mode: 'arrange', size: 40, hardness: 'soft', strength: 1 },
     Tools: StampTools,
     Overlay: StampOverlay,
     begin: beginStamp,

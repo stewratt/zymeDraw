@@ -6,9 +6,13 @@
 // raster was built for.
 //
 // The frame keeps the canvas's 4:5 shape by construction: it's a
-// canvas-proportioned Rect whose side handles are hidden, so only uniform
-// corner scaling (and rotation) is possible. Orientation stays portrait —
-// a live invariant (CLAUDE.md §8).
+// canvas-proportioned Rect whose side handles are hidden, and the session
+// turns on Fabric's uniform scaling so corner drags scale both axes together
+// — the opposite corner stays pinned and the frame can only shrink/grow, not
+// squash into a different ratio. (The canvas is created with
+// uniformScaling:false, which placement images want, so we flip it on for
+// this card and restore it on commit/cleanup.) Rotation stays free.
+// Orientation stays portrait — a live invariant (CLAUDE.md §8).
 //
 // Detail restore: the re-framed master is drawn by 2d transform at master
 // resolution first (that alone is a correct, if soft, result — and is the
@@ -36,12 +40,24 @@ export function beginDeeper(ctx) {
     strokeDashArray: [6, 4],
     strokeUniform: true
   })
-  // Corners only: uniform scaling keeps the frame 4:5. No side handles.
+  // Corners only, no side handles.
   rect.setControlsVisibility({ ml: false, mr: false, mt: false, mb: false })
+  // Turn on native uniform scaling so corners keep the 4:5 ratio and pin the
+  // opposite corner. Also disable the uniScaleKey so Shift can't opt out of
+  // it. Both are restored when the card ends.
+  const prev = { uniformScaling: ctx.canvas.uniformScaling, uniScaleKey: ctx.canvas.uniScaleKey }
+  ctx.canvas.uniformScaling = true
+  ctx.canvas.uniScaleKey = null
   ctx.canvas.add(rect)
   ctx.canvas.setActiveObject(rect)
   ctx.canvas.requestRenderAll()
-  return { rect, master: ctx.master }
+  return { rect, master: ctx.master, prev }
+}
+
+function restoreScaling(canvas, prev) {
+  if (!prev) return
+  canvas.uniformScaling = prev.uniformScaling
+  canvas.uniScaleKey = prev.uniScaleKey
 }
 
 export async function commitDeeper(ctx) {
@@ -50,6 +66,7 @@ export async function commitDeeper(ctx) {
   const { rect, master } = s
   ctx.canvas.discardActiveObject()
   ctx.canvas.remove(rect)
+  restoreScaling(ctx.canvas, s.prev)
   ctx.canvas.requestRenderAll()
 
   const proxyScale = master.width / ctx.canvas.getWidth() // display px → master px
@@ -84,6 +101,7 @@ export async function commitDeeper(ctx) {
 export function cleanupDeeper(ctx) {
   if (!ctx.session) return
   ctx.canvas.remove(ctx.session.rect)
+  restoreScaling(ctx.canvas, ctx.session.prev)
   ctx.canvas.requestRenderAll()
 }
 
