@@ -2,7 +2,7 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #141414;
+  background: var(--bg);
 }
 
 /* ---------- header ---------- */
@@ -12,8 +12,8 @@
   align-items: center;
   gap: 16px;
   padding: 10px 16px;
-  border-bottom: 1px solid #2a2a2a;
-  background: #1a1a1a;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
 }
 .editor-header h1 {
   margin: 0;
@@ -72,7 +72,7 @@
 .canvas-wrap .canvas-container {
   width: 100% !important;
   height: 100% !important;
-  border: 1px solid #2a2a2a;
+  border: 1px solid var(--border);
   background: white;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }
@@ -85,21 +85,24 @@
 /* ---------- deck panel ---------- */
 
 .deck-panel {
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
-  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  /* Take the available column height and scroll internally when the content
+     (a tall Coda thumbnail, a deep placement stack) exceeds it, so the End /
+     commit / restart buttons at the bottom stay reachable at any image size
+     instead of being clipped by the fixed grid row. */
+  flex: 1 1 auto;
   min-height: 0;
-  /* Never let the deck panel shrink — the End/commit button lives here and
-     must stay fully visible no matter how many layers fill the panel below. */
-  flex-shrink: 0;
+  overflow-y: auto;
 }
 .deck-panel.endgame,
 .deck-panel.complete {
-  border-color: #ff8a4a;
+  border-color: var(--border-strong);
 }
 
 /* ---------- grid picker (canvas-area overlay) ---------- */
@@ -107,9 +110,9 @@
 .grid-picker {
   position: absolute;
   inset: 0;
-  background: #141414;
-  border: 1px solid #2a2a2a;
-  border-radius: 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -124,7 +127,7 @@
   margin: 0;
 }
 .grid-picker .hint {
-  color: #888;
+  color: var(--text-dim);
   font-size: 0.8rem;
   margin: 0;
   line-height: 1.5;
@@ -142,9 +145,9 @@
 .die {
   width: 96px;
   height: 96px;
-  border: 1px solid #3a3a3a;
-  border-radius: 10px;
-  background: #0e0e0e;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-2);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -154,7 +157,7 @@
 }
 .die.settled {
   animation: none;
-  border-color: #4a6cff;
+  border-color: var(--sel-border);
 }
 @keyframes die-tumble {
   0%, 100% { transform: rotate(-4deg); }
@@ -166,7 +169,7 @@
 .die-sides {
   font-size: 0.6rem;
   letter-spacing: 0.2em;
-  color: #888;
+  color: var(--text-dim);
   text-transform: uppercase;
 }
 .die-face {
@@ -199,16 +202,16 @@
 .grid-thumb {
   position: relative;
   aspect-ratio: 1;
-  border: 2px solid #2a2a2a;
-  border-radius: 4px;
-  background: #0e0e0e;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
   padding: 0;
   cursor: pointer;
   overflow: hidden;
   transition: border-color 0.15s;
 }
 .grid-thumb:hover {
-  border-color: #3a3a3a;
+  border-color: var(--border-strong);
 }
 .grid-thumb img {
   width: 100%;
@@ -216,11 +219,13 @@
   object-fit: cover;
   display: block;
 }
+/* Monochrome place/stash distinction: place = bright solid border, stash =
+   dimmer border. The PLACE / STASH badges carry the label either way. */
 .grid-thumb.place {
-  border-color: #4a6cff;
+  border-color: var(--text);
 }
 .grid-thumb.stash {
-  border-color: #b98a3a;
+  border-color: var(--text-dim);
 }
 .thumb-badge {
   position: absolute;
@@ -229,16 +234,17 @@
   font-size: 0.55rem;
   letter-spacing: 0.15em;
   padding: 2px 6px;
-  border-radius: 3px;
+  border-radius: var(--radius);
   background: rgba(0, 0, 0, 0.7);
-  color: #fff;
+  color: var(--text);
 }
 .grid-thumb.place .thumb-badge {
-  background: #4a6cff;
+  background: var(--surface-2);
+  color: var(--text);
 }
 .grid-thumb.stash .thumb-badge {
-  background: #b98a3a;
-  color: #1a1a1a;
+  background: var(--surface-2);
+  color: var(--text);
 }
 
 .grid-picker-foot {
@@ -257,7 +263,7 @@
 }
 
 .deck-panel .hint {
-  color: #888;
+  color: var(--text-dim);
   font-size: 0.8rem;
   margin: 0;
   line-height: 1.5;
@@ -265,10 +271,10 @@
 
 .deck-panel button.primary,
 .grid-picker button.primary {
-  background: #4a6cff;
-  color: white;
+  background: var(--fill);
+  color: var(--text);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius);
   padding: 12px;
   font-size: 0.85rem;
   letter-spacing: 0.05em;
@@ -277,25 +283,25 @@
 }
 .deck-panel button.primary:hover,
 .grid-picker button.primary:hover {
-  background: #5d7cff;
+  background: var(--fill-hover);
 }
 .deck-panel button.commit {
-  background: #c45a4a;
+  background: var(--fill);
 }
 .deck-panel button.commit:hover {
-  background: #d6695a;
+  background: var(--fill-hover);
 }
 
 /* ---------- card face ---------- */
 
 .card-face {
-  border: 1px solid #2a2a2a;
-  border-radius: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 32px 24px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  background: #0e0e0e;
+  background: var(--surface-2);
   text-align: center;
   transform-origin: center;
   animation: card-flip-in 480ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
@@ -325,7 +331,7 @@
   font-size: 0.65rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: #888;
+  color: var(--text-dim);
 }
 .card-face .card-label {
   font-size: 1.6rem;
@@ -333,16 +339,18 @@
   letter-spacing: 0.05em;
   color: #eee;
 }
-.card-face.card-add     { border-color: #4a6cff; box-shadow: 0 0 0 1px rgba(74, 108, 255, 0.12) inset; }
-.card-face.card-midgame { border-color: #8a4aff; box-shadow: 0 0 0 1px rgba(138, 74, 255, 0.12) inset; }
-.card-face.card-endgame { border-color: #ff8a4a; box-shadow: 0 0 0 1px rgba(255, 138, 74, 0.12) inset; }
-.card-face.card-mod     { border-color: #8a4aff; box-shadow: 0 0 0 1px rgba(138, 74, 255, 0.12) inset; }
-.card-face.card-death   { border-color: #ff8a4a; box-shadow: 0 0 0 1px rgba(255, 138, 74, 0.12) inset; }
+/* Card kind is signalled by border brightness, not hue. The Coda
+   (endgame/death) reads as emphasized. */
+.card-face.card-add     { border-color: var(--border); }
+.card-face.card-midgame { border-color: var(--border); }
+.card-face.card-endgame { border-color: var(--border-strong); }
+.card-face.card-mod     { border-color: var(--border); }
+.card-face.card-death   { border-color: var(--border-strong); }
 
 .tool-area {
   flex: 1;
-  border: 1px dashed #2a2a2a;
-  border-radius: 4px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
   padding: 16px;
   display: flex;
   align-items: center;
@@ -368,9 +376,9 @@
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.72rem;
   color: #aaa;
-  background: #0e0e0e;
-  border: 1px solid #2a2a2a;
-  border-radius: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 4px 8px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -393,9 +401,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #0e0e0e;
-  border: 1px solid #2a2a2a;
-  border-radius: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 4px 8px;
 }
 .layer-row.draggable {
@@ -405,7 +413,7 @@
   opacity: 0.4;
 }
 .layer-row.drop-target {
-  border-color: #6a6a6a;
+  border-color: var(--sel-border);
   background: #171717;
 }
 .layer-thumb {
@@ -415,8 +423,8 @@
   object-fit: contain;
   background:
     repeating-conic-gradient(#2a2a2a 0% 25%, #1a1a1a 0% 50%) 0 / 12px 12px;
-  border: 1px solid #2a2a2a;
-  border-radius: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 }
 .layer-name {
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -429,8 +437,8 @@
 
 .deck-panel button.primary:disabled,
 .grid-picker button.primary:disabled {
-  background: #2a2a2a;
-  color: #666;
+  background: var(--border);
+  color: var(--text-mute);
   cursor: not-allowed;
 }
 
@@ -470,17 +478,17 @@
 .ctrl input[type="color"] {
   width: 100%;
   height: 24px;
-  border: 1px solid #2a2a2a;
-  background: #0e0e0e;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
   cursor: pointer;
 }
 
 /* ---------- layers panel ---------- */
 
 .layers-panel {
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
-  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -500,7 +508,7 @@
 }
 .layers-panel .hint {
   margin: 0;
-  color: #888;
+  color: var(--text-dim);
   font-size: 0.72rem;
 }
 
@@ -526,17 +534,17 @@
   transition: border-color 0.15s, background 0.15s, opacity 0.15s;
 }
 .reorder-row:hover {
-  border-color: #3a3a3a;
+  border-color: var(--border-strong);
 }
 .reorder-row.dragging {
   opacity: 0.4;
   cursor: grabbing;
 }
 .reorder-row.drag-over {
-  border-color: #4a6cff;
-  background: rgba(74, 108, 255, 0.1);
+  border-color: var(--sel-border);
+  background: var(--sel-bg);
   /* a clear "insert above here" cue */
-  box-shadow: inset 0 2px 0 #4a6cff;
+  box-shadow: inset 0 2px 0 var(--sel-border);
 }
 .drag-handle {
   color: #555;
@@ -546,7 +554,7 @@
   flex-shrink: 0;
 }
 .reorder-row:hover .drag-handle {
-  color: #888;
+  color: var(--text-dim);
 }
 
 .slot-chip {
@@ -554,24 +562,24 @@
   align-items: center;
   gap: 8px;
   padding: 6px 8px;
-  border: 1px dashed #2a2a2a;
-  border-radius: 4px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
   font-size: 0.72rem;
-  color: #888;
+  color: var(--text-dim);
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
 .slot-chip:hover {
   background: #1f1f1f;
-  border-color: #3a3a3a;
+  border-color: var(--border-strong);
 }
 .slot-chip.selected {
-  background: rgba(74, 108, 255, 0.12);
-  border-color: #4a6cff;
-  color: #cfd6ff;
+  background: var(--sel-bg);
+  border-color: var(--sel-border);
+  color: var(--text);
 }
 .slot-chip input[type="radio"] {
-  accent-color: #4a6cff;
+  accent-color: var(--text-dim);
 }
 
 .layer-row {
@@ -579,32 +587,32 @@
   align-items: center;
   gap: 8px;
   padding: 4px 6px;
-  border: 1px solid #2a2a2a;
-  border-radius: 4px;
-  background: #0e0e0e;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
 }
 .layer-row.clickable {
   cursor: pointer;
 }
 .layer-row.clickable:hover {
-  border-color: #3a3a3a;
+  border-color: var(--border-strong);
 }
 .layer-row.selected {
-  border-color: #4a6cff;
-  background: rgba(74, 108, 255, 0.08);
+  border-color: var(--sel-border);
+  background: var(--sel-bg);
 }
 .layer-row img {
   width: 28px;
   height: 28px;
   object-fit: cover;
-  background: #0e0e0e;
-  border-radius: 2px;
+  background: var(--surface-2);
+  border-radius: var(--radius);
 }
 .thumb-placeholder {
   width: 28px;
   height: 28px;
   background: #1f1f1f;
-  border-radius: 2px;
+  border-radius: var(--radius);
 }
 .layer-label {
   display: flex;
@@ -618,7 +626,7 @@
   font-size: 0.55rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #888;
+  color: var(--text-dim);
 }
 .layer-label {
   overflow: hidden;
@@ -638,26 +646,26 @@
   align-items: center;
   gap: 8px;
   padding: 4px 6px;
-  background: #0e0e0e;
-  border: 1px solid #2a2a2a;
-  border-radius: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   color: #ddd;
   font-size: 0.72rem;
   cursor: pointer;
   text-align: left;
 }
 .grade-swatch:hover {
-  border-color: #3a3a3a;
+  border-color: var(--border-strong);
 }
 .grade-swatch.selected {
-  border-color: #4a6cff;
-  background: rgba(74, 108, 255, 0.08);
+  border-color: var(--sel-border);
+  background: var(--sel-bg);
 }
 .swatch-chip {
   width: 28px;
   height: 28px;
-  border-radius: 2px;
-  border: 1px solid #2a2a2a;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
   flex-shrink: 0;
 }
 .swatch-label {
@@ -668,14 +676,14 @@
 
 .mode-toggle {
   display: flex;
-  border: 1px solid #2a2a2a;
-  border-radius: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   overflow: hidden;
 }
 .mode-toggle button {
   flex: 1;
   background: transparent;
-  color: #888;
+  color: var(--text-dim);
   border: none;
   padding: 8px;
   font-size: 0.72rem;
@@ -684,11 +692,11 @@
   cursor: pointer;
 }
 .mode-toggle button + button {
-  border-left: 1px solid #2a2a2a;
+  border-left: 1px solid var(--border);
 }
 .mode-toggle button.active {
-  background: rgba(74, 108, 255, 0.15);
-  color: #cfd6ff;
+  background: var(--sel-bg);
+  color: var(--text);
 }
 .mode-toggle button:disabled {
   color: #444;
@@ -718,7 +726,7 @@
   flex: 1;
 }
 .deck-panel button.secondary:disabled {
-  border-color: #2a2a2a;
+  border-color: var(--border);
   color: #555;
   cursor: not-allowed;
   background: transparent;
@@ -728,27 +736,31 @@
 
 .deck-panel .export-path {
   font-size: 0.7rem;
-  background: #0e0e0e;
-  border: 1px solid #2a2a2a;
-  border-radius: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 6px 8px;
   margin: 0;
   word-break: break-all;
   color: #ddd;
 }
+/* Cap the finished thumbnail so a tall portrait can't overflow the panel and
+   push the buttons out of view — object-fit keeps it undistorted. */
 .export-thumb {
   width: 100%;
   height: auto;
+  max-height: 40vh;
+  object-fit: contain;
   display: block;
-  border: 1px solid #2a2a2a;
-  border-radius: 4px;
-  background: #0e0e0e;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
 }
 .deck-panel button.secondary {
   background: transparent;
-  color: #cfd6ff;
-  border: 1px solid #4a6cff;
-  border-radius: 4px;
+  color: var(--text);
+  border: 1px solid var(--sel-border);
+  border-radius: var(--radius);
   padding: 8px 12px;
   font-size: 0.75rem;
   letter-spacing: 0.05em;
@@ -756,11 +768,10 @@
   cursor: pointer;
 }
 .deck-panel button.secondary:hover {
-  background: rgba(74, 108, 255, 0.12);
+  background: var(--sel-bg);
 }
 .deck-panel .error {
-  color: #ff8a4a;
-  font-size: 0.8rem;
+  color: var(--text);
   margin: 0;
 }
 .mono {

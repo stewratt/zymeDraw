@@ -246,6 +246,108 @@ app.post('/api/open-output', async (req, res) => {
   }
 })
 
+// Open the OS's native folder-picker dialog and return the absolute path the
+// user chose. A browser can't do this (the sandbox never exposes real paths),
+// but the backend is a plain Node process on the user's machine, so it can —
+// same "backend = hands" reasoning as /api/open-output. Body: { mode:
+// 'read'|'write', current?: string } — mode only sets the prompt wording;
+// current pre-selects a starting folder where the OS supports it.
+//   { ok:true, path }            → user picked a folder
+//   { ok:true, path:null, cancelled:true } → user dismissed the dialog
+//   { ok:false, error }          → no picker available (degrade to typing)
+app.post('/api/pick-folder', async (req, res) => {
+  const { mode, current } = req.body ?? {}
+  const prompt = mode === 'write' ? 'Choose output folder' : 'Choose input folder'
+  const startDir =
+    typeof current === 'string' && current.trim()
+      ? path.resolve(expandTilde(current.trim()))
+      : undefined
+  try {
+    res.json(await pickFolder(prompt, startDir))
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message })
+  }
+})
+
+// Spawn a command and capture its stdout. Resolves on close OR error (a
+// missing binary emits 'error' and never 'close', so we must handle both —
+// that's what lets the Linux zenity→kdialog fallback work).
+function runCapture(cmd, args) {
+  return new Promise((resolve) => {
+    let out = ''
+    let done = false
+    const finish = (r) => {
+      if (!done) {
+        done = true
+        resolve(r)
+      }
+    }
+    let child
+    try {
+      child = spawn(cmd, args)
+    } catch (err) {
+      return finish({ code: -1, out: '', spawnErr: err })
+    }
+    child.stdout?.on('data', (d) => (out += d.toString()))
+    child.on('error', (err) => finish({ code: -1, out: '', spawnErr: err }))
+    child.on('close', (code) => finish({ code, out: out.trim(), spawnErr: null }))
+  })
+}
+
+async function pickFolder(prompt, startDir) {
+  const platform = os.platform()
+
+  if (platform === 'darwin') {
+    // Prompt passed as argv (not string-interpolated) so it can't break the
+    // AppleScript. A cancel exits non-zero with no stdout.
+    const { code, out } = await runCapture('osascript', [
+      '-e', 'on run argv',
+      '-e', 'return POSIX path of (choose folder with prompt (item 1 of argv))',
+      '-e', 'end run',
+      prompt
+    ])
+    if (code === 0 && out) return { ok: true, path: out.replace(/\/+$/, '') }
+    return { ok: true, path: null, cancelled: true }
+  }
+
+  if (platform === 'win32') {
+    // FolderBrowserDialog needs an STA thread. The prompt is a fixed string,
+    // JSON-quoted for safety. Cancel prints nothing.
+    const ps =
+      'Add-Type -AssemblyName System.Windows.Forms; ' +
+      '$d = New-Object System.Windows.Forms.FolderBrowserDialog; ' +
+      `$d.Description = ${JSON.stringify(prompt)}; ` +
+      (startDir ? `$d.SelectedPath = ${JSON.stringify(startDir)}; ` : '') +
+      "if ($d.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { [Console]::Out.Write($d.SelectedPath) }"
+    const { out } = await runCapture('powershell', ['-NoProfile', '-STA', '-Command', ps])
+    if (out) return { ok: true, path: out }
+    return { ok: true, path: null, cancelled: true }
+  }
+
+  // Linux / other: GTK's zenity first, then KDE's kdialog. Neither is
+  // guaranteed installed — if both are missing the field stays typeable.
+  const zenArgs = ['--file-selection', '--directory', `--title=${prompt}`]
+  if (startDir) zenArgs.push(`--filename=${startDir.replace(/\/*$/, '/')}`)
+  const zen = await runCapture('zenity', zenArgs)
+  if (!zen.spawnErr) {
+    if (zen.code === 0 && zen.out) return { ok: true, path: zen.out }
+    return { ok: true, path: null, cancelled: true }
+  }
+  const kd = await runCapture('kdialog', [
+    '--getexistingdirectory',
+    startDir || os.homedir(),
+    '--title', prompt
+  ])
+  if (!kd.spawnErr) {
+    if (kd.code === 0 && kd.out) return { ok: true, path: kd.out }
+    return { ok: true, path: null, cancelled: true }
+  }
+  return {
+    ok: false,
+    error: 'No native folder picker found (install zenity or kdialog). Type the path instead.'
+  }
+}
+
 function timestampSlug() {
   const d = new Date()
   const pad = (n) => String(n).padStart(2, '0')

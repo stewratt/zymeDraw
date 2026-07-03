@@ -141,10 +141,18 @@ stands. Editor gained **async commit hooks** generically: `handleCommit`
 awaits `entry.commit`, End shows "Committing…", a ref guards re-entry,
 Restart waits for an in-flight commit. 9 of 10 card designs are real.
 
-**Next action: Phase 10 — Rails:** prototype the edge/palette-clamped
-alpha look first (threshold vs. edges vs. posterize-band, on real input
-images) and check in with Stew on the recipe before building the card.
-Final implementation is pure canvas2d pixel work — no sidecar needed.
+**Phase 10 is done (2026-07-02, verified by Stew):** **Rails** — a
+random image is dealt and read for its *most shattered* form
+(`editor/shatter.js`, later shared with Shattered Transfer): the winning
+mask becomes a solid-color cutout (random-hue-seeded picker) you arrange,
+tint, fade, and erase with the standing brush. Pure canvas2d — no sidecar.
+10 of 10 card designs are real.
+
+**Next action: Phase 11 — Tuning + polish**, now folded into the **v3 card
+system redesign** (`version_3_design.md`, started 2026-07-03): mechanic ×
+suit card anatomy, the zyme naming register, a simplified 5×5 opening, the
+mask/soften standing tools, and new play shapes (Pore/enclosure). Read that
+doc before v3 work; its §10 open questions are the next check-in with Stew.
 
 **Style-transfer experiment (branch `style-transfer`, off `v2`,
 2026-07-03):** fast-neural-style (ONNX zoo, pointillism to start; Stew
@@ -399,6 +407,7 @@ an optional field that Editor applies generically.
 | `GET /api/ping`              | Sanity check `{ ok: true }`. |
 | `GET /api/config`            | Returns `{ inputFolder, outputFolder, homedir }`. |
 | `POST /api/config`           | Validates both paths, persists `~/.deck-config.json`. |
+| `POST /api/pick-folder`      | `{ mode:'read'\|'write', current? }` → opens the OS native folder dialog, returns `{ ok, path, cancelled? }`. macOS `osascript`, Windows PowerShell `FolderBrowserDialog`, Linux `zenity`→`kdialog`. Setup's Browse buttons. |
 | `GET /api/images`            | Lists images in the configured input folder. |
 | `GET /api/images/sample?n=`  | Random sample of n filenames (opening grid, Ghost/Stamp grids). Registered BEFORE `:filename`. |
 | `GET /api/images/:filename`  | Streams one image. Path-traversal-safe. |
@@ -440,8 +449,8 @@ what to keep (registry pattern, purity, commitment) and what failed
 | 7 — ML sidecar | ✅ done (2026-07-02) | FastAPI on onnxruntime CPU-only; ESRGAN onnx committed in-repo; /api/ml proxy; start.js auto-start; degradation verified; README setup. |
 | 8 — Stamp | ✅ done (2026-07-02) | Grid of 6 → rembg cutout via sidecar → place/opacity/erase; live degradation path; shared ArrangeEraseControls. |
 | 9 — Deeper | ✅ done (2026-07-02) | 4:5-locked frame → master re-frame + true-detail ESRGAN restore; generic async commit hooks + Committing… state. |
-| 10 — Rails | ⬜ | Palette-clamped alpha cutout stamp (prototype look first). |
-| 11 — Tuning + polish | ⬜ | Pacing/deck balance, death-crop decision, tone pass, merge `v2`. |
+| 10 — Rails | ✅ done (2026-07-02) | shatter.js most-shattered alpha cutout → solid color / opacity / erase; pure canvas2d, no sidecar. 10 of 10 designs real. |
+| 11 — Tuning + polish | ⬜ (→ v3) | Pacing/deck balance, death-crop decision, tone pass, merge `v2`. Folded into the v3 redesign — see `version_3_design.md`. |
 
 ---
 
@@ -488,6 +497,12 @@ what to keep (registry pattern, purity, commitment) and what failed
 - **`xdg-open` on minimal Linux desktops** may be missing; `POST
   /api/open-output` fails silently and the path shown on screen is the
   fallback.
+- **Native folder dialog on Linux** (`POST /api/pick-folder`, Setup's Browse
+  buttons) needs **`zenity` or `kdialog`** installed. When neither is present
+  the route returns `{ ok:false }` and Setup shows a note — typing the path by
+  hand still works. macOS/Windows use built-in tooling (`osascript` /
+  PowerShell). The macOS `choose folder` dialog can open *behind* the browser
+  window; add `activate` to the AppleScript if that becomes annoying.
 - **Filter flush race on End**: `canvas.renderAll()` is called immediately
   before snapshotting to flush filter pipelines. If a bake/export ever
   doesn't match the screen, investigate this timing first.
