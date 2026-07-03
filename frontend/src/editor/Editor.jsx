@@ -2,7 +2,7 @@ import { useEffect, useReducer, useRef, useState } from 'react'
 import CanvasStage, { CANVAS_WIDTH, CANVAS_HEIGHT } from './CanvasStage.jsx'
 import DeckPanel from './DeckPanel.jsx'
 import GridPicker from './GridPicker.jsx'
-import { deckReducer, initialState } from './deck.js'
+import { TUNING, deckReducer, initialState } from './deck.js'
 import { cardRegistry } from './cards/registry.jsx'
 import { placeImages, layerThumbUrl } from './placement.js'
 import { sampleImages } from './sampling.js'
@@ -48,7 +48,7 @@ function randomizeColors(defaults) {
 // Editor is a generic dispatcher. It doesn't know what any card does — it
 // looks up the current card in cardRegistry and calls
 // begin/update/commit/cleanup at the right times. The session arc itself
-// (rolls → pick → placement → acts → Coda) lives in deck.js; Editor's only
+// (pick → placement → acts → Coda) lives in deck.js; Editor's only
 // arc-specific jobs are the impure work the reducer can't do: sampling the
 // opening grid, the universal bake on every End, and exporting on COMPLETE.
 function Editor({ config, onBackToSetup }) {
@@ -114,19 +114,20 @@ function Editor({ config, onBackToSetup }) {
 
   // The reducer never touches the filesystem: when the opening grid is
   // needed, Editor samples the input folder (sampling.js) and reports it
-  // back via SET_GRID.
+  // back via SET_GRID. Waits for the folder listing so the loading/error
+  // states in DeckPanel get their moment instead of a dangling fetch.
   useEffect(() => {
     if (state.phase !== 'OPENING_PICK' || state.grid.length > 0) return
+    if (imageList.status !== 'ready' || imageList.filenames.length === 0) return
     let cancelled = false
     ;(async () => {
-      const fallback = imageList.status === 'ready' ? imageList.filenames : []
-      const filenames = await sampleImages(state.rolls.gridSize, fallback)
+      const filenames = await sampleImages(TUNING.openingGrid, imageList.filenames)
       if (!cancelled && filenames.length > 0) dispatch({ type: 'SET_GRID', filenames })
     })()
     return () => {
       cancelled = true
     }
-  }, [state.phase, state.grid.length, state.rolls, imageList])
+  }, [state.phase, state.grid.length, imageList])
 
   // Entering a placement session (opening or stash return) loads the chosen
   // images onto the canvas as free-transform objects and arms the erase
@@ -291,12 +292,11 @@ function Editor({ config, onBackToSetup }) {
     })
   }, [cardControls, state.currentCard, cardReady])
 
-  // Keyboard shortcuts. Space = advance (roll / deal), Enter = primary
-  // action (End / restart — never confirms the opening pick, which needs an
-  // explicit choice), R = Restart. Disabled while focus is in any form
-  // control so sliders, color pickers and text inputs behave normally.
+  // Keyboard shortcuts. Space = deal, Enter = primary action (End /
+  // restart — never confirms the opening pick, which needs an explicit
+  // choice), R = Restart. Disabled while focus is in any form control so
+  // sliders, color pickers and text inputs behave normally.
   useEffect(() => {
-    const imagesReady = imageList.status === 'ready' && imageList.filenames.length > 0
     const handler = (e) => {
       const t = e.target
       const tag = t?.tagName
@@ -321,10 +321,7 @@ function Editor({ config, onBackToSetup }) {
       if (e.metaKey || e.ctrlKey || e.altKey) return
 
       if (e.key === ' ' || e.code === 'Space') {
-        if (state.phase === 'OPENING_ROLLS' && imagesReady) {
-          e.preventDefault()
-          dispatch({ type: 'ROLL_OPENING' })
-        } else if (state.phase === 'WORKING' && !state.currentCard) {
+        if (state.phase === 'WORKING' && !state.currentCard) {
           e.preventDefault()
           dispatch({ type: 'DEAL' })
         }
@@ -344,9 +341,6 @@ function Editor({ config, onBackToSetup }) {
         } else if (state.phase === 'WORKING' && !state.currentCard) {
           e.preventDefault()
           dispatch({ type: 'DEAL' })
-        } else if (state.phase === 'OPENING_ROLLS' && imagesReady) {
-          e.preventDefault()
-          dispatch({ type: 'ROLL_OPENING' })
         }
       } else if (e.key === 'r' || e.key === 'R') {
         e.preventDefault()
@@ -355,7 +349,7 @@ function Editor({ config, onBackToSetup }) {
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [state.currentCard, state.phase, cardReady, placementReady, imageList, cardInfo])
+  }, [state.currentCard, state.phase, cardReady, placementReady, cardInfo])
 
   function handleControlChange(key, value) {
     setCardControls((prev) => ({ ...prev, [key]: value }))
@@ -469,13 +463,14 @@ function Editor({ config, onBackToSetup }) {
       <main className="editor-main">
         <section className="canvas-area">
           <CanvasStage ref={canvasStageRef} />
-          {state.phase === 'OPENING_PICK' && (
-            <GridPicker
-              rolls={state.rolls}
-              grid={state.grid}
-              onConfirm={(placed, stashed) => dispatch({ type: 'CONFIRM_PICK', placed, stashed })}
-            />
-          )}
+          {state.phase === 'OPENING_PICK' &&
+            imageList.status === 'ready' &&
+            imageList.filenames.length > 0 && (
+              <GridPicker
+                grid={state.grid}
+                onConfirm={(placed, stashed) => dispatch({ type: 'CONFIRM_PICK', placed, stashed })}
+              />
+            )}
           {CardOverlay && (
             <CardOverlay
               controls={cardControls}
@@ -504,7 +499,6 @@ function Editor({ config, onBackToSetup }) {
             onEraseRedo={() => eraseSessionRef.current?.redo()}
             exportState={exportState}
             onControlChange={handleControlChange}
-            onRoll={() => dispatch({ type: 'ROLL_OPENING' })}
             onEndPlacement={handleEndPlacement}
             onDeal={() => dispatch({ type: 'DEAL' })}
             onCommit={handleCommit}

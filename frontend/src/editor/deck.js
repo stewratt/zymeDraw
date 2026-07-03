@@ -1,12 +1,11 @@
-// The deck — v2 session script. A PURE reducer: no Fabric, no DOM, no React.
+// The deck — v3 session script. A PURE reducer: no Fabric, no DOM, no React.
 // It holds card ids and filenames, never images or canvas objects. All the
-// session's randomness (dice rolls, deck shuffles) also lives here, so this
-// one file is the complete rulebook.
+// session's randomness (deck shuffles) also lives here, so this one file is
+// the complete rulebook.
 //
 // The arc:
-//   OPENING_ROLLS  two dice rolls: grid size + how many you may take
-//   OPENING_PICK   choose images from the grid; each is placed now or stashed
-//   PLACEMENT      arrange the placed images; End bakes
+//   OPENING_PICK   a fixed grid of images; take two — one placed, one stashed
+//   PLACEMENT      arrange the placed image; End bakes
 //   WORKING        deal cards from the literal shuffled deck, one round each
 //   STASH_RETURN   after Act I, the stash comes back as one placement session
 //   WORKING        Act II; then death cards are shuffled into whatever deck
@@ -15,11 +14,9 @@
 //
 // "Death card" is the design term; on screen the card is called Coda.
 
-// Every pacing number lives here. Rolls are dice-expressible ({ base, die })
-// so a manual physical-dice mode can be added later without rework.
+// Every pacing number lives here.
 export const TUNING = {
-  gridRoll: { base: 8, die: 8 }, // images dealt into the opening grid: 9–16
-  pickRoll: { base: 1, die: 3 }, // how many you may take from it: 2–4
+  openingGrid: 24, // images dealt into the opening grid (6×4)
   actOneRounds: 4, // card rounds before the stash returns
   actTwoRounds: 2, // rounds after that before death cards are shuffled in
   deathCount: 3 // death cards shuffled into the remaining deck
@@ -48,14 +45,6 @@ export const MOD_CARDS = [
 
 export const DEATH_CARD = { id: 'coda', label: 'Coda' }
 
-function rollDie(sides) {
-  return 1 + Math.floor(Math.random() * sides)
-}
-
-export function rollNotation(spec) {
-  return `${spec.base} + d${spec.die}`
-}
-
 // Fisher–Yates on a copy.
 function shuffle(cards) {
   const out = [...cards]
@@ -83,8 +72,7 @@ function deathCards() {
 
 export function initialState() {
   return {
-    phase: 'OPENING_ROLLS',
-    rolls: null, // { gridSize, pickCount } once rolled
+    phase: 'OPENING_PICK',
     grid: [], // filenames offered in the opening pick (Editor samples them
     //           and reports back via SET_GRID — fetching is not deck logic)
     toPlace: [], // filenames being arranged in the current placement session
@@ -103,37 +91,20 @@ export function initialState() {
 // the state unchanged rather than throwing.
 export function deckReducer(state, action) {
   switch (action.type) {
-    case 'ROLL_OPENING': {
-      if (state.phase !== 'OPENING_ROLLS') return state
-      // The individual die faces are kept so the reveal UI can show the
-      // roll ("8 + 4 = 12"), and so a manual physical-dice mode can slot in
-      // later by supplying the faces itself.
-      const gridDie = rollDie(TUNING.gridRoll.die)
-      const pickDie = rollDie(TUNING.pickRoll.die)
-      return {
-        ...state,
-        phase: 'OPENING_PICK',
-        rolls: {
-          gridDie,
-          pickDie,
-          gridSize: TUNING.gridRoll.base + gridDie,
-          pickCount: TUNING.pickRoll.base + pickDie
-        }
-      }
-    }
-
     case 'SET_GRID': {
       if (state.phase !== 'OPENING_PICK') return state
       return { ...state, grid: action.filenames }
     }
 
     case 'CONFIRM_PICK': {
-      if (state.phase !== 'OPENING_PICK' || !state.rolls) return state
+      if (state.phase !== 'OPENING_PICK') return state
       const placed = action.placed ?? []
       const stashed = action.stashed ?? []
+      // Take two, strictly: one placed now, one stashed for later. The stash
+      // return is a constant beat — exactly one image, every session.
       const legal =
-        placed.length >= 1 &&
-        placed.length + stashed.length <= state.rolls.pickCount &&
+        placed.length === 1 &&
+        stashed.length === 1 &&
         [...placed, ...stashed].every((f) => state.grid.includes(f))
       if (!legal) return state
       return {

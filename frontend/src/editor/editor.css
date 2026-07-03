@@ -132,63 +132,6 @@
   margin: 0;
   line-height: 1.5;
 }
-.grid-picker.dice-stage {
-  align-items: center;
-  justify-content: center;
-  gap: 28px;
-}
-
-.dice-row {
-  display: flex;
-  gap: 28px;
-}
-.die {
-  width: 96px;
-  height: 96px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  background: var(--surface-2);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  animation: die-tumble 0.3s ease-in-out infinite;
-}
-.die.settled {
-  animation: none;
-  border-color: var(--sel-border);
-}
-@keyframes die-tumble {
-  0%, 100% { transform: rotate(-4deg); }
-  50% { transform: rotate(4deg); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .die { animation: none; }
-}
-.die-sides {
-  font-size: 0.6rem;
-  letter-spacing: 0.2em;
-  color: var(--text-dim);
-  text-transform: uppercase;
-}
-.die-face {
-  font-size: 2rem;
-  font-weight: 300;
-  color: #eee;
-}
-.dice-summary {
-  color: #ccc;
-  font-size: 0.85rem;
-  letter-spacing: 0.05em;
-  margin: 0;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-.dice-summary.shown {
-  opacity: 1;
-}
-
 .grid-thumbs {
   flex: 1;
   min-height: 0;
@@ -198,6 +141,20 @@
   gap: 8px;
   align-content: start;
   padding: 2px;
+}
+/* The opening's fixed 6×4 deal fills the canvas area exactly — every image
+   visible, never a scrollbar. The 1fr tracks shrink with the screen; the
+   thumbs give up their square ratio and let object-fit crop instead.
+   Card grids (Ghost, Stamp) keep the square auto-fill layout above. */
+.grid-thumbs.opening {
+  overflow: hidden;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+}
+.grid-thumbs.opening .grid-thumb {
+  aspect-ratio: auto;
+  min-height: 0;
+  min-width: 0;
 }
 .grid-thumb {
   position: relative;
@@ -219,13 +176,15 @@
   object-fit: cover;
   display: block;
 }
-/* Monochrome place/stash distinction: place = bright solid border, stash =
-   dimmer border. The PLACE / STASH badges carry the label either way. */
+/* Place/stash get real colors — the one deliberate exception to the
+   greyscale UI, because telling the two picks apart at a glance matters
+   more here than the palette rule. Muted green = goes on now; muted
+   amber = held back. */
 .grid-thumb.place {
-  border-color: var(--text);
+  border-color: #7da869;
 }
 .grid-thumb.stash {
-  border-color: var(--text-dim);
+  border-color: #c9a15a;
 }
 .thumb-badge {
   position: absolute;
@@ -239,12 +198,12 @@
   color: var(--text);
 }
 .grid-thumb.place .thumb-badge {
-  background: var(--surface-2);
-  color: var(--text);
+  background: #7da869;
+  color: #10130e;
 }
 .grid-thumb.stash .thumb-badge {
-  background: var(--surface-2);
-  color: var(--text);
+  background: #c9a15a;
+  color: #17120a;
 }
 
 .grid-picker-foot {

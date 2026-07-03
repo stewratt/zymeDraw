@@ -1,6 +1,6 @@
 // The deck panel renders one view per session phase:
-//   OPENING_ROLLS  → the roll invitation (or folder loading/error states)
-//   OPENING_PICK   → a summary; the actual grid is GridPicker over the canvas
+//   OPENING_PICK   → a summary (or folder loading/error states); the actual
+//                    grid is GridPicker over the canvas
 //   PLACEMENT /
 //   STASH_RETURN   → the placement session instructions + End
 //   WORKING        → Deal button, or the revealed card + Tools + End
@@ -9,7 +9,7 @@
 // It knows nothing about specific cards — it renders whatever Tools
 // component the current registry entry provides.
 
-import { TUNING, progressLabel, rollNotation } from './deck.js'
+import { progressLabel } from './deck.js'
 import PlacementLayers from './PlacementLayers.jsx'
 
 function DeckPanel({
@@ -30,7 +30,6 @@ function DeckPanel({
   onEraseRedo,
   exportState,
   onControlChange,
-  onRoll,
   onEndPlacement,
   onDeal,
   onCommit,
@@ -38,10 +37,8 @@ function DeckPanel({
   onOpenOutput
 }) {
   switch (state.phase) {
-    case 'OPENING_ROLLS':
-      return <OpeningRolls imageList={imageList} onRoll={onRoll} />
     case 'OPENING_PICK':
-      return <OpeningPickPanel state={state} />
+      return <OpeningPickPanel imageList={imageList} />
     case 'PLACEMENT':
     case 'STASH_RETURN':
       return (
@@ -87,7 +84,7 @@ function DeckPanel({
   }
 }
 
-function OpeningRolls({ imageList, onRoll }) {
+function OpeningPickPanel({ imageList }) {
   if (imageList.status === 'loading') {
     return (
       <aside className="deck-panel">
@@ -120,28 +117,8 @@ function OpeningRolls({ imageList, onRoll }) {
     <aside className="deck-panel">
       <h2>THE OPENING</h2>
       <p className="hint">
-        Two rolls set the opening: how many images are dealt out (
-        {rollNotation(TUNING.gridRoll)}), and how many of them you may take (
-        {rollNotation(TUNING.pickRoll)}).
-      </p>
-      <p className="hint">
-        {imageList.filenames.length} image
-        {imageList.filenames.length === 1 ? '' : 's'} in folder
-      </p>
-      <button type="button" className="primary" onClick={onRoll}>
-        Roll
-      </button>
-    </aside>
-  )
-}
-
-function OpeningPickPanel({ state }) {
-  return (
-    <aside className="deck-panel">
-      <h2>THE OPENING</h2>
-      <p className="hint">
-        Take up to <strong>{state.rolls.pickCount}</strong> from the grid. Each pick is
-        placed now or stashed for later; at least one must be placed.
+        Take <strong>two</strong> from the grid: one placed now, one stashed —
+        it comes back after Act I.
       </p>
     </aside>
   )
