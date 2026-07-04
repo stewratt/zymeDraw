@@ -45,13 +45,12 @@ export async function beginChar(ctx) {
   scorch(scorched, maskCanvas, ctx.controls.depth)
   img.setElement(scorched)
 
-  const view = ctx.view ?? { left: 0, top: 0, width: ctx.canvasWidth, height: ctx.canvasHeight }
-  const scale = Math.min((view.width * 0.65) / img.width, (view.height * 0.65) / img.height)
+  const scale = Math.min((ctx.canvasWidth * 0.65) / img.width, (ctx.canvasHeight * 0.65) / img.height)
   img.set({
     originX: 'center',
     originY: 'center',
-    left: view.left + view.width / 2,
-    top: view.top + view.height / 2,
+    left: ctx.canvasWidth / 2,
+    top: ctx.canvasHeight / 2,
     scaleX: scale,
     scaleY: scale,
     globalCompositeOperation: 'multiply',

@@ -9,7 +9,6 @@ import { sampleImages } from './sampling.js'
 import { createMaskSession } from './brushCore.js'
 import {
   bake,
-  bakeRegion,
   createMaster,
   masterThumbDataUrl,
   masterToPngDataUrl,
@@ -58,10 +57,6 @@ function Editor({ config, onBackToSetup }) {
   const canvasStageRef = useRef(null)
   const cardSessionRef = useRef(null) // opaque per-card data the registry owns
   const masterRef = useRef(null) // the full-resolution truth (masterRaster.js)
-  // The Pore's region (display coords) while an enclosure runs — deck.js
-  // counts the rounds, this holds the geometry. Set by a commit that
-  // returns { enclosureRegion }.
-  const poreRegionRef = useRef(null)
 
   // Per-card UI state: controls (slider values etc.), info (data the Tools
   // component renders), ready (true once begin has finished).
@@ -187,23 +182,6 @@ function Editor({ config, onBackToSetup }) {
     showMaster(canvas, masterRef.current)
   }, [])
 
-  // The enclosure viewport (Pore): while the deck says we're inside a pore,
-  // the working view zooms into the region — no pixels are cropped, this is
-  // purely how much of the piece you're allowed to perceive. Anything else
-  // (including COMPLETE and Restart) returns the view to identity.
-  useEffect(() => {
-    const canvas = canvasStageRef.current?.getCanvas()
-    if (!canvas) return
-    const region = poreRegionRef.current
-    if (state.phase === 'WORKING' && state.enclosure && region) {
-      const z = CANVAS_WIDTH / region.width
-      canvas.setViewportTransform([z, 0, 0, z, -region.left * z, -region.top * z])
-    } else {
-      canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
-    }
-    canvas.requestRenderAll()
-  }, [state.enclosure, state.phase])
-
   // When a death card is dealt (phase → COMPLETE), write the master out —
   // it already holds the true pixels at 2400×3000, so export is a direct
   // read with no multiplier render. Runs exactly once per transition.
@@ -280,12 +258,6 @@ function Editor({ config, onBackToSetup }) {
         imageList: imageList.filenames,
         canvasWidth: CANVAS_WIDTH,
         canvasHeight: CANVAS_HEIGHT,
-        // The working view: the whole canvas normally, the pore region
-        // during an enclosure. Cards center their initial objects in it.
-        view:
-          state.enclosure && poreRegionRef.current
-            ? poreRegionRef.current
-            : { left: 0, top: 0, width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
         report: (patch) => setCardInfo((prev) => ({ ...prev, ...patch })),
         // Cards whose begin awaits (Ghost's pick + image load) check this
         // after each await so a restart can't leave objects behind.
@@ -398,21 +370,13 @@ function Editor({ config, onBackToSetup }) {
     try {
       if (canvas) {
         if (entry?.commit) {
-          const result = await entry.commit({
+          await entry.commit({
             canvas,
             controls: cardControls,
             session: cardSessionRef.current
           })
-          // A duration card hands back the region its enclosure covers.
-          if (result?.enclosureRegion) poreRegionRef.current = result.enclosureRegion
         }
-        // Inside an enclosure only the pore region lands in the master —
-        // unless this card re-framed the whole piece (Deeper, Rack), in
-        // which case the region geometry is gone and the full bake stands.
-        const enclosed = state.enclosure && !entry?.reframes && poreRegionRef.current
-        masterRef.current = enclosed
-          ? bakeRegion(canvas, masterRef.current, poreRegionRef.current)
-          : bake(canvas)
+        masterRef.current = bake(canvas)
       }
     } finally {
       committingRef.current = false
@@ -467,7 +431,6 @@ function Editor({ config, onBackToSetup }) {
       showMaster(canvas, masterRef.current)
     }
     cardSessionRef.current = null
-    poreRegionRef.current = null
     setCardControls({})
     setCardInfo({})
     setPlacementReady(true)

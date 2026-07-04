@@ -666,6 +666,14 @@
   padding: 6px;
   font-size: 0.62rem;
 }
+/* Icon mode rows (Arrange · Conceal · Restore · Soften) */
+.mode-toggle.icons button {
+  padding: 7px 4px;
+}
+.mode-toggle.icons button svg {
+  display: block;
+  margin: 0 auto;
+}
 
 .brush-tools {
   display: flex;

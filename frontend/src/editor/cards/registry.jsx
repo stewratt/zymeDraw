@@ -23,12 +23,8 @@
 //     is live (the grid picks). Same props as Tools.
 //   - commit may be async (Deeper awaits the sidecar's detail restore);
 //     Editor awaits it and shows a generic "committing" state.
-//   - commit may return { enclosureRegion } (Pore) — Editor stores the
-//     region and zooms the viewport while deck.js counts the rounds down.
-//   - `reframes: true` marks a card that replaces the whole master's
-//     geometry (Deeper, Rack). Inside an enclosure its End takes the full
-//     bake instead of the region bake — paired with `endsEnclosure` on the
-//     deck list in deck.js.
+//   - begin may await the user (Ghost's pick, Etch's frame) — End stays
+//     disabled until it resolves; begin's ctx has isCancelled for restarts.
 
 import { ghostCard } from './ghost.jsx'
 import { stainCard } from './stain.jsx'
@@ -37,7 +33,7 @@ import { RailsTools, beginRails, cleanupRails, commitRails, updateRails } from '
 import { CharTools, beginChar, cleanupChar, commitChar, updateChar } from './char.jsx'
 import { DeeperTools, beginDeeper, cleanupDeeper, commitDeeper } from './deeper.jsx'
 import { RackTools, beginRack, cleanupRack, updateRack } from './rack.jsx'
-import { PoreTools, beginPore, cleanupPore, commitPore } from './pore.jsx'
+import { EtchTools, beginEtch, cleanupEtch, commitEtch, updateEtch } from './etch.jsx'
 import {
   StampOverlay,
   StampTools,
@@ -112,7 +108,6 @@ export const cardRegistry = {
   deeper: {
     controls: [],
     defaultControls: {},
-    reframes: true,
     Tools: DeeperTools,
     begin: beginDeeper,
     commit: commitDeeper,
@@ -122,7 +117,6 @@ export const cardRegistry = {
   rack: {
     controls: ['flipX', 'flipY'],
     defaultControls: { flipX: false, flipY: false },
-    reframes: true,
     Tools: RackTools,
     begin: beginRack,
     update: updateRack,
@@ -181,15 +175,16 @@ export const cardRegistry = {
     cleanup: cleanupCure
   },
 
-  // ---- Structure ----
+  // ---- Etch (pixel glyph at the master's grain) ----
 
-  pore: {
-    controls: [],
-    defaultControls: {},
-    Tools: PoreTools,
-    begin: beginPore,
-    commit: commitPore,
-    cleanup: cleanupPore
+  etch: {
+    controls: ['color', 'pixel'],
+    defaultControls: { color: '#c43c28', pixel: 1 },
+    Tools: EtchTools,
+    begin: beginEtch,
+    update: updateEtch,
+    commit: commitEtch,
+    cleanup: cleanupEtch
   },
 
   // ---- Stashed (await Stew's trained style models — see deck.js) ----

@@ -181,23 +181,36 @@ build-order steps are built (steps 3–6 in one pass at Stew's request —
    Stain are thin configs), **Char** (Stencil × Sink: Rails' fragments as
    a grey multiply burn with a Depth slider), **Cure** (Wash × soft light:
    soft-light self-overlay + influence).
-5. **Pore** — the first *duration card*. Commit returns
-   `{ enclosureRegion }` (a generic registry contract); deck.js counts
-   `state.enclosure.roundsLeft` (TUNING.poreRounds = 2) while Editor zooms
-   the viewport into the region. Ends bake **only the pore region** into
-   the master (`masterRaster.bakeRegion` — resets the viewport before
-   snapshotting, since `toCanvasElement` bakes the current viewport).
-   Rules encoded: cards get `ctx.view` and start their objects inside it;
-   re-frame cards (Deeper, Rack — `reframes` in registry, `endsEnclosure`
-   in deck.js) end an enclosure early; the stash return defers until the
-   enclosure lifts.
+5. **Pore** — built as the first *duration card* (multi-round enclosure),
+   then **replaced by Etch in the revision round** (below). The enclosure
+   machinery (`state.enclosure`, `bakeRegion`, `ctx.view`, `reframes`/
+   `endsEnclosure`) was deleted with it; git history has it all if a
+   duration card ever comes back.
 6. **Deck tuning** — the §8 target list is live in `deck.js`: 19 mod cards
    (Ghost 2, Stain 2, Stamp 2, Rails 1, Char 1, Deeper 2, Rack 1, Silt 2,
-   Bruise 1, Dissolve 1, Steep 1, Turn 1, Cure 1, Pore 1) + Coda 3.
+   Bruise 1, Dissolve 1, Steep 1, Turn 1, Cure 1, Etch 1) + Coda 3.
+
+**Revision round (started 2026-07-04, in progress):** Stew is playtesting
+the whole branch and feeding back. Landed so far:
+
+- **Pore → Etch.** Playtest failure: Deeper dealt right after Pore ended
+  the enclosure before its payoff (the zoom-out reveal) ever happened —
+  the multi-round design collided with the deck. Etch (Stew's idea,
+  named per the register; decisions: fixed-size frame, position only) is
+  self-contained: drag a small fixed frame (96×120 *master* px, snapped
+  to the master grid), Zoom in — the card owns the viewport for its
+  session — and draw a tiny glyph with a solid-color pixel brush at the
+  master's grain (1 master px ≈ 8 screen px; bg `imageSmoothing` off
+  while zoomed so the piece's true pixels show). End recedes and the
+  universal bake lands the glyph 1:1. Color control is named `color` so
+  it opens on a random hue. `cards/etch.jsx`; snapshot-based undo/redo.
+- **Mask-mode icons.** Arrange · Conceal · Restore · Soften are now icon
+  buttons (move-arrows / eraser / brush / feathered dot — inline SVGs in
+  `maskControls.jsx`), name on hover; the words were hard to teach.
 
 Still open from the doc: suits visible or backstage (§10.1), Echo (§7.3),
-Mount (§7.4), death-crop (parked since v2). **Next action: Stew's revision
-round over the whole v3 branch.**
+Mount (§7.4), death-crop (parked since v2). **Next action: more of Stew's
+revision feedback.**
 
 **Style-transfer experiment (branch `style-transfer`, off `v2`,
 2026-07-03):** fast-neural-style (ONNX zoo, pointillism to start; Stew
@@ -244,8 +257,8 @@ Within a card you can adjust freely (including within-card brush undo/redo);
 after End it is baked in. Commitment is the central mechanic, not a missing
 feature.
 
-**The session arc** (v3; the v2 arc with the opening simplified and the
-Pore enclosure added — v3 detail in `version_3_design.md`):
+**The session arc** (v3; the v2 arc with the opening simplified — v3
+detail in `version_3_design.md`):
 
 1. **Opening pick** — a fixed 6×4 grid of 24 images sampled from the input
    folder. Take two, strictly: one *placed now*, one *stashed* for later.
@@ -256,9 +269,7 @@ Pore enclosure added — v3 detail in `version_3_design.md`):
 3. **Act I** — deal ~4 modification cards from the shuffled deck.
 4. **Stash return** — the stashed image comes back as a placement session.
 5. **Act II** — ~2 more rounds, then death cards are shuffled into the
-   remaining deck; keep dealing until one appears. (A Pore commit anywhere
-   in the acts opens an *enclosure*: the next rounds are worked inside a
-   small region of the piece.)
+   remaining deck; keep dealing until one appears.
 6. **Death card** — the piece is complete. Export at full resolution.
 
 **Card design rule: constraint outside, freedom inside.** No card may simply
@@ -280,7 +291,7 @@ a game.
   finish, export, this round.* "Card" and "deck" stay — they're the
   instrument, not a genre signal. (Dice left the product in v3 step 1.)
   v3 adds the **zyme register** for card names: one concrete process word —
-  Silt, Bruise, Turn, Steep, Rack, Stain, Char, Cure, Pore — never a
+  Silt, Bruise, Turn, Steep, Rack, Stain, Char, Cure, Etch — never a
   settings-menu label (`version_3_design.md` §4).
 - **No celebratory / gamer affect.** No win-states or congratulatory copy.
   The end is a piece being *finished*, not a level being *beaten*.
@@ -399,7 +410,7 @@ zymeDraw/
 │               ├── silt.jsx / dissolve.jsx / bruise.jsx
 │               ├── steep.jsx / turn.jsx / cure.jsx
 │               ├── deeper.jsx / rack.jsx  # re-frames
-│               └── pore.jsx               # the duration card (enclosure)
+│               └── etch.jsx               # pixel glyph at the master's grain
 └── backend/
     ├── server.js             # all Express routes (see §6) + /api/ml proxy
     ├── config-store.js       # reads/writes ~/.deck-config.json
@@ -532,11 +543,10 @@ what to keep (registry pattern, purity, commitment) and what failed
   placeholder. Randomization is centralized in `Editor.jsx`
   (`randomizeColors`, keyed on the control name `color`), so a new color card
   gets this for free just by naming its control `color`.
-- **An enclosure (Pore) constrains everything inside it.** While
-  `state.enclosure` runs, the viewport shows only the pore region, cards
-  start their objects in `ctx.view`, Ends bake only the region
-  (`bakeRegion`), the stash return defers, and a re-frame card ends the
-  enclosure early.
+- **A card may own the viewport for its session** (Etch zooms to the
+  master's grain), but it must restore the identity transform in both
+  commit and cleanup — the universal bake snapshots through the CURRENT
+  viewport (`toCanvasElement`), so a leaked zoom would bake wrong.
 - **Browser tab dependency**: closing the tab loses in-progress work. By
   design — commitment is the mechanic.
 
