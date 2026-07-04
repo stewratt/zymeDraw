@@ -1,4 +1,6 @@
-// Etch — a mark almost too small to find (replaced Pore, 2026-07-04).
+// Subliminal Etch — a mark almost too small to find (replaced Pore,
+// 2026-07-04; the two-word name is Stew's deliberate exception to the
+// one-word zyme register).
 // A small fixed-size frame is dragged anywhere on the piece; confirming it
 // zooms the view all the way into that region — one master pixel is a fat
 // square on screen — and a solid-color pixel brush etches a tiny glyph,

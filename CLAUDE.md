@@ -188,15 +188,17 @@ build-order steps are built (steps 3–6 in one pass at Stew's request —
    duration card ever comes back.
 6. **Deck tuning** — the §8 target list is live in `deck.js`: 19 mod cards
    (Ghost 2, Stain 2, Stamp 2, Rails 1, Char 1, Deeper 2, Rack 1, Silt 2,
-   Bruise 1, Dissolve 1, Steep 1, Turn 1, Cure 1, Etch 1) + Coda 3.
+   Bruise 1, Dissolve 1, Steep 1, Turn 1, Cure 1, Subliminal Etch 1) +
+   Coda 3.
 
 **Revision round (started 2026-07-04, in progress):** Stew is playtesting
 the whole branch and feeding back. Landed so far:
 
-- **Pore → Etch.** Playtest failure: Deeper dealt right after Pore ended
-  the enclosure before its payoff (the zoom-out reveal) ever happened —
-  the multi-round design collided with the deck. Etch (Stew's idea,
-  named per the register; decisions: fixed-size frame, position only) is
+- **Pore → Subliminal Etch.** Playtest failure: Deeper dealt right after
+  Pore ended the enclosure before its payoff (the zoom-out reveal) ever
+  happened — the multi-round design collided with the deck. Subliminal
+  Etch (Stew's idea and his name — the one deliberate two-word exception
+  to the register; decisions: fixed-size frame, position only) is
   self-contained: drag a small fixed frame (96×120 *master* px, snapped
   to the master grid), Zoom in — the card owns the viewport for its
   session — and draw a tiny glyph with a solid-color pixel brush at the
@@ -291,8 +293,9 @@ a game.
   finish, export, this round.* "Card" and "deck" stay — they're the
   instrument, not a genre signal. (Dice left the product in v3 step 1.)
   v3 adds the **zyme register** for card names: one concrete process word —
-  Silt, Bruise, Turn, Steep, Rack, Stain, Char, Cure, Etch — never a
-  settings-menu label (`version_3_design.md` §4).
+  Silt, Bruise, Turn, Steep, Rack, Stain, Char, Cure — never a
+  settings-menu label (`version_3_design.md` §4). Subliminal Etch is the
+  one deliberate two-word exception (Stew's call, revision round).
 - **No celebratory / gamer affect.** No win-states or congratulatory copy.
   The end is a piece being *finished*, not a level being *beaten*.
 - **"Death card" is a design-conversation term, not UI copy.** On screen the

@@ -39,7 +39,7 @@ export const MOD_CARDS = [
   { id: 'steep', label: 'Steep', copies: 1 }, // Wash × Sink
   { id: 'turn', label: 'Turn', copies: 1 }, // Wash (hue)
   { id: 'cure', label: 'Cure', copies: 1 }, // Wash × Cure
-  { id: 'etch', label: 'Etch', copies: 1 } // Pixel glyph, hidden at the grain
+  { id: 'etch', label: 'Subliminal Etch', copies: 1 } // Pixel glyph, hidden at the grain
   // Stashed until Stew trains his own style model — the demo ONNX styles
   // don't look good enough to ship. Card files, registry entries, and the
   // /style sidecar endpoint all stay in place; re-add these lines to deal
