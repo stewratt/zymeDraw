@@ -1,7 +1,8 @@
-// HSV Brush — paint a color shift where it belongs. Hue/saturation/
-// brightness run through the canvas filter pipeline (hue-rotate/saturate/
-// brightness), so dragging the sliders re-renders the shifted copy at
-// interactive speed. Note: ctx.filter needs a modern browser (Safari 18+).
+// Bruise — localized discoloration: set a hue/saturation/brightness shift,
+// then paint it where the image should bruise. The shift runs through the
+// canvas filter pipeline (hue-rotate/saturate/brightness), so dragging the
+// sliders re-renders the shifted copy at interactive speed. Note:
+// ctx.filter needs a modern browser (Safari 18+).
 
 import { BrushControls, makeEffectCardHooks } from './effectCardFactory.jsx'
 
@@ -18,9 +19,9 @@ export function applyHsvShift(effected, master, controls) {
   ctx.restore()
 }
 
-export const hsvBrushHooks = makeEffectCardHooks(applyHsvShift)
+export const bruiseHooks = makeEffectCardHooks(applyHsvShift)
 
-// Shared by the HSV brush and the Global HSV card.
+// Shared by Bruise (the brush) and Turn (the whole-batch shift).
 export function HsvSliders({ controls, onControlChange }) {
   return (
     <>
@@ -61,11 +62,11 @@ export function HsvSliders({ controls, onControlChange }) {
   )
 }
 
-export function HsvBrushTools({ controls, info, ready, onControlChange }) {
+export function BruiseTools({ controls, info, ready, onControlChange }) {
   if (!ready) return <span className="hint">Preparing…</span>
   return (
     <div className="brush-tools card-tools">
-      <p className="hint">Set a shift, then paint where it belongs.</p>
+      <p className="hint">Set the discoloration, then paint where the image should bruise.</p>
       <HsvSliders controls={controls} onControlChange={onControlChange} />
       <BrushControls controls={controls} info={info} onControlChange={onControlChange} />
     </div>

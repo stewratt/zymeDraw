@@ -1,4 +1,4 @@
-// The declarative card registry — v2.
+// The declarative card registry — v3.
 //
 // Maps each card id to:
 //   - controls        : which control keys appear in the panel
@@ -8,28 +8,36 @@
 //   - commit          : the card's own End step (finalize its temp objects)
 //   - cleanup         : called if the card is abandoned (restart)
 //
-// The v2 contract: after a card's commit hook runs, Editor performs the
+// The contract: after a card's commit hook runs, Editor performs the
 // UNIVERSAL BAKE (masterRaster.bake) — the whole canvas flattens into the
 // master. Cards never implement flattening; their job is only to set up and
 // adjust temporary objects/tools during their session.
 //
 // Adding a new card = one entry here + one behavior file in cards/, built on
-// the shared modules (brushCore, effectCardFactory, GridPicker, placement).
-// Never add per-card branches to Editor.jsx or DeckPanel.jsx.
+// the shared modules (brushCore, effectCardFactory, graftCardFactory,
+// GridPicker, placement). Never add per-card branches to Editor.jsx or
+// DeckPanel.jsx.
 //
-// Optional shape extension: `Overlay` is a component Editor renders over
-// the canvas area while the card is live (Ghost's grid pick; Stamp will
-// reuse it). It receives the same props as Tools.
-//
-// A card's commit hook may be async (Deeper awaits the sidecar's detail
-// restore); Editor awaits it and shows a generic "committing" state.
-//
-// All ten planned card designs are registered, plus the style-transfer
-// experiment (Transfer, this branch).
+// Optional shape extensions Editor applies generically:
+//   - `Overlay`: a component rendered over the canvas area while the card
+//     is live (the grid picks). Same props as Tools.
+//   - commit may be async (Deeper awaits the sidecar's detail restore);
+//     Editor awaits it and shows a generic "committing" state.
+//   - commit may return { enclosureRegion } (Pore) — Editor stores the
+//     region and zooms the viewport while deck.js counts the rounds down.
+//   - `reframes: true` marks a card that replaces the whole master's
+//     geometry (Deeper, Rack). Inside an enclosure its End takes the full
+//     bake instead of the region bake — paired with `endsEnclosure` on the
+//     deck list in deck.js.
 
-import { NoiseTools, noiseHooks } from './noiseBrush.jsx'
+import { ghostCard } from './ghost.jsx'
+import { stainCard } from './stain.jsx'
+import { graftControls } from './graftCardFactory.jsx'
 import { RailsTools, beginRails, cleanupRails, commitRails, updateRails } from './rails.jsx'
+import { CharTools, beginChar, cleanupChar, commitChar, updateChar } from './char.jsx'
 import { DeeperTools, beginDeeper, cleanupDeeper, commitDeeper } from './deeper.jsx'
+import { RackTools, beginRack, cleanupRack, updateRack } from './rack.jsx'
+import { PoreTools, beginPore, cleanupPore, commitPore } from './pore.jsx'
 import {
   StampOverlay,
   StampTools,
@@ -38,34 +46,12 @@ import {
   commitStamp,
   updateStamp
 } from './stamp.jsx'
-import {
-  GhostOverlay,
-  GhostTools,
-  beginGhost,
-  cleanupGhost,
-  commitGhost,
-  updateGhost
-} from './ghost.jsx'
-import { BlurTools, blurHooks } from './blurBrush.jsx'
-import { HsvBrushTools, hsvBrushHooks } from './hsvBrush.jsx'
-import {
-  ColorOverlayTools,
-  beginColorOverlay,
-  cleanupColorOverlay,
-  updateColorOverlay
-} from './colorOverlay.jsx'
-import {
-  GlobalHsvTools,
-  beginGlobalHsv,
-  cleanupGlobalHsv,
-  updateGlobalHsv
-} from './globalHsv.jsx'
-import {
-  RepositionTools,
-  beginReposition,
-  cleanupReposition,
-  updateReposition
-} from './reposition.jsx'
+import { SiltTools, siltHooks } from './silt.jsx'
+import { DissolveTools, dissolveHooks } from './dissolve.jsx'
+import { BruiseTools, bruiseHooks } from './bruise.jsx'
+import { SteepTools, beginSteep, cleanupSteep, updateSteep } from './steep.jsx'
+import { TurnTools, beginTurn, cleanupTurn, updateTurn } from './turn.jsx'
+import { CureTools, beginCure, cleanupCure, updateCure } from './cure.jsx'
 import {
   TransferTools,
   beginTransfer,
@@ -83,43 +69,10 @@ import {
 } from './shatteredTransfer.jsx'
 
 export const cardRegistry = {
-  ghost: {
-    controls: ['opacity', 'brightness', 'contrast', 'mode', 'size', 'hardness', 'strength'],
-    defaultControls: {
-      opacity: 1,
-      brightness: 100,
-      contrast: 100,
-      mode: 'arrange',
-      size: 40,
-      hardness: 'soft',
-      strength: 1
-    },
-    Tools: GhostTools,
-    Overlay: GhostOverlay,
-    begin: beginGhost,
-    update: updateGhost,
-    commit: commitGhost,
-    cleanup: cleanupGhost
-  },
+  // ---- Graft (grid pick → placed image + mask brush) ----
 
-  rails: {
-    controls: ['color', 'opacity', 'mode', 'size', 'hardness', 'strength'],
-    defaultControls: { color: '#c43c28', opacity: 1, mode: 'arrange', size: 40, hardness: 'soft', strength: 1 },
-    Tools: RailsTools,
-    begin: beginRails,
-    update: updateRails,
-    commit: commitRails,
-    cleanup: cleanupRails
-  },
-
-  deeper: {
-    controls: [],
-    defaultControls: {},
-    Tools: DeeperTools,
-    begin: beginDeeper,
-    commit: commitDeeper,
-    cleanup: cleanupDeeper
-  },
+  ghost: { ...graftControls, ...ghostCard },
+  stain: { ...graftControls, ...stainCard },
 
   stamp: {
     controls: ['opacity', 'mode', 'size', 'hardness', 'strength'],
@@ -132,53 +85,114 @@ export const cardRegistry = {
     cleanup: cleanupStamp
   },
 
-  noiseBrush: {
-    controls: ['size', 'hardness', 'intensity'],
-    defaultControls: { size: 60, hardness: 'soft', intensity: 1 },
-    Tools: NoiseTools,
-    ...noiseHooks
+  // ---- Stencil (image read as an alpha cutout of itself) ----
+
+  rails: {
+    controls: ['color', 'opacity', 'mode', 'size', 'hardness', 'strength'],
+    defaultControls: { color: '#c43c28', opacity: 1, mode: 'arrange', size: 40, hardness: 'soft', strength: 1 },
+    Tools: RailsTools,
+    begin: beginRails,
+    update: updateRails,
+    commit: commitRails,
+    cleanup: cleanupRails
   },
 
-  blurBrush: {
-    controls: ['size', 'hardness', 'intensity', 'radius'],
-    defaultControls: { size: 60, hardness: 'soft', intensity: 1, radius: 10 },
-    Tools: BlurTools,
-    ...blurHooks
+  char: {
+    controls: ['depth', 'opacity', 'mode', 'size', 'hardness', 'strength'],
+    defaultControls: { depth: 0.7, opacity: 1, mode: 'arrange', size: 40, hardness: 'soft', strength: 1 },
+    Tools: CharTools,
+    begin: beginChar,
+    update: updateChar,
+    commit: commitChar,
+    cleanup: cleanupChar
   },
 
-  hsvBrush: {
-    controls: ['size', 'hardness', 'intensity', 'h', 's', 'v'],
-    defaultControls: { size: 60, hardness: 'soft', intensity: 1, h: 0, s: 100, v: 100 },
-    Tools: HsvBrushTools,
-    ...hsvBrushHooks
+  // ---- Re-frame (the master itself is the object) ----
+
+  deeper: {
+    controls: [],
+    defaultControls: {},
+    reframes: true,
+    Tools: DeeperTools,
+    begin: beginDeeper,
+    commit: commitDeeper,
+    cleanup: cleanupDeeper
   },
 
-  colorOverlay: {
-    controls: ['color', 'intensity', 'blend'],
-    defaultControls: { color: '#a06a3a', intensity: 0.35, blend: 'multiply' },
-    Tools: ColorOverlayTools,
-    begin: beginColorOverlay,
-    update: updateColorOverlay,
-    cleanup: cleanupColorOverlay
-  },
-
-  globalHsv: {
-    controls: ['h', 's', 'v', 'intensity'],
-    defaultControls: { h: 0, s: 100, v: 100, intensity: 1 },
-    Tools: GlobalHsvTools,
-    begin: beginGlobalHsv,
-    update: updateGlobalHsv,
-    cleanup: cleanupGlobalHsv
-  },
-
-  reposition: {
+  rack: {
     controls: ['flipX', 'flipY'],
     defaultControls: { flipX: false, flipY: false },
-    Tools: RepositionTools,
-    begin: beginReposition,
-    update: updateReposition,
-    cleanup: cleanupReposition
+    reframes: true,
+    Tools: RackTools,
+    begin: beginRack,
+    update: updateRack,
+    cleanup: cleanupRack
   },
+
+  // ---- Reveal brushes (paint the effect where it belongs) ----
+
+  silt: {
+    controls: ['size', 'hardness', 'intensity'],
+    defaultControls: { size: 60, hardness: 'soft', intensity: 1 },
+    Tools: SiltTools,
+    ...siltHooks
+  },
+
+  dissolve: {
+    controls: ['size', 'hardness', 'intensity', 'radius'],
+    defaultControls: { size: 60, hardness: 'soft', intensity: 1, radius: 10 },
+    Tools: DissolveTools,
+    ...dissolveHooks
+  },
+
+  bruise: {
+    controls: ['size', 'hardness', 'intensity', 'h', 's', 'v'],
+    defaultControls: { size: 60, hardness: 'soft', intensity: 1, h: 0, s: 100, v: 100 },
+    Tools: BruiseTools,
+    ...bruiseHooks
+  },
+
+  // ---- Washes (whole-canvas, influence mandatory) ----
+
+  steep: {
+    controls: ['color', 'intensity', 'blend'],
+    defaultControls: { color: '#a06a3a', intensity: 0.35, blend: 'multiply' },
+    Tools: SteepTools,
+    begin: beginSteep,
+    update: updateSteep,
+    cleanup: cleanupSteep
+  },
+
+  turn: {
+    controls: ['h', 's', 'v', 'intensity'],
+    defaultControls: { h: 0, s: 100, v: 100, intensity: 1 },
+    Tools: TurnTools,
+    begin: beginTurn,
+    update: updateTurn,
+    cleanup: cleanupTurn
+  },
+
+  cure: {
+    controls: ['intensity'],
+    defaultControls: { intensity: 0.5 },
+    Tools: CureTools,
+    begin: beginCure,
+    update: updateCure,
+    cleanup: cleanupCure
+  },
+
+  // ---- Structure ----
+
+  pore: {
+    controls: [],
+    defaultControls: {},
+    Tools: PoreTools,
+    begin: beginPore,
+    commit: commitPore,
+    cleanup: cleanupPore
+  },
+
+  // ---- Stashed (await Stew's trained style models — see deck.js) ----
 
   transfer: {
     controls: ['opacity', 'mode', 'size', 'hardness', 'strength'],

@@ -12,6 +12,10 @@
 //                  remains — dealing one ends the session instantly
 //   COMPLETE       the piece is finished; export
 //
+// Within WORKING, a Pore commit opens an *enclosure*: the next poreRounds
+// rounds are worked inside a small region (state.enclosure counts them
+// down; Editor owns the region and the zoomed viewport).
+//
 // "Death card" is the design term; on screen the card is called Coda.
 
 // Every pacing number lives here.
@@ -19,22 +23,35 @@ export const TUNING = {
   openingGrid: 24, // images dealt into the opening grid (6×4)
   actOneRounds: 4, // card rounds before the stash returns
   actTwoRounds: 2, // rounds after that before death cards are shuffled in
-  deathCount: 3 // death cards shuffled into the remaining deck
+  deathCount: 3, // death cards shuffled into the remaining deck
+  poreRounds: 2 // rounds worked inside a Pore enclosure
 }
 
 // The mod deck: one entry per card design, expanded by copy count and
-// shuffled at session start. Rebalancing the deck = editing this array.
+// shuffled at session start. Rebalancing the deck = editing this array
+// (target ratios in version_3_design.md §8–9).
+//
+// Optional per-card rule flags, carried onto the dealt card:
+//   duration       — a Pore-style card: committing it opens an enclosure
+//                    for TUNING.poreRounds rounds
+//   endsEnclosure  — a re-frame card: committing it inside an enclosure
+//                    ends the enclosure early (the geometry the pore
+//                    referenced is gone)
 export const MOD_CARDS = [
-  { id: 'ghost', label: 'Ghost', copies: 2 },
-  { id: 'stamp', label: 'Stamp', copies: 2 },
-  { id: 'deeper', label: 'Deeper', copies: 2 },
-  { id: 'noiseBrush', label: 'Noise Brush', copies: 1 },
-  { id: 'blurBrush', label: 'Blur Brush', copies: 1 },
-  { id: 'hsvBrush', label: 'HSV Brush', copies: 1 },
-  { id: 'colorOverlay', label: 'Color Overlay', copies: 1 },
-  { id: 'globalHsv', label: 'HSV', copies: 1 },
-  { id: 'reposition', label: 'Reposition', copies: 1 },
-  { id: 'rails', label: 'Rails', copies: 1 }
+  { id: 'ghost', label: 'Ghost', copies: 2 }, // Graft × Rise
+  { id: 'stain', label: 'Stain', copies: 2 }, // Graft × Sink
+  { id: 'stamp', label: 'Stamp', copies: 2 }, // Graft (cutout)
+  { id: 'rails', label: 'Rails', copies: 1 }, // Stencil × solid
+  { id: 'char', label: 'Char', copies: 1 }, // Stencil × Sink
+  { id: 'deeper', label: 'Deeper', copies: 2, endsEnclosure: true }, // Re-frame, inward
+  { id: 'rack', label: 'Rack', copies: 1, endsEnclosure: true }, // Re-frame, neutral
+  { id: 'silt', label: 'Silt', copies: 2 }, // Reveal × deposit
+  { id: 'bruise', label: 'Bruise', copies: 1 }, // Reveal × Bruise
+  { id: 'dissolve', label: 'Dissolve', copies: 1 }, // Reveal × blur — provisional (§6.3)
+  { id: 'steep', label: 'Steep', copies: 1 }, // Wash × Sink
+  { id: 'turn', label: 'Turn', copies: 1 }, // Wash (hue)
+  { id: 'cure', label: 'Cure', copies: 1 }, // Wash × Cure
+  { id: 'pore', label: 'Pore', copies: 1, duration: true } // Enclosure
   // Stashed until Stew trains his own style model — the demo ONNX styles
   // don't look good enough to ship. Card files, registry entries, and the
   // /style sidecar endpoint all stay in place; re-add these lines to deal
@@ -57,8 +74,8 @@ function shuffle(cards) {
 
 function buildDeck() {
   const cards = []
-  for (const { id, label, copies } of MOD_CARDS) {
-    for (let n = 0; n < copies; n++) cards.push({ id, label, kind: 'mod' })
+  for (const { copies, ...card } of MOD_CARDS) {
+    for (let n = 0; n < copies; n++) cards.push({ ...card, kind: 'mod' })
   }
   return shuffle(cards)
 }
@@ -81,6 +98,7 @@ export function initialState() {
     roundsDealt: 0,
     stashReturned: false,
     deathShuffled: false,
+    enclosure: null, // { roundsLeft } while inside a Pore; Editor holds the region
     currentCard: null,
     history: []
   }
@@ -163,22 +181,41 @@ export function deckReducer(state, action) {
 
     case 'COMMIT': {
       if (state.phase !== 'WORKING' || !state.currentCard) return state
+      const card = state.currentCard
       const roundsDealt = state.roundsDealt + 1
+
+      // Enclosure bookkeeping (Pore): a duration card opens one; each later
+      // commit inside it counts down; a re-frame card ends it early.
+      let enclosure = state.enclosure
+      if (card.duration) {
+        enclosure = { roundsLeft: TUNING.poreRounds }
+      } else if (enclosure) {
+        enclosure =
+          card.endsEnclosure || enclosure.roundsLeft <= 1
+            ? null
+            : { roundsLeft: enclosure.roundsLeft - 1 }
+      }
+
       const next = {
         ...state,
         roundsDealt,
+        enclosure,
         currentCard: null,
         history: [
           ...state.history,
-          { event: 'card', cardId: state.currentCard.id, ts: Date.now() }
+          { event: 'card', cardId: card.id, ts: Date.now() }
         ]
       }
 
-      // End of Act I: the stash comes back as one placement session.
+      // End of Act I: the stash comes back as one placement session. `>=`
+      // because it defers while an enclosure is open (a placement session
+      // can't happen inside the pore) and fires on the first commit after
+      // the enclosure lifts.
       if (
-        roundsDealt === TUNING.actOneRounds &&
+        roundsDealt >= TUNING.actOneRounds &&
         !state.stashReturned &&
-        state.stash.length > 0
+        state.stash.length > 0 &&
+        !enclosure
       ) {
         return { ...next, phase: 'STASH_RETURN', toPlace: state.stash }
       }
@@ -209,10 +246,13 @@ export function deckReducer(state, action) {
 // Short human label for where the session stands. Derived, never stored.
 export function progressLabel(state) {
   if (state.phase !== 'WORKING') return null
-  if (state.deathShuffled) return 'late — the Coda is in the deck'
+  const pore = state.enclosure
+    ? ` · inside the pore (${state.enclosure.roundsLeft} round${state.enclosure.roundsLeft === 1 ? '' : 's'} left)`
+    : ''
+  if (state.deathShuffled) return `late — the Coda is in the deck${pore}`
   const { actOneRounds, actTwoRounds } = TUNING
   if (state.roundsDealt < actOneRounds) {
-    return `Act I · round ${state.roundsDealt + 1} of ${actOneRounds}`
+    return `Act I · round ${state.roundsDealt + 1} of ${actOneRounds}${pore}`
   }
-  return `Act II · round ${state.roundsDealt - actOneRounds + 1} of ${actTwoRounds}`
+  return `Act II · round ${state.roundsDealt - actOneRounds + 1} of ${actTwoRounds}${pore}`
 }

@@ -1,6 +1,8 @@
-// Noise Brush — paint film grain where it belongs. Nothing changes until
+// Silt — fine particulate settles where you paint. Nothing changes until
 // you paint. Built on the effect-card factory; this file is only the grain
-// itself plus its Tools panel.
+// itself plus its Tools panel. (Deck anatomy: Reveal × deposit — and the
+// canonical deposit card: a later Deeper texturizes the settled grain into
+// real sediment.)
 
 import { BrushControls, makeEffectCardHooks } from './effectCardFactory.jsx'
 
@@ -8,7 +10,7 @@ import { BrushControls, makeEffectCardHooks } from './effectCardFactory.jsx'
 // R/G/B so the grain reads as film, not confetti. Influence blends it down.
 const STRENGTH = 90
 
-function applyNoise(effected, master) {
+function applySilt(effected, master) {
   const ctx = effected.getContext('2d')
   ctx.clearRect(0, 0, effected.width, effected.height)
   ctx.drawImage(master, 0, 0)
@@ -23,13 +25,13 @@ function applyNoise(effected, master) {
   ctx.putImageData(imageData, 0, 0)
 }
 
-export const noiseHooks = makeEffectCardHooks(applyNoise)
+export const siltHooks = makeEffectCardHooks(applySilt)
 
-export function NoiseTools({ controls, info, ready, onControlChange }) {
-  if (!ready) return <span className="hint">Preparing the grain…</span>
+export function SiltTools({ controls, info, ready, onControlChange }) {
+  if (!ready) return <span className="hint">Preparing the silt…</span>
   return (
     <div className="brush-tools card-tools">
-      <p className="hint">Paint where the grain belongs. Nothing changes until you paint.</p>
+      <p className="hint">Paint where the silt should settle. Nothing changes until you paint.</p>
       <BrushControls controls={controls} info={info} onControlChange={onControlChange} />
     </div>
   )

@@ -25,15 +25,19 @@ import * as fabric from 'fabric'
 import { showMaster } from '../masterRaster.js'
 
 export function beginDeeper(ctx) {
+  // Dealt inside a Pore, the frame starts inside the pore's view — the dive
+  // happens where you enclosed it (v3 design §7.2).
+  const view = ctx.view ?? { left: 0, top: 0, width: ctx.canvasWidth, height: ctx.canvasHeight }
+  const startScale = (0.7 * view.width) / ctx.canvasWidth
   const rect = new fabric.Rect({
     width: ctx.canvasWidth,
     height: ctx.canvasHeight,
-    scaleX: 0.7,
-    scaleY: 0.7,
+    scaleX: startScale,
+    scaleY: startScale,
     originX: 'center',
     originY: 'center',
-    left: ctx.canvasWidth / 2,
-    top: ctx.canvasHeight / 2,
+    left: view.left + view.width / 2,
+    top: view.top + view.height / 2,
     fill: 'rgba(0, 0, 0, 0)',
     stroke: '#ffffff',
     strokeWidth: 1.5,

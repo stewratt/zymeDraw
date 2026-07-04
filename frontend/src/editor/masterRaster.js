@@ -56,6 +56,36 @@ export function bake(canvas) {
   return next
 }
 
+// The enclosure bake (Pore): like bake(), but only the pore region lands in
+// the master — everything outside it keeps the previous master's pixels, so
+// a whole-canvas wash dealt inside a pore stains only the pore. The canvas
+// is snapshotted through an identity viewport (toCanvasElement bakes the
+// CURRENT viewport, and during an enclosure that's zoomed in); the caller's
+// zoom is restored afterwards. `region` is in display coordinates.
+export function bakeRegion(canvas, prevMaster, region) {
+  canvas.discardActiveObject?.()
+  const vpt = [...canvas.viewportTransform]
+  canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
+  canvas.renderAll()
+  const full = canvas.toCanvasElement(MASTER_SCALE)
+  canvas.setViewportTransform(vpt)
+  canvas.remove(...canvas.getObjects())
+
+  const next = document.createElement('canvas')
+  next.width = prevMaster.width
+  next.height = prevMaster.height
+  const g = next.getContext('2d')
+  g.drawImage(prevMaster, 0, 0)
+  const x = Math.round(region.left * MASTER_SCALE)
+  const y = Math.round(region.top * MASTER_SCALE)
+  const w = Math.round(region.width * MASTER_SCALE)
+  const h = Math.round(region.height * MASTER_SCALE)
+  g.drawImage(full, x, y, w, h, x, y, w, h)
+
+  showMaster(canvas, next)
+  return next
+}
+
 export function masterToPngDataUrl(master) {
   return master.toDataURL('image/png')
 }

@@ -1,6 +1,7 @@
-// Color Overlay — a global tint: pick a color, a blend mode, and how much
-// influence it has. One of the two permitted whole-canvas modifiers (color
-// adjustments with an influence control — CLAUDE.md §1).
+// Steep — the whole piece soaks in a dye bath: pick the dye, the blend,
+// and how long it steeps (the influence slider is steeping time). One of
+// the permitted whole-canvas modifiers (color adjustments with an
+// influence control — CLAUDE.md §1).
 //
 // Implementation: a full-canvas Rect whose globalCompositeOperation blends
 // it over everything beneath (including the master background) at render
@@ -10,7 +11,7 @@ import * as fabric from 'fabric'
 
 const BLENDS = ['multiply', 'screen', 'overlay', 'color']
 
-export function beginColorOverlay(ctx) {
+export function beginSteep(ctx) {
   const rect = new fabric.Rect({
     left: 0,
     top: 0,
@@ -27,7 +28,7 @@ export function beginColorOverlay(ctx) {
   return { rect }
 }
 
-export function updateColorOverlay(ctx) {
+export function updateSteep(ctx) {
   if (!ctx.session) return
   ctx.session.rect.set({
     fill: ctx.controls.color,
@@ -37,19 +38,19 @@ export function updateColorOverlay(ctx) {
   ctx.canvas.requestRenderAll()
 }
 
-export function cleanupColorOverlay(ctx) {
+export function cleanupSteep(ctx) {
   if (!ctx.session) return
   ctx.canvas.remove(ctx.session.rect)
   ctx.canvas.requestRenderAll()
 }
 
-export function ColorOverlayTools({ controls, ready, onControlChange }) {
+export function SteepTools({ controls, ready, onControlChange }) {
   if (!ready) return <span className="hint">Preparing…</span>
   return (
     <div className="brush-tools card-tools">
-      <p className="hint">Tint the whole piece. Influence decides how far it goes.</p>
+      <p className="hint">The piece steeps in a dye bath. Influence is steeping time.</p>
       <label className="ctrl">
-        <span className="ctrl-label">Color</span>
+        <span className="ctrl-label">Dye</span>
         <input
           type="color"
           value={controls.color}

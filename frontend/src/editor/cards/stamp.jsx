@@ -61,18 +61,17 @@ export async function beginStamp(ctx) {
   if (url) URL.revokeObjectURL(url)
   if (ctx.isCancelled?.()) return null
 
-  // Start small — a stamp on the canvas, not a whole new image. Scale to
-  // fit 65% of the canvas, then take half of that; resize up as needed.
+  // Start small — a stamp on the piece, not a whole new image. Scale to
+  // fit 65% of the working view (the pore during an enclosure), then take
+  // half of that; resize up as needed.
+  const view = ctx.view ?? { left: 0, top: 0, width: ctx.canvasWidth, height: ctx.canvasHeight }
   const scale =
-    Math.min(
-      (ctx.canvasWidth * 0.65) / img.width,
-      (ctx.canvasHeight * 0.65) / img.height
-    ) / 2
+    Math.min((view.width * 0.65) / img.width, (view.height * 0.65) / img.height) / 2
   img.set({
     originX: 'center',
     originY: 'center',
-    left: ctx.canvasWidth / 2,
-    top: ctx.canvasHeight / 2,
+    left: view.left + view.width / 2,
+    top: view.top + view.height / 2,
     scaleX: scale,
     scaleY: scale,
     opacity: ctx.controls.opacity

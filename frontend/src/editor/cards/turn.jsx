@@ -1,15 +1,15 @@
-// HSV (global) — a whole-canvas hue/saturation/brightness shift with an
-// influence slider: the shifted copy of the master sits over the canvas at
-// `intensity` opacity, so 100% is the full shift and 40% is a nudge. The
-// other permitted whole-canvas modifier (CLAUDE.md §1).
+// Turn — the whole batch turns: a whole-canvas hue/saturation/brightness
+// shift with an influence slider. The shifted copy of the master sits over
+// the canvas at `intensity` opacity, so 100% is the full turn and 40% is a
+// lean. The other permitted whole-canvas modifier (CLAUDE.md §1).
 //
-// Reuses the HSV brush's filter draw; no mask, no brush — the influence
-// slider IS the judgment here.
+// Reuses Bruise's filter draw; no mask, no brush — the influence slider IS
+// the judgment here.
 
 import * as fabric from 'fabric'
-import { HsvSliders, applyHsvShift } from './hsvBrush.jsx'
+import { HsvSliders, applyHsvShift } from './bruise.jsx'
 
-export function beginGlobalHsv(ctx) {
+export function beginTurn(ctx) {
   const effected = document.createElement('canvas')
   effected.width = ctx.master.width
   effected.height = ctx.master.height
@@ -30,7 +30,7 @@ export function beginGlobalHsv(ctx) {
   return { effected, overlay, master: ctx.master }
 }
 
-export function updateGlobalHsv(ctx) {
+export function updateTurn(ctx) {
   const s = ctx.session
   if (!s) return
   applyHsvShift(s.effected, s.master, ctx.controls)
@@ -39,17 +39,17 @@ export function updateGlobalHsv(ctx) {
   ctx.canvas.requestRenderAll()
 }
 
-export function cleanupGlobalHsv(ctx) {
+export function cleanupTurn(ctx) {
   if (!ctx.session) return
   ctx.canvas.remove(ctx.session.overlay)
   ctx.canvas.requestRenderAll()
 }
 
-export function GlobalHsvTools({ controls, ready, onControlChange }) {
+export function TurnTools({ controls, ready, onControlChange }) {
   if (!ready) return <span className="hint">Preparing…</span>
   return (
     <div className="brush-tools card-tools">
-      <p className="hint">Shift the whole piece. Influence decides how far it goes.</p>
+      <p className="hint">The whole batch turns. Influence decides how far.</p>
       <HsvSliders controls={controls} onControlChange={onControlChange} />
       <label className="ctrl">
         <span className="ctrl-label">Influence</span>

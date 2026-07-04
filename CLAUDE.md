@@ -148,11 +148,56 @@ mask becomes a solid-color cutout (random-hue-seeded picker) you arrange,
 tint, fade, and erase with the standing brush. Pure canvas2d — no sidecar.
 10 of 10 card designs are real.
 
-**Next action: Phase 11 — Tuning + polish**, now folded into the **v3 card
-system redesign** (`version_3_design.md`, started 2026-07-03): mechanic ×
-suit card anatomy, the zyme naming register, a simplified 5×5 opening, the
-mask/soften standing tools, and new play shapes (Pore/enclosure). Read that
-doc before v3 work; its §10 open questions are the next check-in with Stew.
+**v3 (branch `v3`, off `main`, 2026-07-03) — the card system redesign**
+(`version_3_design.md`): mechanic × suit anatomy, the zyme naming register,
+a simplified opening, mask/soften standing tools, new play shapes. All six
+build-order steps are built (steps 3–6 in one pass at Stew's request —
+**awaiting his single revision round**):
+
+1. **Opening simplified** — no dice; a fixed **6×4 grid of 24** (was 5×5/25
+   in the doc; changed for screen fit — the grid always fits the canvas
+   area with no scroll, cells shrink with the window). Strict take-two:
+   exactly one placed, one stashed (decided with Stew, as were: dice leave
+   the product entirely; "stash" keeps its plain name). Place/stash picks
+   are marked muted green/amber — the one deliberate color exception in
+   the greyscale UI.
+2. **Mask brush + soften** — erase grew into the standing mask brush:
+   **Arrange · Conceal · Restore · Soften** (labels decided with Stew).
+   Conceal = old erase; restore paints the mask back out (masks are
+   image-native so they travel with the image — reposition-then-correct
+   works by construction); soften lerps the mask toward a blurred copy of
+   itself under the stroke (feather radius = half the dab radius, decided
+   with Stew; needs Safari 18+ like the other ctx.filter effects).
+   `applyMaskOp`/`snapshotMaskSettings` exported from brushCore;
+   `cards/maskControls.jsx` replaced `arrangeEraseControls.jsx`.
+3. **Renames (zyme register, §4.3 of the doc, all-at-once)** — Noise→**Silt**,
+   Blur→**Dissolve** (kept, one copy, provisional per §6.3), HSV
+   Brush→**Bruise**, Global HSV→**Turn**, Color Overlay→**Steep**,
+   Reposition→**Rack**. Files, registry keys, and deck ids all renamed to
+   match (`silt.jsx`, `dissolve.jsx`, `bruise.jsx`, `turn.jsx`,
+   `steep.jsx`, `rack.jsx`).
+4. **Suit siblings** — **Stain** (Graft × Sink: Ghost's multiply twin;
+   `graftCardFactory.jsx` now holds the shared Graft chassis and Ghost/
+   Stain are thin configs), **Char** (Stencil × Sink: Rails' fragments as
+   a grey multiply burn with a Depth slider), **Cure** (Wash × soft light:
+   soft-light self-overlay + influence).
+5. **Pore** — the first *duration card*. Commit returns
+   `{ enclosureRegion }` (a generic registry contract); deck.js counts
+   `state.enclosure.roundsLeft` (TUNING.poreRounds = 2) while Editor zooms
+   the viewport into the region. Ends bake **only the pore region** into
+   the master (`masterRaster.bakeRegion` — resets the viewport before
+   snapshotting, since `toCanvasElement` bakes the current viewport).
+   Rules encoded: cards get `ctx.view` and start their objects inside it;
+   re-frame cards (Deeper, Rack — `reframes` in registry, `endsEnclosure`
+   in deck.js) end an enclosure early; the stash return defers until the
+   enclosure lifts.
+6. **Deck tuning** — the §8 target list is live in `deck.js`: 19 mod cards
+   (Ghost 2, Stain 2, Stamp 2, Rails 1, Char 1, Deeper 2, Rack 1, Silt 2,
+   Bruise 1, Dissolve 1, Steep 1, Turn 1, Cure 1, Pore 1) + Coda 3.
+
+Still open from the doc: suits visible or backstage (§10.1), Echo (§7.3),
+Mount (§7.4), death-crop (parked since v2). **Next action: Stew's revision
+round over the whole v3 branch.**
 
 **Style-transfer experiment (branch `style-transfer`, off `v2`,
 2026-07-03):** fast-neural-style (ONNX zoo, pointillism to start; Stew
@@ -199,20 +244,22 @@ Within a card you can adjust freely (including within-card brush undo/redo);
 after End it is baked in. Commitment is the central mechanic, not a missing
 feature.
 
-**The v2 session arc** (full detail in `redesign_v2_plan.md` §2.2):
+**The session arc** (v3; the v2 arc with the opening simplified and the
+Pore enclosure added — v3 detail in `version_3_design.md`):
 
-1. **Opening rolls** — two dice-style rolls: how many images appear in a grid
-   (8–16, sampled from the input folder), and how many you may pick (2–4).
-2. **Opening pick** — choose your images; each is *placed now* or *stashed*
-   for later. At least one placed.
-3. **Placement** — arrange the placed images with move/scale/rotate and an
-   always-available hard/soft **erase brush** (masking hard edges is core to
-   collage; erase is a standing tool whenever images are placed, not a card).
-4. **Act I** — deal ~4 modification cards from the shuffled deck.
-5. **Stash return** — stashed images come back as a placement session.
-6. **Act II** — ~2 more rounds, then death cards are shuffled into the
-   remaining deck; keep dealing until one appears.
-7. **Death card** — the piece is complete. Export at full resolution.
+1. **Opening pick** — a fixed 6×4 grid of 24 images sampled from the input
+   folder. Take two, strictly: one *placed now*, one *stashed* for later.
+2. **Placement** — arrange the placed image with move/scale/rotate and the
+   standing **mask brush** (conceal / restore / soften — masking hard edges
+   is core to collage; the brush is a standing tool whenever images are
+   placed, not a card).
+3. **Act I** — deal ~4 modification cards from the shuffled deck.
+4. **Stash return** — the stashed image comes back as a placement session.
+5. **Act II** — ~2 more rounds, then death cards are shuffled into the
+   remaining deck; keep dealing until one appears. (A Pore commit anywhere
+   in the acts opens an *enclosure*: the next rounds are worked inside a
+   small region of the piece.)
+6. **Death card** — the piece is complete. Export at full resolution.
 
 **Card design rule: constraint outside, freedom inside.** No card may simply
 *do something to the image* with no room for judgment (v1's Flip Canvas was
@@ -230,8 +277,11 @@ a game.
 
 - **Language is a studio/darkroom/press, not an arcade.** Avoid "play," "win,"
   "score," "level," "player," "turn." Prefer *draw, deal, commit, compose,
-  finish, export, this round.* "Card," "deck," and dice-style rolls stay —
-  they're the instrument, not a genre signal.
+  finish, export, this round.* "Card" and "deck" stay — they're the
+  instrument, not a genre signal. (Dice left the product in v3 step 1.)
+  v3 adds the **zyme register** for card names: one concrete process word —
+  Silt, Bruise, Turn, Steep, Rack, Stain, Char, Cure, Pore — never a
+  settings-menu label (`version_3_design.md` §4).
 - **No celebratory / gamer affect.** No win-states or congratulatory copy.
   The end is a piece being *finished*, not a level being *beaten*.
 - **"Death card" is a design-conversation term, not UI copy.** On screen the
@@ -331,19 +381,25 @@ zymeDraw/
 │           ├── Editor.jsx       # registry dispatcher (no per-card logic!)
 │           ├── CanvasStage.jsx  # Fabric canvas, forwarded ref
 │           ├── DeckPanel.jsx    # right sidebar: per-phase panels + Tools + End
-│           ├── deck.js          # PURE state machine — the v2 session script
-│           ├── masterRaster.js  # offscreen 2400×3000 truth + universal bake
-│           ├── brushCore.js     # stroke engine: erase + reveal sessions
+│           ├── deck.js          # PURE state machine — the session script
+│           ├── masterRaster.js  # offscreen 2400×3000 truth + bake/bakeRegion
+│           ├── brushCore.js     # stroke engine: mask + reveal sessions
 │           ├── GridPicker.jsx   # opening pick overlay + CardGridPicker (single-pick)
 │           ├── placement.js     # free-transform placement sessions
 │           ├── sampling.js      # random-sample fetch w/ client fallback
+│           ├── shatter.js       # stencil reading (Rails, Char, Shattered Transfer)
 │           ├── editor.css
 │           └── cards/
 │               ├── registry.jsx        # one entry per card
-│               ├── effectCardFactory.jsx  # effect card = applyEffect + sliders
-│               ├── noiseBrush.jsx / blurBrush.jsx / hsvBrush.jsx
-│               ├── colorOverlay.jsx / globalHsv.jsx / reposition.jsx
-│               └── ghost.jsx           # the begin-awaits-user pattern
+│               ├── effectCardFactory.jsx  # reveal card = applyEffect + sliders
+│               ├── graftCardFactory.jsx   # graft card = grid pick + blend config
+│               ├── maskControls.jsx       # standing-brush UI (Arrange·Conceal·Restore·Soften)
+│               ├── ghost.jsx / stain.jsx  # Graft × Rise / × Sink (thin configs)
+│               ├── stamp.jsx / rails.jsx / char.jsx
+│               ├── silt.jsx / dissolve.jsx / bruise.jsx
+│               ├── steep.jsx / turn.jsx / cure.jsx
+│               ├── deeper.jsx / rack.jsx  # re-frames
+│               └── pore.jsx               # the duration card (enclosure)
 └── backend/
     ├── server.js             # all Express routes (see §6) + /api/ml proxy
     ├── config-store.js       # reads/writes ~/.deck-config.json
@@ -462,18 +518,25 @@ what to keep (registry pattern, purity, commitment) and what failed
   passes happen at master resolution; export writes the master directly.
 - **No session round-cap.** A session ends only when a death card is dealt.
   Pacing is tuned by deck composition + death-card count in `deck.js`.
-- **Erase is a standing tool, not a card.** Any time images are being placed
-  (opening, stash return, Ghost, Stamp), the hard/soft erase brush is
-  available.
+- **The mask brush is a standing tool, not a card** (v3; grew out of v2's
+  erase). Any time images are being placed (opening, stash return, Ghost,
+  Stain, Stamp, Rails, Char), the conceal/restore/soften brush is available.
+  Masks are image-native, so they travel with the image through
+  move/scale/rotate.
 - **Within-card undo/redo exists for brushes only, never across End.**
 - **Global modifiers are banned except color adjustments**, which must carry
-  an influence/opacity slider.
+  an influence/opacity slider (Steep, Turn, Cure).
 - **Color pickers start on a random hue every time.** Any control named
-  `color` (Color Overlay, Rails, and any future card) is seeded with a fresh
+  `color` (Steep, Rails, and any future card) is seeded with a fresh
   random color when the card is dealt — its `defaultControls` value is only a
   placeholder. Randomization is centralized in `Editor.jsx`
   (`randomizeColors`, keyed on the control name `color`), so a new color card
   gets this for free just by naming its control `color`.
+- **An enclosure (Pore) constrains everything inside it.** While
+  `state.enclosure` runs, the viewport shows only the pore region, cards
+  start their objects in `ctx.view`, Ends bake only the region
+  (`bakeRegion`), the stash return defers, and a re-frame card ends the
+  enclosure early.
 - **Browser tab dependency**: closing the tab loses in-progress work. By
   design — commitment is the mechanic.
 

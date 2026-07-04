@@ -106,7 +106,9 @@ function createBrushCursor(canvas, getControls) {
   function move(e) {
     if (!enabled) return
     const rect = canvas.wrapperEl.getBoundingClientRect()
-    const d = Math.max(4, getControls().size * (rect.width / canvas.getWidth()))
+    // getZoom() covers the enclosure viewport (Pore): brush size lives in
+    // scene units, so zoomed-in views show a proportionally bigger circle.
+    const d = Math.max(4, getControls().size * canvas.getZoom() * (rect.width / canvas.getWidth()))
     el.style.width = `${d}px`
     el.style.height = `${d}px`
     el.style.left = `${e.clientX - rect.left}px`

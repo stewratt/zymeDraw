@@ -1,29 +1,33 @@
-// Rails — a shattered stamp. One random image is dealt, and the card
-// reads it for its MOST SHATTERED form (decided with Stew, Phase 10):
-// the winning mask (see shatter.js — the machinery is shared with
-// Shattered Transfer) becomes a solid-color cutout you arrange, tint,
-// fade and work with the mask brush. End bakes it on. No sidecar — pure
-// canvas2d.
+// Char — Rails' shadow sibling (Stencil × Sink). One random image is read
+// for its most shattered form (shatter.js, same reading as Rails), but the
+// fragments don't paint a color — they scorch: the cutout sits in
+// `multiply` blend as a grey burn, darkening whatever is beneath. Depth
+// sets how deep the char goes (white = untouched, black = burned through);
+// opacity fades the whole mark. Arrange + the standing mask brush, as ever.
+// No sidecar — pure canvas2d.
 
 import * as fabric from 'fabric'
 import { createMaskSession } from '../brushCore.js'
 import { sampleImages } from '../sampling.js'
 import { READING_LABEL, computeLum, maskFor, maskToCanvas, pickMostShattered } from '../shatter.js'
-import { ArrangeMaskControls } from './maskControls.jsx'
+import { ArrangeMaskControls, maskHint } from './maskControls.jsx'
 
-function tint(tinted, maskCanvas, color) {
-  const g = tinted.getContext('2d')
+// Fill the fragments with the char grey: depth 0 → white (multiply no-op),
+// depth 1 → black (burned through).
+function scorch(scorched, maskCanvas, depth) {
+  const v = Math.round(255 * (1 - depth))
+  const g = scorched.getContext('2d')
   g.save()
   g.globalCompositeOperation = 'source-over'
-  g.clearRect(0, 0, tinted.width, tinted.height)
-  g.fillStyle = color
-  g.fillRect(0, 0, tinted.width, tinted.height)
+  g.clearRect(0, 0, scorched.width, scorched.height)
+  g.fillStyle = `rgb(${v}, ${v}, ${v})`
+  g.fillRect(0, 0, scorched.width, scorched.height)
   g.globalCompositeOperation = 'destination-in'
   g.drawImage(maskCanvas, 0, 0)
   g.restore()
 }
 
-export async function beginRails(ctx) {
+export async function beginChar(ctx) {
   const [file] = await sampleImages(1, ctx.imageList)
   ctx.report({ stage: 'shattering' })
   const img = await fabric.FabricImage.fromURL(`/api/images/${encodeURIComponent(file)}`)
@@ -35,11 +39,11 @@ export async function beginRails(ctx) {
   const mask = maskFor(lum, img.width, img.height, winner)
   const maskCanvas = maskToCanvas(mask, img.width, img.height)
 
-  const tinted = document.createElement('canvas')
-  tinted.width = img.width
-  tinted.height = img.height
-  tint(tinted, maskCanvas, ctx.controls.color)
-  img.setElement(tinted)
+  const scorched = document.createElement('canvas')
+  scorched.width = img.width
+  scorched.height = img.height
+  scorch(scorched, maskCanvas, ctx.controls.depth)
+  img.setElement(scorched)
 
   const view = ctx.view ?? { left: 0, top: 0, width: ctx.canvasWidth, height: ctx.canvasHeight }
   const scale = Math.min((view.width * 0.65) / img.width, (view.height * 0.65) / img.height)
@@ -50,6 +54,7 @@ export async function beginRails(ctx) {
     top: view.top + view.height / 2,
     scaleX: scale,
     scaleY: scale,
+    globalCompositeOperation: 'multiply',
     opacity: ctx.controls.opacity
   })
   ctx.canvas.add(img)
@@ -69,29 +74,29 @@ export async function beginRails(ctx) {
     canUndo: false,
     canRedo: false
   })
-  return { img, maskCanvas, tinted, session, controlsRef, lastColor: ctx.controls.color }
+  return { img, maskCanvas, scorched, session, controlsRef, lastDepth: ctx.controls.depth }
 }
 
-export function updateRails(ctx) {
+export function updateChar(ctx) {
   const s = ctx.session
   if (!s) return
   s.controlsRef.current = ctx.controls
   s.img.set({ opacity: ctx.controls.opacity })
-  if (ctx.controls.color !== s.lastColor) {
-    tint(s.tinted, s.maskCanvas, ctx.controls.color)
-    s.lastColor = ctx.controls.color
+  if (ctx.controls.depth !== s.lastDepth) {
+    scorch(s.scorched, s.maskCanvas, ctx.controls.depth)
+    s.lastDepth = ctx.controls.depth
     s.session.refresh()
   }
   s.session.setActive(ctx.controls.mode !== 'arrange')
   ctx.canvas.requestRenderAll()
 }
 
-export function commitRails(ctx) {
-  // Drop the brush; the shattered stamp stays for the universal bake.
+export function commitChar(ctx) {
+  // Drop the brush; the char stays for the universal bake.
   ctx.session?.session.dispose()
 }
 
-export function cleanupRails(ctx) {
+export function cleanupChar(ctx) {
   const s = ctx.session
   if (!s) return
   s.session.dispose()
@@ -99,25 +104,29 @@ export function cleanupRails(ctx) {
   ctx.canvas.requestRenderAll()
 }
 
-export function RailsTools({ controls, info, ready, onControlChange }) {
+export function CharTools({ controls, info, ready, onControlChange }) {
   if (info.stage === 'shattering' || !ready) {
     return <span className="hint">Reading the image for its most shattered form…</span>
   }
+  const brushing = controls.mode !== 'arrange'
   return (
     <div className="brush-tools card-tools">
       <p className="hint">
-        This image {info.reading ?? 'shattered'}. Arrange the fragments, tint them,
-        fade them, work into them with the brush.
+        {brushing
+          ? maskHint(controls.mode, 'the char')
+          : `This image ${info.reading ?? 'shattered'}. The fragments scorch what is beneath — arrange them, set the depth of the burn.`}
       </p>
       <ArrangeMaskControls controls={controls} info={info} onControlChange={onControlChange} />
       <label className="ctrl">
-        <span className="ctrl-label">Color</span>
+        <span className="ctrl-label">Depth</span>
         <input
-          type="color"
-          value={controls.color}
-          onChange={(e) => onControlChange('color', e.target.value)}
+          type="range"
+          min="10"
+          max="100"
+          value={Math.round(controls.depth * 100)}
+          onChange={(e) => onControlChange('depth', Number(e.target.value) / 100)}
         />
-        <span className="ctrl-value mono">{controls.color}</span>
+        <span className="ctrl-value mono">{Math.round(controls.depth * 100)}%</span>
       </label>
       <label className="ctrl">
         <span className="ctrl-label">Opacity</span>
