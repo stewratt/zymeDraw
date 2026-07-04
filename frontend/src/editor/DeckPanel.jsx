@@ -11,6 +11,7 @@
 
 import { progressLabel } from './deck.js'
 import PlacementLayers from './PlacementLayers.jsx'
+import { ArrangeMaskControls, maskHint } from './cards/maskControls.jsx'
 
 function DeckPanel({
   state,
@@ -23,11 +24,11 @@ function DeckPanel({
   placementReady,
   placedLayers,
   onReorderLayer,
-  eraseControls,
-  eraseHistory,
-  onEraseControlsChange,
-  onEraseUndo,
-  onEraseRedo,
+  maskControls,
+  maskHistory,
+  onMaskControlsChange,
+  onMaskUndo,
+  onMaskRedo,
   exportState,
   onControlChange,
   onEndPlacement,
@@ -47,11 +48,11 @@ function DeckPanel({
           placementReady={placementReady}
           placedLayers={placedLayers}
           onReorderLayer={onReorderLayer}
-          eraseControls={eraseControls}
-          eraseHistory={eraseHistory}
-          onEraseControlsChange={onEraseControlsChange}
-          onEraseUndo={onEraseUndo}
-          onEraseRedo={onEraseRedo}
+          maskControls={maskControls}
+          maskHistory={maskHistory}
+          onMaskControlsChange={onMaskControlsChange}
+          onMaskUndo={onMaskUndo}
+          onMaskRedo={onMaskRedo}
           onEndPlacement={onEndPlacement}
         />
       )
@@ -129,96 +130,35 @@ function Placement({
   placementReady,
   placedLayers,
   onReorderLayer,
-  eraseControls,
-  eraseHistory,
-  onEraseControlsChange,
-  onEraseUndo,
-  onEraseRedo,
+  maskControls,
+  maskHistory,
+  onMaskControlsChange,
+  onMaskUndo,
+  onMaskRedo,
   onEndPlacement
 }) {
   const returning = state.phase === 'STASH_RETURN'
-  const erasing = eraseControls.mode === 'erase'
+  const brushing = maskControls.mode !== 'arrange'
   return (
     <aside className="deck-panel">
       <h2>{returning ? 'STASH RETURN' : 'PLACEMENT'}</h2>
       <p className="hint">
         {returning
-          ? 'Your stashed images come back — arrange them like the opening.'
-          : 'Arrange your images.'}{' '}
-        {erasing
-          ? 'Paint over an image to erase it; the topmost image under your first touch takes the whole stroke.'
+          ? 'Your stashed image comes back — arrange it like the opening.'
+          : 'Arrange your image.'}{' '}
+        {brushing
+          ? maskHint(maskControls.mode, 'an image')
           : 'Drag to move, corner handles to scale, top handle to rotate.'}{' '}
         End bakes everything in for good.
       </p>
 
-      <div className="mode-toggle">
-        <button
-          type="button"
-          className={erasing ? '' : 'active'}
-          onClick={() => onEraseControlsChange({ mode: 'arrange' })}
-        >
-          Arrange
-        </button>
-        <button
-          type="button"
-          className={erasing ? 'active' : ''}
-          disabled={!placementReady}
-          onClick={() => onEraseControlsChange({ mode: 'erase' })}
-        >
-          Erase
-        </button>
+      <div className="brush-tools">
+        <ArrangeMaskControls
+          controls={maskControls}
+          info={{ ...maskHistory, undo: onMaskUndo, redo: onMaskRedo }}
+          onControlChange={(key, value) => onMaskControlsChange({ [key]: value })}
+        />
       </div>
-
-      {erasing && (
-        <div className="brush-tools">
-          <label className="ctrl">
-            <span className="ctrl-label">Size</span>
-            <input
-              type="range"
-              min="6"
-              max="150"
-              value={eraseControls.size}
-              onChange={(e) => onEraseControlsChange({ size: Number(e.target.value) })}
-            />
-            <span className="ctrl-value mono">{eraseControls.size}px</span>
-          </label>
-          <label className="ctrl">
-            <span className="ctrl-label">Strength</span>
-            <input
-              type="range"
-              min="5"
-              max="100"
-              value={Math.round((eraseControls.strength ?? 1) * 100)}
-              onChange={(e) => onEraseControlsChange({ strength: Number(e.target.value) / 100 })}
-            />
-            <span className="ctrl-value mono">{Math.round((eraseControls.strength ?? 1) * 100)}%</span>
-          </label>
-          <div className="mode-toggle small">
-            <button
-              type="button"
-              className={eraseControls.hardness === 'soft' ? 'active' : ''}
-              onClick={() => onEraseControlsChange({ hardness: 'soft' })}
-            >
-              Soft
-            </button>
-            <button
-              type="button"
-              className={eraseControls.hardness === 'hard' ? 'active' : ''}
-              onClick={() => onEraseControlsChange({ hardness: 'hard' })}
-            >
-              Hard
-            </button>
-          </div>
-          <div className="undo-row">
-            <button type="button" className="secondary" disabled={!eraseHistory.canUndo} onClick={onEraseUndo}>
-              Undo
-            </button>
-            <button type="button" className="secondary" disabled={!eraseHistory.canRedo} onClick={onEraseRedo}>
-              Redo
-            </button>
-          </div>
-        </div>
-      )}
 
       {placedLayers.length > 0 ? (
         <>

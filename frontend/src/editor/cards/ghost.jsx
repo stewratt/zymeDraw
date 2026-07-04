@@ -1,7 +1,7 @@
 // Ghost — a second exposure. A fresh grid of 8 is dealt; take one and it
 // joins the piece in `screen` blend, so only its light survives — dark
 // areas vanish, bright areas glow through. Freedom inside the constraint:
-// free transform, opacity, brightness/contrast, and the standing erase
+// free transform, opacity, brightness/contrast, and the standing mask
 // brush. End bakes it in.
 //
 // The chain: begin() deals the grid, then *waits* on the user's pick — the
@@ -10,16 +10,16 @@
 //
 // Brightness/contrast never touch the original pixels: the image's element
 // is a `filtered` canvas redrawn from the original through ctx.filter, and
-// the erase session composites from that same canvas — so erase strokes,
+// the mask session composites from that same canvas — so brush strokes,
 // BC changes and the 3× bake all read full-resolution truth. Using 2d
 // ctx.filter (not Fabric's WebGL filters) also sidesteps the §9 concern
 // about WebGL filters + globalCompositeOperation at bake time.
 
 import * as fabric from 'fabric'
-import { createEraseSession } from '../brushCore.js'
+import { createMaskSession } from '../brushCore.js'
 import { CardGridPicker } from '../GridPicker.jsx'
 import { sampleImages } from '../sampling.js'
-import { ArrangeEraseControls } from './arrangeEraseControls.jsx'
+import { ArrangeMaskControls, maskHint } from './maskControls.jsx'
 
 const GRID_SIZE = 8
 
@@ -66,7 +66,7 @@ export async function beginGhost(ctx) {
   ctx.canvas.requestRenderAll()
 
   const controlsRef = { current: ctx.controls }
-  const session = createEraseSession(ctx.canvas, [img], {
+  const session = createMaskSession(ctx.canvas, [img], {
     getControls: () => controlsRef.current,
     onHistoryChange: (canUndo, canRedo) => ctx.report({ canUndo, canRedo })
   })
@@ -94,7 +94,7 @@ export function updateGhost(ctx) {
     drawFiltered(s.filtered, s.original, ctx.controls)
     s.session.refresh()
   }
-  s.session.setActive(ctx.controls.mode === 'erase')
+  s.session.setActive(ctx.controls.mode !== 'arrange')
   s.lastControls = ctx.controls
   ctx.canvas.requestRenderAll()
 }
@@ -129,15 +129,15 @@ export function GhostOverlay({ info }) {
 export function GhostTools({ controls, info, ready, onControlChange }) {
   if (info.stage === 'pick') return <span className="hint">Take one image from the grid.</span>
   if (!ready) return <span className="hint">Preparing…</span>
-  const erasing = controls.mode === 'erase'
+  const brushing = controls.mode !== 'arrange'
   return (
     <div className="brush-tools card-tools">
       <p className="hint">
-        {erasing
-          ? 'Paint over the ghost to erase it.'
+        {brushing
+          ? maskHint(controls.mode, 'the ghost')
           : 'Drag, scale, rotate the ghost into place. Only its light survives the blend.'}
       </p>
-      <ArrangeEraseControls controls={controls} info={info} onControlChange={onControlChange} />
+      <ArrangeMaskControls controls={controls} info={info} onControlChange={onControlChange} />
       <label className="ctrl">
         <span className="ctrl-label">Opacity</span>
         <input

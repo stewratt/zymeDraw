@@ -2,13 +2,14 @@
 // reads it for its MOST SHATTERED form (decided with Stew, Phase 10):
 // the winning mask (see shatter.js — the machinery is shared with
 // Shattered Transfer) becomes a solid-color cutout you arrange, tint,
-// fade and erase. End bakes it on. No sidecar — pure canvas2d.
+// fade and work with the mask brush. End bakes it on. No sidecar — pure
+// canvas2d.
 
 import * as fabric from 'fabric'
-import { createEraseSession } from '../brushCore.js'
+import { createMaskSession } from '../brushCore.js'
 import { sampleImages } from '../sampling.js'
 import { READING_LABEL, computeLum, maskFor, maskToCanvas, pickMostShattered } from '../shatter.js'
-import { ArrangeEraseControls } from './arrangeEraseControls.jsx'
+import { ArrangeMaskControls } from './maskControls.jsx'
 
 function tint(tinted, maskCanvas, color) {
   const g = tinted.getContext('2d')
@@ -58,7 +59,7 @@ export async function beginRails(ctx) {
   ctx.canvas.requestRenderAll()
 
   const controlsRef = { current: ctx.controls }
-  const session = createEraseSession(ctx.canvas, [img], {
+  const session = createMaskSession(ctx.canvas, [img], {
     getControls: () => controlsRef.current,
     onHistoryChange: (canUndo, canRedo) => ctx.report({ canUndo, canRedo })
   })
@@ -83,7 +84,7 @@ export function updateRails(ctx) {
     s.lastColor = ctx.controls.color
     s.session.refresh()
   }
-  s.session.setActive(ctx.controls.mode === 'erase')
+  s.session.setActive(ctx.controls.mode !== 'arrange')
   ctx.canvas.requestRenderAll()
 }
 
@@ -108,9 +109,9 @@ export function RailsTools({ controls, info, ready, onControlChange }) {
     <div className="brush-tools card-tools">
       <p className="hint">
         This image {info.reading ?? 'shattered'}. Arrange the fragments, tint them,
-        fade them, erase into them.
+        fade them, work into them with the brush.
       </p>
-      <ArrangeEraseControls controls={controls} info={info} onControlChange={onControlChange} />
+      <ArrangeMaskControls controls={controls} info={info} onControlChange={onControlChange} />
       <label className="ctrl">
         <span className="ctrl-label">Color</span>
         <input

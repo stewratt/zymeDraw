@@ -2,7 +2,7 @@
 // through the sidecar's fast-neural-style model (pointillist, for now) and
 // comes back as a full-canvas overlay. The judgment is in the taking away:
 // an influence slider sets how strongly the redraw sits, and the standing
-// erase brush cuts the original back through wherever it should win.
+// mask brush cuts the original back through wherever it should win.
 // End bakes whatever remains.
 //
 // Graceful degradation (mandatory, CLAUDE.md §3): sidecar down or transfer
@@ -10,9 +10,9 @@
 // (baking the untouched master changes nothing).
 
 import * as fabric from 'fabric'
-import { createEraseSession } from '../brushCore.js'
+import { createMaskSession } from '../brushCore.js'
 import { fetchStyledCanvas } from '../styleTransfer.js'
-import { EraseBrushControls } from './arrangeEraseControls.jsx'
+import { MaskBrushControls } from './maskControls.jsx'
 
 export async function beginTransfer(ctx) {
   ctx.report({ stage: 'transferring' })
@@ -43,7 +43,7 @@ export async function beginTransfer(ctx) {
   ctx.canvas.requestRenderAll()
 
   const controlsRef = { current: ctx.controls }
-  const session = createEraseSession(ctx.canvas, [img], {
+  const session = createMaskSession(ctx.canvas, [img], {
     getControls: () => controlsRef.current,
     onHistoryChange: (canUndo, canRedo) => ctx.report({ canUndo, canRedo })
   })
@@ -101,7 +101,7 @@ export function TransferTools({ controls, info, ready, onControlChange }) {
   return (
     <div className="brush-tools card-tools">
       <p className="hint">
-        The whole piece has been redrawn. Erase to cut the original back
+        The whole piece has been redrawn. Conceal to cut the original back
         through; influence sets how strongly the redraw sits.
       </p>
       <label className="ctrl">
@@ -115,7 +115,7 @@ export function TransferTools({ controls, info, ready, onControlChange }) {
         />
         <span className="ctrl-value mono">{Math.round(controls.opacity * 100)}%</span>
       </label>
-      <EraseBrushControls controls={controls} info={info} onControlChange={onControlChange} />
+      <MaskBrushControls controls={controls} info={info} onControlChange={onControlChange} />
     </div>
   )
 }

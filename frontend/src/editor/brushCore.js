@@ -15,9 +15,14 @@
 // One stroke engine, two built-in consumers (plus card-owned ones —
 // createStrokeEngine is exported for cards whose composite the built-ins
 // can't express, e.g. Shattered Transfer's styled-window overlay):
-//   - ERASE mode  (placement sessions): each stroke punches OUT of a placed
-//     image (destination-out) at its own strength — a 50% stroke erases
-//     half. A stroke never stacks with itself; crossing strokes accumulate.
+//   - MASK mode  (placement sessions): the standing mask brush. Each stroke
+//     is one of three ops on the image's mask — CONCEAL punches out of the
+//     placed image at the stroke's strength, RESTORE paints concealed areas
+//     back (the mask lives in image-native coordinates, so it travels with
+//     the image through move/scale/rotate — reposition-then-correct works
+//     by construction), SOFTEN feathers the mask locally by lerping it
+//     toward a blurred copy of itself under the stroke. A stroke never
+//     stacks with itself; crossing strokes accumulate.
 //   - REVEAL mode (effect cards): each stroke stamps effected pixels — the
 //     effect computed FROM THE MASTER at that stroke's own settings — into
 //     an accumulation layer at that stroke's influence. Strokes are agnostic
@@ -139,8 +144,8 @@ function createBrushCursor(canvas, getControls) {
 //                      record still riding on strokeMask, or null
 //
 // A stroke record: { points, radius, hardness, settings }. `settings` is
-// snapshotSettings(controls) — the consumer's per-stroke snapshot (erase:
-// strength; reveal: influence + effect params).
+// snapshotSettings(controls) — the consumer's per-stroke snapshot (mask:
+// strength + op; reveal: influence + effect params).
 // `resolveTarget(scenePoint, brushRadius)` picks which object a stroke
 // sticks to (the whole stroke stays on it). It may say "none yet": a stroke
 // begun on empty canvas keeps recording and attaches to the first target it
@@ -309,47 +314,99 @@ export function createStrokeEngine(canvas, { states, resolveTarget, getControls,
   }
 }
 
-// ---------- erase mode ----------
+// ---------- mask mode (the standing brush) ----------
 
-export function createEraseSession(canvas, images, { getControls, onHistoryChange }) {
-  // Per-image erase state, set up front: the Fabric object's element is
+const MASK_OPS = new Set(['conceal', 'restore', 'soften'])
+
+// A stroke's settings.op → its `mode` control, conceal by default ('arrange'
+// never reaches a stroke — the engine is inactive then).
+export function snapshotMaskSettings(controls) {
+  return {
+    strength: controls.strength ?? 1,
+    op: MASK_OPS.has(controls.mode) ? controls.mode : 'conceal'
+  }
+}
+
+// Apply one locked-or-live stroke's op to a mask canvas. Shared by the mask
+// session below and by card-owned engines whose committed mask means
+// "concealment" (Shattered Transfer's trim).
+export function applyMaskOp(mask, strokeMask, blurScratch, stroke) {
+  const { op, strength } = stroke.settings
+  const ctx = mask.getContext('2d')
+  if (op === 'soften') {
+    // Feather = lerp the mask toward a blurred copy of itself, only under
+    // the stroke. The blur radius rides the brush (half the dab radius).
+    // ctx.filter blur needs Safari 18+ — same caveat as the effect brushes;
+    // older Safari just gets a no-op.
+    const b = blurScratch.getContext('2d')
+    b.save()
+    b.clearRect(0, 0, blurScratch.width, blurScratch.height)
+    b.filter = `blur(${Math.max(1, stroke.radius * 0.5)}px)`
+    b.drawImage(mask, 0, 0)
+    b.filter = 'none'
+    b.globalCompositeOperation = 'destination-in'
+    b.drawImage(strokeMask, 0, 0)
+    b.restore()
+    ctx.save()
+    ctx.globalAlpha = strength
+    ctx.globalCompositeOperation = 'destination-out'
+    ctx.drawImage(strokeMask, 0, 0)
+    ctx.globalCompositeOperation = 'source-over'
+    ctx.drawImage(blurScratch, 0, 0)
+    ctx.restore()
+    return
+  }
+  ctx.save()
+  ctx.globalAlpha = strength
+  // Restore paints concealment OUT of the mask; conceal paints it in.
+  if (op === 'restore') ctx.globalCompositeOperation = 'destination-out'
+  ctx.drawImage(strokeMask, 0, 0)
+  ctx.restore()
+}
+
+export function createMaskSession(canvas, images, { getControls, onHistoryChange }) {
+  // Per-image mask state, set up front: the Fabric object's element is
   // swapped for a same-size composite canvas so display and bake both
-  // render the erased result from full-resolution pixels. committedMask
-  // holds graded alpha — how much past strokes erased each pixel; the live
-  // stroke rides separately at its own strength.
+  // render the masked result from full-resolution pixels. committedMask
+  // holds graded alpha — how much past strokes concealed each pixel; the
+  // live stroke rides separately at its own strength, previewed through
+  // effMask so all three ops show their true result mid-stroke.
   const states = new Map()
   for (const img of images) {
     const source = img.getElement()
     const committedMask = makeLayer(img.width, img.height)
     const strokeMask = makeLayer(img.width, img.height)
+    const effMask = makeLayer(img.width, img.height) // committed + live preview
+    const blurScratch = makeLayer(img.width, img.height) // soften staging
     const composite = makeLayer(img.width, img.height)
     composite.getContext('2d').drawImage(source, 0, 0)
     img.setElement(composite)
+
     states.set(img, {
       strokeMask,
       strokes: [],
       bakeStroke(stroke) {
-        const ctx = committedMask.getContext('2d')
-        ctx.save()
-        ctx.globalAlpha = stroke.settings.strength
-        ctx.drawImage(strokeMask, 0, 0)
-        ctx.restore()
+        applyMaskOp(committedMask, strokeMask, blurScratch, stroke)
       },
       clearCommitted() {
         clearLayer(committedMask)
       },
       recomposite(liveStroke) {
+        let mask = committedMask
+        if (liveStroke) {
+          const ectx = effMask.getContext('2d')
+          ectx.clearRect(0, 0, effMask.width, effMask.height)
+          ectx.drawImage(committedMask, 0, 0)
+          applyMaskOp(effMask, strokeMask, blurScratch, liveStroke)
+          mask = effMask
+        }
         const ctx = composite.getContext('2d')
         ctx.save()
         ctx.globalCompositeOperation = 'source-over'
         ctx.clearRect(0, 0, composite.width, composite.height)
         ctx.drawImage(source, 0, 0)
         ctx.globalCompositeOperation = 'destination-out'
-        ctx.drawImage(committedMask, 0, 0)
-        if (liveStroke) {
-          ctx.globalAlpha = liveStroke.settings.strength
-          ctx.drawImage(strokeMask, 0, 0)
-        }
+        ctx.drawImage(mask, 0, 0)
         ctx.restore()
         img.dirty = true // invalidate Fabric's object cache
         canvas.requestRenderAll()
@@ -376,7 +433,7 @@ export function createEraseSession(canvas, images, { getControls, onHistoryChang
       return null
     },
     getControls,
-    snapshotSettings: (c) => ({ strength: c.strength ?? 1 }),
+    snapshotSettings: snapshotMaskSettings,
     onHistoryChange
   })
 }

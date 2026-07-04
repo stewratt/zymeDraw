@@ -6,7 +6,7 @@ import { TUNING, deckReducer, initialState } from './deck.js'
 import { cardRegistry } from './cards/registry.jsx'
 import { placeImages, layerThumbUrl } from './placement.js'
 import { sampleImages } from './sampling.js'
-import { createEraseSession } from './brushCore.js'
+import { createMaskSession } from './brushCore.js'
 import {
   bake,
   createMaster,
@@ -73,18 +73,19 @@ function Editor({ config, onBackToSetup }) {
   // restacks the Fabric objects; only meaningful with two or more images.
   const [placedLayers, setPlacedLayers] = useState([])
 
-  // The erase brush (brushCore.js), live during placement sessions.
+  // The standing mask brush (brushCore.js), live during placement sessions.
   // Controls live in React; the session reads them through a ref so
-  // mid-stroke slider changes don't rebuild anything.
-  const eraseSessionRef = useRef(null)
-  const eraseControlsRef = useRef(null)
-  const [eraseControls, setEraseControls] = useState({ mode: 'arrange', size: 40, hardness: 'soft', strength: 1 })
-  const [eraseHistory, setEraseHistory] = useState({ canUndo: false, canRedo: false })
+  // mid-stroke slider changes don't rebuild anything. `mode` is arrange or
+  // one of the brush ops (conceal / restore / soften).
+  const maskSessionRef = useRef(null)
+  const maskControlsRef = useRef(null)
+  const [maskControls, setMaskControls] = useState({ mode: 'arrange', size: 40, hardness: 'soft', strength: 1 })
+  const [maskHistory, setMaskHistory] = useState({ canUndo: false, canRedo: false })
 
   useEffect(() => {
-    eraseControlsRef.current = eraseControls
-    eraseSessionRef.current?.setActive(eraseControls.mode === 'erase')
-  }, [eraseControls])
+    maskControlsRef.current = maskControls
+    maskSessionRef.current?.setActive(maskControls.mode !== 'arrange')
+  }, [maskControls])
 
   // True while an (async) card commit is running — End disabled, generic
   // "Committing…" label. The ref guards re-entry across renders.
@@ -130,7 +131,7 @@ function Editor({ config, onBackToSetup }) {
   }, [state.phase, state.grid.length, imageList])
 
   // Entering a placement session (opening or stash return) loads the chosen
-  // images onto the canvas as free-transform objects and arms the erase
+  // images onto the canvas as free-transform objects and arms the mask
   // brush over them. The cancelled flag covers restarts while images are
   // still in flight.
   useEffect(() => {
@@ -140,14 +141,14 @@ function Editor({ config, onBackToSetup }) {
     let cancelled = false
     setPlacementReady(false)
     setPlacedLayers([])
-    setEraseControls({ mode: 'arrange', size: 40, hardness: 'soft', strength: 1 })
-    setEraseHistory({ canUndo: false, canRedo: false })
+    setMaskControls({ mode: 'arrange', size: 40, hardness: 'soft', strength: 1 })
+    setMaskHistory({ canUndo: false, canRedo: false })
     placeImages(canvas, state.toPlace, () => cancelled)
       .then((imgs) => {
         if (cancelled || imgs.length === 0) return
-        eraseSessionRef.current = createEraseSession(canvas, imgs, {
-          getControls: () => eraseControlsRef.current,
-          onHistoryChange: (canUndo, canRedo) => setEraseHistory({ canUndo, canRedo })
+        maskSessionRef.current = createMaskSession(canvas, imgs, {
+          getControls: () => maskControlsRef.current,
+          onHistoryChange: (canUndo, canRedo) => setMaskHistory({ canUndo, canRedo })
         })
         // placeImages adds bottom-to-top; the panel reads top-to-bottom.
         const layers = imgs.map((img, i) => ({
@@ -165,8 +166,8 @@ function Editor({ config, onBackToSetup }) {
       })
     return () => {
       cancelled = true
-      eraseSessionRef.current?.dispose()
-      eraseSessionRef.current = null
+      maskSessionRef.current?.dispose()
+      maskSessionRef.current = null
       setPlacedLayers([])
     }
   }, [state.phase])
@@ -304,13 +305,13 @@ function Editor({ config, onBackToSetup }) {
         return
       }
       // Cmd/Ctrl+Z (+Shift for redo): within-card brush undo. Placement
-      // sessions route to the erase brush; cards route to whatever undo the
+      // sessions route to the mask brush; cards route to whatever undo the
       // card reported (effect brushes). Never crosses an End.
       if ((e.metaKey || e.ctrlKey) && (e.key === 'z' || e.key === 'Z')) {
         if (state.phase === 'PLACEMENT' || state.phase === 'STASH_RETURN') {
           e.preventDefault()
-          if (e.shiftKey) eraseSessionRef.current?.redo()
-          else eraseSessionRef.current?.undo()
+          if (e.shiftKey) maskSessionRef.current?.redo()
+          else maskSessionRef.current?.undo()
         } else if (state.phase === 'WORKING' && state.currentCard) {
           e.preventDefault()
           if (e.shiftKey) cardInfo.redo?.()
@@ -492,11 +493,11 @@ function Editor({ config, onBackToSetup }) {
             placementReady={placementReady}
             placedLayers={placedLayers}
             onReorderLayer={handleReorderLayer}
-            eraseControls={eraseControls}
-            eraseHistory={eraseHistory}
-            onEraseControlsChange={(patch) => setEraseControls((prev) => ({ ...prev, ...patch }))}
-            onEraseUndo={() => eraseSessionRef.current?.undo()}
-            onEraseRedo={() => eraseSessionRef.current?.redo()}
+            maskControls={maskControls}
+            maskHistory={maskHistory}
+            onMaskControlsChange={(patch) => setMaskControls((prev) => ({ ...prev, ...patch }))}
+            onMaskUndo={() => maskSessionRef.current?.undo()}
+            onMaskRedo={() => maskSessionRef.current?.redo()}
             exportState={exportState}
             onControlChange={handleControlChange}
             onEndPlacement={handleEndPlacement}

@@ -1,10 +1,10 @@
 // Stamp — a cutout. A grid of 6 is dealt; take one and the sidecar's
 // rembg model cuts its subject out of the background; the cutout is
 // placed for arranging (move/scale/rotate), opacity, and the standing
-// erase brush. End bakes it down.
+// mask brush. End bakes it down.
 //
 // Graceful degradation (mandatory, CLAUDE.md §3): if the sidecar is down
-// or the cutout fails, the WHOLE image is placed instead and the erase
+// or the cutout fails, the WHOLE image is placed instead and the conceal
 // brush becomes the scissors — the session never blocks on ML. The panel
 // says which mode you're in.
 //
@@ -13,10 +13,10 @@
 // panel can explain the wait while End stays disabled.
 
 import * as fabric from 'fabric'
-import { createEraseSession } from '../brushCore.js'
+import { createMaskSession } from '../brushCore.js'
 import { CardGridPicker } from '../GridPicker.jsx'
 import { sampleImages } from '../sampling.js'
-import { ArrangeEraseControls } from './arrangeEraseControls.jsx'
+import { ArrangeMaskControls, maskHint } from './maskControls.jsx'
 
 const GRID_SIZE = 6
 
@@ -48,7 +48,7 @@ export async function beginStamp(ctx) {
   try {
     url = await fetchCutoutUrl(chosen)
   } catch {
-    // degrade: place the full image, erase brush becomes the scissors
+    // degrade: place the full image, conceal brush becomes the scissors
   }
   if (ctx.isCancelled?.()) {
     if (url) URL.revokeObjectURL(url)
@@ -82,7 +82,7 @@ export async function beginStamp(ctx) {
   ctx.canvas.requestRenderAll()
 
   const controlsRef = { current: ctx.controls }
-  const session = createEraseSession(ctx.canvas, [img], {
+  const session = createMaskSession(ctx.canvas, [img], {
     getControls: () => controlsRef.current,
     onHistoryChange: (canUndo, canRedo) => ctx.report({ canUndo, canRedo })
   })
@@ -102,7 +102,7 @@ export function updateStamp(ctx) {
   if (!s) return
   s.controlsRef.current = ctx.controls
   s.img.set({ opacity: ctx.controls.opacity })
-  s.session.setActive(ctx.controls.mode === 'erase')
+  s.session.setActive(ctx.controls.mode !== 'arrange')
   ctx.canvas.requestRenderAll()
 }
 
@@ -143,17 +143,17 @@ export function StampTools({ controls, info, ready, onControlChange }) {
     )
   }
   if (!ready) return <span className="hint">Preparing…</span>
-  const erasing = controls.mode === 'erase'
+  const brushing = controls.mode !== 'arrange'
   return (
     <div className="brush-tools card-tools">
       <p className="hint">
         {info.degraded
-          ? 'The cutout service is unavailable, so the whole image was placed — the erase brush is your scissors.'
-          : erasing
-            ? 'Paint over the stamp to erase it.'
+          ? 'The cutout service is unavailable, so the whole image was placed — the conceal brush is your scissors.'
+          : brushing
+            ? maskHint(controls.mode, 'the stamp')
             : 'Drag, scale, rotate the stamp into place.'}
       </p>
-      <ArrangeEraseControls controls={controls} info={info} onControlChange={onControlChange} />
+      <ArrangeMaskControls controls={controls} info={info} onControlChange={onControlChange} />
       <label className="ctrl">
         <span className="ctrl-label">Opacity</span>
         <input

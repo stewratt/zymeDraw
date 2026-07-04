@@ -7,28 +7,28 @@
 // wherever the fragments sit, the redraw shows through, and dragging the
 // stencil sweeps the style across the piece.
 //
-// Erase marks live on the PIECE, not the stencil — they're strokes in
+// Brush marks live on the PIECE, not the stencil — they're strokes in
 // overlay space, so trimmed fragments stay trimmed if the stencil is
 // re-arranged afterwards. Influence sets how strongly the styled layer
 // sits. End bakes what remains.
 //
 // The overlay composite (the card's own stroke-engine consumer — the
-// built-in erase/reveal sessions can't express the moving window):
+// built-in mask/reveal sessions can't express the moving window):
 //
 //   composite = styled pixels
 //             ∩ windowMask     (stencil mask at its current transform)
-//             − erase strokes  (committed mask + live stroke)
+//             − mask strokes   (committed mask + live stroke)
 //
 // Graceful degradation (mandatory, CLAUDE.md §3): sidecar down or transfer
 // failed → the stencil is withdrawn, the panel says so, End moves on.
 
 import * as fabric from 'fabric'
-import { clearLayer, createStrokeEngine, makeLayer } from '../brushCore.js'
+import { applyMaskOp, clearLayer, createStrokeEngine, makeLayer, snapshotMaskSettings } from '../brushCore.js'
 import { CardGridPicker } from '../GridPicker.jsx'
 import { sampleImages } from '../sampling.js'
 import { READING_LABEL, computeLum, maskFor, maskToCanvas, pickMostShattered } from '../shatter.js'
 import { fetchStyledCanvas } from '../styleTransfer.js'
-import { ArrangeEraseControls } from './arrangeEraseControls.jsx'
+import { ArrangeMaskControls, maskHint } from './maskControls.jsx'
 
 const GRID_SIZE = 6
 
@@ -100,6 +100,8 @@ export async function beginShatteredTransfer(ctx) {
   const windowMask = makeLayer(styled.width, styled.height)
   const committedMask = makeLayer(styled.width, styled.height)
   const strokeMask = makeLayer(styled.width, styled.height)
+  const effMask = makeLayer(styled.width, styled.height) // live-stroke preview
+  const blurScratch = makeLayer(styled.width, styled.height) // soften staging
   const composite = makeLayer(styled.width, styled.height)
 
   const overlay = new fabric.FabricImage(composite, {
@@ -133,16 +135,20 @@ export async function beginShatteredTransfer(ctx) {
     strokeMask,
     strokes: [],
     bakeStroke(stroke) {
-      const g = committedMask.getContext('2d')
-      g.save()
-      g.globalAlpha = stroke.settings.strength
-      g.drawImage(strokeMask, 0, 0)
-      g.restore()
+      applyMaskOp(committedMask, strokeMask, blurScratch, stroke)
     },
     clearCommitted() {
       clearLayer(committedMask)
     },
     recomposite(liveStroke) {
+      let mask = committedMask
+      if (liveStroke) {
+        const e = effMask.getContext('2d')
+        e.clearRect(0, 0, effMask.width, effMask.height)
+        e.drawImage(committedMask, 0, 0)
+        applyMaskOp(effMask, strokeMask, blurScratch, liveStroke)
+        mask = effMask
+      }
       const g = composite.getContext('2d')
       g.save()
       g.globalCompositeOperation = 'source-over'
@@ -151,11 +157,7 @@ export async function beginShatteredTransfer(ctx) {
       g.globalCompositeOperation = 'destination-in'
       g.drawImage(windowMask, 0, 0)
       g.globalCompositeOperation = 'destination-out'
-      g.drawImage(committedMask, 0, 0)
-      if (liveStroke) {
-        g.globalAlpha = liveStroke.settings.strength
-        g.drawImage(strokeMask, 0, 0)
-      }
+      g.drawImage(mask, 0, 0)
       g.restore()
       overlay.dirty = true
       ctx.canvas.requestRenderAll()
@@ -168,7 +170,7 @@ export async function beginShatteredTransfer(ctx) {
     // The overlay covers the whole canvas; every stroke belongs to it.
     resolveTarget: () => overlay,
     getControls: () => controlsRef.current,
-    snapshotSettings: (c) => ({ strength: c.strength ?? 1 }),
+    snapshotSettings: snapshotMaskSettings,
     onHistoryChange: (canUndo, canRedo) => ctx.report({ canUndo, canRedo })
   })
 
@@ -213,8 +215,8 @@ export function updateShatteredTransfer(ctx) {
   if (!s) return
   s.controlsRef.current = ctx.controls
   s.overlay.set({ opacity: ctx.controls.opacity })
-  s.engine.setActive(ctx.controls.mode === 'erase')
-  // While erasing, the handle would read as un-erased residue — hide it.
+  s.engine.setActive(ctx.controls.mode !== 'arrange')
+  // While brushing, the handle would read as untouched residue — hide it.
   s.img.visible = ctx.controls.mode === 'arrange'
   ctx.canvas.requestRenderAll()
 }
@@ -273,12 +275,12 @@ export function ShatteredTransferTools({ controls, info, ready, onControlChange 
     )
   }
   if (!ready) return <span className="hint">Preparing…</span>
-  const erasing = controls.mode === 'erase'
+  const brushing = controls.mode !== 'arrange'
   return (
     <div className="brush-tools card-tools">
       <p className="hint">
-        {erasing
-          ? 'Paint over the styled fragments to trim them — the marks stay on the piece even if the stencil moves again.'
+        {brushing
+          ? maskHint(controls.mode, 'the styled fragments')
           : `The window is open${info.reading ? ` — this image ${info.reading}` : ''}. Drag, scale, rotate the stencil; the redraw shows through wherever it sits.`}
       </p>
       <label className="ctrl">
@@ -292,7 +294,7 @@ export function ShatteredTransferTools({ controls, info, ready, onControlChange 
         />
         <span className="ctrl-value mono">{Math.round(controls.opacity * 100)}%</span>
       </label>
-      <ArrangeEraseControls controls={controls} info={info} onControlChange={onControlChange} />
+      <ArrangeMaskControls controls={controls} info={info} onControlChange={onControlChange} />
     </div>
   )
 }

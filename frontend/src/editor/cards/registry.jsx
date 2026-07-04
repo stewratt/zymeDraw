@@ -181,8 +181,9 @@ export const cardRegistry = {
   },
 
   transfer: {
-    controls: ['opacity', 'size', 'hardness', 'strength'],
-    defaultControls: { opacity: 1, size: 60, hardness: 'soft', strength: 1 },
+    controls: ['opacity', 'mode', 'size', 'hardness', 'strength'],
+    // No arrange here — the brush is always in hand, opening on conceal.
+    defaultControls: { opacity: 1, mode: 'conceal', size: 60, hardness: 'soft', strength: 1 },
     Tools: TransferTools,
     begin: beginTransfer,
     update: updateTransfer,

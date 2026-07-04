@@ -6,7 +6,7 @@
 //
 // Order here is top-to-bottom (topmost layer first), matching how a layers
 // panel reads. Editor owns the reorder — it restacks the Fabric objects and
-// keeps this list in sync (see handleReorderLayer). The erase brush always
+// keeps this list in sync (see handleReorderLayer). The mask brush always
 // targets the topmost image under the pointer, so reordering here also
 // changes which image a stroke sticks to, for free.
 

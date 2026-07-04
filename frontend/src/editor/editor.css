@@ -641,10 +641,11 @@
 }
 .mode-toggle button {
   flex: 1;
+  min-width: 0; /* four-up rows (Arrange·Conceal·Restore·Soften) must fit */
   background: transparent;
   color: var(--text-dim);
   border: none;
-  padding: 8px;
+  padding: 8px 4px;
   font-size: 0.72rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
