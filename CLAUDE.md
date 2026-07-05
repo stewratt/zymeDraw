@@ -212,11 +212,14 @@ the whole branch and feeding back. Landed so far:
 - **Brush retune.** All brush size sliders now max 300px (were 150/200).
   Silt and Dissolve open big — size 180; influence 15% (Silt) / 70% (Dissolve) —
   matching how Stew actually works them.
-- **Auto-deal.** The between-rounds "THE DECK / Deal" panel is gone:
-  Editor deals the next card the moment the deck is WORKING with no card
-  in hand (a card-draw animation will replace the beat later). The
-  progress line moved onto the round panel under the card face; the
-  Space/Enter deal shortcuts went with the button.
+- **Auto-deal, tried and reverted (2026-07-04).** The between-rounds
+  "THE DECK / Deal" panel was removed in favor of dealing the instant a
+  round ended, but playtest showed the rounds bled into one another. A
+  center-canvas card-reveal overlay (1 s flip between deals) was tried
+  as the separator and rejected too. Both were reverted the same day:
+  the two-press rhythm (End — commit, then Deal) is the design. Stew
+  will rework the deal beat's UI himself later — don't re-remove the
+  Deal panel.
 
 Still open from the doc: suits visible or backstage (§10.1), Echo (§7.3),
 Mount (§7.4), death-crop (parked since v2). **Next action: more of Stew's
@@ -607,9 +610,8 @@ Open <http://localhost:5173>. Setup screen prefilled from
 `~/.deck-config.json`. Two absolute paths (input folder must exist with
 images, output folder must be writable). Continue → Editor.
 
-**Keyboard shortcuts** (Editor): **Enter** = primary action (End), **R** =
-restart. Suppressed while focus is in any form control. (Dealing is
-automatic as of the v3 revision round — no draw key.)
+**Keyboard shortcuts** (Editor): **Space** = draw/deal, **Enter** = primary
+action, **R** = restart. Suppressed while focus is in any form control.
 
 ---
 

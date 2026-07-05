@@ -172,16 +172,6 @@ function Editor({ config, onBackToSetup }) {
     }
   }, [state.phase])
 
-  // Cards flow continuously: the moment the deck is WORKING with no card in
-  // hand (after End, after a placement session), the next card is dealt.
-  // The between-rounds Draw button is gone (decided 2026-07-04) — a card-
-  // draw animation will take its place later.
-  useEffect(() => {
-    if (state.phase === 'WORKING' && !state.currentCard) {
-      dispatch({ type: 'DEAL' })
-    }
-  }, [state.phase, state.currentCard])
-
   // Create the master raster once the Fabric canvas exists, and show it as
   // the canvas background. The master is the only committed state; the
   // visible canvas is a working proxy.
@@ -303,10 +293,10 @@ function Editor({ config, onBackToSetup }) {
     })
   }, [cardControls, state.currentCard, cardReady])
 
-  // Keyboard shortcuts. Enter = primary action (End / restart — never
-  // confirms the opening pick, which needs an explicit choice), R =
-  // Restart. Disabled while focus is in any form control so sliders,
-  // color pickers and text inputs behave normally.
+  // Keyboard shortcuts. Space = deal, Enter = primary action (End /
+  // restart — never confirms the opening pick, which needs an explicit
+  // choice), R = Restart. Disabled while focus is in any form control so
+  // sliders, color pickers and text inputs behave normally.
   useEffect(() => {
     const handler = (e) => {
       const t = e.target
@@ -331,7 +321,12 @@ function Editor({ config, onBackToSetup }) {
       }
       if (e.metaKey || e.ctrlKey || e.altKey) return
 
-      if (e.key === 'Enter') {
+      if (e.key === ' ' || e.code === 'Space') {
+        if (state.phase === 'WORKING' && !state.currentCard) {
+          e.preventDefault()
+          dispatch({ type: 'DEAL' })
+        }
+      } else if (e.key === 'Enter') {
         if (state.phase === 'COMPLETE') {
           e.preventDefault()
           handleRestart()
@@ -344,6 +339,9 @@ function Editor({ config, onBackToSetup }) {
         } else if (state.phase === 'WORKING' && state.currentCard && cardReady) {
           e.preventDefault()
           handleCommit()
+        } else if (state.phase === 'WORKING' && !state.currentCard) {
+          e.preventDefault()
+          dispatch({ type: 'DEAL' })
         }
       } else if (e.key === 'r' || e.key === 'R') {
         e.preventDefault()
@@ -503,6 +501,7 @@ function Editor({ config, onBackToSetup }) {
             exportState={exportState}
             onControlChange={handleControlChange}
             onEndPlacement={handleEndPlacement}
+            onDeal={() => dispatch({ type: 'DEAL' })}
             onCommit={handleCommit}
             onRestart={handleRestart}
             onOpenOutput={handleOpenOutput}
