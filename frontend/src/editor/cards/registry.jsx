@@ -136,7 +136,7 @@ export const cardRegistry = {
 
   dissolve: {
     controls: ['size', 'hardness', 'intensity', 'radius'],
-    defaultControls: { size: 180, hardness: 'soft', intensity: 0.15, radius: 10 },
+    defaultControls: { size: 180, hardness: 'soft', intensity: 0.7, radius: 10 },
     Tools: DissolveTools,
     ...dissolveHooks
   },

@@ -210,8 +210,8 @@ the whole branch and feeding back. Landed so far:
   buttons (move-arrows / eraser / brush / feathered dot — inline SVGs in
   `maskControls.jsx`), name on hover; the words were hard to teach.
 - **Brush retune.** All brush size sliders now max 300px (were 150/200).
-  Silt and Dissolve open big and faint — size 180, influence 15% — since
-  Stew works them at ~180–200px / 10–20% almost every time.
+  Silt and Dissolve open big — size 180; influence 15% (Silt) / 70% (Dissolve) —
+  matching how Stew actually works them.
 - **Auto-deal.** The between-rounds "THE DECK / Deal" panel is gone:
   Editor deals the next card the moment the deck is WORKING with no card
   in hand (a card-draw animation will replace the beat later). The
