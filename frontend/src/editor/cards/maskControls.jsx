@@ -98,7 +98,7 @@ function BrushSliders({ controls, info, onControlChange }) {
         <input
           type="range"
           min="6"
-          max="150"
+          max="300"
           value={controls.size}
           onChange={(e) => onControlChange('size', Number(e.target.value))}
         />

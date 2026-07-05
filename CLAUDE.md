@@ -209,6 +209,14 @@ the whole branch and feeding back. Landed so far:
 - **Mask-mode icons.** Arrange · Conceal · Restore · Soften are now icon
   buttons (move-arrows / eraser / brush / feathered dot — inline SVGs in
   `maskControls.jsx`), name on hover; the words were hard to teach.
+- **Brush retune.** All brush size sliders now max 300px (were 150/200).
+  Silt and Dissolve open big and faint — size 180, influence 15% — since
+  Stew works them at ~180–200px / 10–20% almost every time.
+- **Auto-deal.** The between-rounds "THE DECK / Deal" panel is gone:
+  Editor deals the next card the moment the deck is WORKING with no card
+  in hand (a card-draw animation will replace the beat later). The
+  progress line moved onto the round panel under the card face; the
+  Space/Enter deal shortcuts went with the button.
 
 Still open from the doc: suits visible or backstage (§10.1), Echo (§7.3),
 Mount (§7.4), death-crop (parked since v2). **Next action: more of Stew's
@@ -599,8 +607,9 @@ Open <http://localhost:5173>. Setup screen prefilled from
 `~/.deck-config.json`. Two absolute paths (input folder must exist with
 images, output folder must be writable). Continue → Editor.
 
-**Keyboard shortcuts** (Editor): **Space** = draw/deal, **Enter** = primary
-action, **R** = restart. Suppressed while focus is in any form control.
+**Keyboard shortcuts** (Editor): **Enter** = primary action (End), **R** =
+restart. Suppressed while focus is in any form control. (Dealing is
+automatic as of the v3 revision round — no draw key.)
 
 ---
 

@@ -57,7 +57,7 @@ export function BrushControls({ controls, info, onControlChange }) {
         <input
           type="range"
           min="6"
-          max="200"
+          max="300"
           value={controls.size}
           onChange={(e) => onControlChange('size', Number(e.target.value))}
         />

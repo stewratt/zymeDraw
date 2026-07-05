@@ -32,7 +32,6 @@ function DeckPanel({
   exportState,
   onControlChange,
   onEndPlacement,
-  onDeal,
   onCommit,
   onRestart,
   onOpenOutput
@@ -69,7 +68,11 @@ function DeckPanel({
           onCommit={onCommit}
         />
       ) : (
-        <AwaitingDeal state={state} onDeal={onDeal} />
+        // Editor auto-deals the moment a round ends; this renders for at
+        // most a frame. A card-draw animation will live here later.
+        <aside className="deck-panel">
+          <h2>THIS ROUND</h2>
+        </aside>
       )
     case 'COMPLETE':
       return (
@@ -186,22 +189,6 @@ function Placement({
   )
 }
 
-function AwaitingDeal({ state, onDeal }) {
-  return (
-    <aside className="deck-panel">
-      <h2>THE DECK</h2>
-      <p className="hint">
-        {state.deck.length} card{state.deck.length === 1 ? '' : 's'} remain
-        {state.stash.length > 0 ? ` · ${state.stash.length} stashed` : ''}
-      </p>
-      <p className="hint">{progressLabel(state)}</p>
-      <button type="button" className="primary" onClick={onDeal}>
-        Deal
-      </button>
-    </aside>
-  )
-}
-
 function CardRevealed({ state, entry, controls, info, ready, committing, onControlChange, onCommit }) {
   const card = state.currentCard
   const ToolsComponent = entry?.Tools
@@ -214,6 +201,7 @@ function CardRevealed({ state, entry, controls, info, ready, committing, onContr
         <span className="card-kind">{card.kind === 'mod' ? 'modification' : card.kind}</span>
         <span className="card-label">{card.label}</span>
       </div>
+      <p className="hint">{progressLabel(state)}</p>
       <div className="tool-area">
         {ToolsComponent ? (
           <ToolsComponent

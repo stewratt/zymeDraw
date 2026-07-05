@@ -126,15 +126,17 @@ export const cardRegistry = {
   // ---- Reveal brushes (paint the effect where it belongs) ----
 
   silt: {
+    // Playtest tuning (2026-07-04): Stew works these two brushes big and
+    // faint — open there instead of small and full-strength.
     controls: ['size', 'hardness', 'intensity'],
-    defaultControls: { size: 60, hardness: 'soft', intensity: 1 },
+    defaultControls: { size: 180, hardness: 'soft', intensity: 0.15 },
     Tools: SiltTools,
     ...siltHooks
   },
 
   dissolve: {
     controls: ['size', 'hardness', 'intensity', 'radius'],
-    defaultControls: { size: 60, hardness: 'soft', intensity: 1, radius: 10 },
+    defaultControls: { size: 180, hardness: 'soft', intensity: 0.15, radius: 10 },
     Tools: DissolveTools,
     ...dissolveHooks
   },
