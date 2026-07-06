@@ -111,6 +111,17 @@ function Editor({ config, onBackToSetup }) {
   // pattern as the Keys reference.
   const [historyOpen, setHistoryOpen] = useState(false)
 
+  // The state cache (v4 notes §9): every universal bake keeps a full-res
+  // JPEG of the master, captioned by what just committed. Viewed only at
+  // the Coda — C cycles the plinth through them. The plate only moves
+  // forward: no state is exported or re-entered (the capture keeps that
+  // door open for later). Session-local: Restart clears it.
+  const [states, setStates] = useState([]) // [{ url, label }]
+
+  function captureState(master, label) {
+    setStates((prev) => [...prev, { url: master.toDataURL('image/jpeg', 0.92), label }])
+  }
+
   const [imageList, setImageList] = useState({
     status: 'loading',
     filenames: [],
@@ -348,6 +359,7 @@ function Editor({ config, onBackToSetup }) {
           })
         }
         masterRef.current = bake(canvas)
+        captureState(masterRef.current, `after ${state.currentCard.label}`)
       }
     } finally {
       committingRef.current = false
@@ -383,6 +395,10 @@ function Editor({ config, onBackToSetup }) {
     const canvas = canvasStageRef.current?.getCanvas()
     if (canvas) {
       masterRef.current = bake(canvas)
+      captureState(
+        masterRef.current,
+        state.phase === 'STASH_RETURN' ? 'the stash return' : 'the opening'
+      )
     }
     dispatch({ type: 'END_PLACEMENT' })
   }
@@ -405,6 +421,7 @@ function Editor({ config, onBackToSetup }) {
     setCardControls({})
     setCardInfo({})
     setPlacementReady(true)
+    setStates([])
     setExportState({ status: 'idle', savedPath: null, error: null, thumbDataUrl: null })
     dispatch({ type: 'RESTART' })
   }
@@ -673,7 +690,7 @@ function Editor({ config, onBackToSetup }) {
               canvas simply stays visible — no spinner needed. */}
           {state.phase === 'COMPLETE' && masterRef.current && (
             <Suspense fallback={null}>
-              <Plinth master={masterRef.current} />
+              <Plinth master={masterRef.current} states={states} />
             </Suspense>
           )}
         </section>

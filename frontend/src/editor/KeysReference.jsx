@@ -45,6 +45,10 @@ const SECTIONS = [
       ['[ ]', 'Etch: pixel size.'],
       ['N', 'A new hue on any color control.']
     ]
+  },
+  {
+    title: 'At the Coda',
+    rows: [['C', 'Leaf through the states — the piece as it stood after every End.']]
   }
 ]
 

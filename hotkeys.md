@@ -189,7 +189,9 @@ These target the active/topmost placed object (Deeper: the frame rect).
 - **Layer reorder** — only exists with 2+ images (opening placement,
   briefly); drag is fine. Revisit if multi-image sessions grow.
 - **Coda screen** — the piece is finished; no need to speedrun the exit.
-  Enter already restarts.
+  Enter already restarts. *(Amended 2026-07-06: the plinth now takes
+  **C** — leaf through the session's states, see §9 item 8 — but the
+  no-speedrun principle stands; nothing else gets a key here.)*
 - **Digits 1–0 for Strength/Influence** — proposed (the Photoshop
   digits-for-opacity convention), decided against as overkill. Click a
   slider and native arrow keys already work; shift+drag and `[`/`]` cover
@@ -251,3 +253,7 @@ These target the active/topmost placed object (Deeper: the frame rect).
 6. No other keys requested.
 7. (Revision round) Mode row is **W·E·R·S**, replacing the proposed
    V/B/C/R/S; **Conceal renames to Erase** across the UI.
+8. (2026-07-06) **C** at the Coda leafs the plinth through the session's
+   committed states (the v4 state cache, notes §9) and back to the piece.
+   The Coda screen's one key; Tier 1, no collisions (the brush grammar's
+   scopes never coexist with the plinth).

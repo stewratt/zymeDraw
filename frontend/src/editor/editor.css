@@ -96,6 +96,19 @@
 .plinth canvas {
   display: block;
 }
+/* The states caption: a quiet line under the piece — the key hint on the
+   final state, the state's name while leafing. Never catches the mouse. */
+.plinth-caption {
+  position: absolute;
+  bottom: 14px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--text-mute);
+  pointer-events: none;
+}
 
 /* ---------- deck panel ---------- */
 

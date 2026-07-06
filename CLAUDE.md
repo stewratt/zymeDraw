@@ -84,6 +84,16 @@ verification):
   shallow panel (unlit full-res master face, flat `#333333` edges).
   `editor/Plinth.jsx`, lazy-loaded so `three` (~530 kB, the one big
   dependency) only downloads when a piece finishes. Out of the plan.
+- **The state cache** (notes §9, Wave 1 — **SHIPPED, verified
+  2026-07-06**): every universal bake keeps a full-res JPEG of the
+  master in memory, captioned by what committed (*the opening · after
+  Silt · the stash return*). Editor-side only, zero `deck.js` change;
+  Restart clears it. Viewing lives on the plinth, not the deck overlay
+  (Stew simplified it away from the planned states grid): at the Coda,
+  **C** leafs the panel's face through the states and back to the piece
+  (`hotkeys.md` §9 item 8). Capture-and-view only — no mid-state export;
+  §9.3's *pull* decision stays open, and the capture makes it a one-day
+  build later.
 
 **Policy locked (v4_design_notes.md §2): set-knowledge is free;
 order-knowledge and order-control are never ambient — the deal stays
@@ -92,14 +102,12 @@ mechanics (Skim, Cull).
 
 **Next actions, in order (the notes' §10):**
 
-1. Stew verifies the built v4 work in the browser.
-2. **Wave 1 — state cache + states grid** (§9 there): JPEG snapshot at
-   every bake, capture-and-view only; decide mid-state *pulling* (the
-   printmaking "states of the plate" question) after living with it.
-3. **Wave 2 — Cull + Skim** (§5.1–5.2): the tutor and the scry card,
+1. **Wave 2 — Cull + Skim** (§5.1–5.2): the tutor and the scry card,
    one copy each.
-4. **Wave 3 — the descent experiment** (§8.2): 1 Deeper dealt + 2 in
+2. **Wave 3 — the descent experiment** (§8.2): 1 Deeper dealt + 2 in
    reserve, descents dilute the deck; isolate its playtest.
+3. Later, after living with the states: decide mid-state *pulling* (the
+   printmaking "states of the plate" question, notes §9.3).
 
 Still open from v3: suits visible or backstage (§10.1), Echo (§7.3),
 Mount (§7.4), death-crop (parked since v2, re-raised in the notes' §6.5).
