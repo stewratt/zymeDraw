@@ -464,6 +464,38 @@
 .card--tile .card-text-face .card-label {
   font-size: 0.85rem;
 }
+/* The two mod-card families (v4), color-coded until Stew's designed faces
+   carry the distinction: image cards warm, deck cards (Cull, Skim, Delay)
+   cool. Tints live on the text face so real art simply covers them. */
+.card--family-image .card-text-face {
+  background: linear-gradient(165deg, #2d2520, #221c18);
+}
+.card--family-image .card-text-face .card-kind {
+  color: #a58a68;
+}
+.card--family-deck .card-text-face {
+  background: linear-gradient(165deg, #202b36, #191f27);
+}
+.card--family-deck .card-text-face .card-kind {
+  color: #7e96b4;
+}
+/* Stash-return tone sliders (hue/saturation), under the brush tools. */
+.stash-tone {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+/* Delay's granted right, waiting at the deal panel. */
+.delay-held {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+.delay-held .card {
+  width: 64px;
+}
 .card-count {
   position: absolute;
   right: 6px;

@@ -59,6 +59,7 @@ import {
 } from './stamp.jsx'
 import { CullOverlay, CullTools, beginCull } from './cull.jsx'
 import { SkimOverlay, SkimTools, beginSkim } from './skim.jsx'
+import { DelayTools } from './delay.jsx'
 import { SiltTools, siltHooks } from './silt.jsx'
 import { DissolveTools, dissolveHooks } from './dissolve.jsx'
 import { BruiseTools, bruiseHooks } from './bruise.jsx'
@@ -216,6 +217,15 @@ export const cardRegistry = {
     Tools: SkimTools,
     Overlay: SkimOverlay,
     begin: beginSkim,
+    skipBake: true
+  },
+
+  // No begin, no overlay: the round is a beat — the right it grants lives
+  // in deck.js (delayHeld) and pays off at the Coda (CODA_CHOICE).
+  delay: {
+    controls: [],
+    defaultControls: {},
+    Tools: DelayTools,
     skipBake: true
   },
 

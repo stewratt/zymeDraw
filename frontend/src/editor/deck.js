@@ -4,12 +4,15 @@
 // the complete rulebook.
 //
 // The arc:
-//   OPENING_PICK   a fixed grid of images; take two — one placed, one stashed
-//   PLACEMENT      arrange the placed image; End bakes
+//   OPENING_PICK   a fixed grid of images; take two — place one + stash
+//                  one, or place both (no stash beat that session)
+//   PLACEMENT      arrange the placed image(s); End bakes
 //   WORKING        deal cards from the literal shuffled deck, one round each
 //   STASH_RETURN   after Act I, the stash comes back as one placement session
 //   WORKING        Act II; then death cards are shuffled into whatever deck
 //                  remains — dealing one ends the session instantly
+//   CODA_CHOICE    only if Delay was committed: the dealt Coda waits for a
+//                  choice — accept the ending, or set it aside (once)
 //   COMPLETE       the piece is finished; export
 //
 // "Death card" is the design term; on screen the card is called Coda.
@@ -43,9 +46,12 @@ export const MOD_CARDS = [
   { id: 'turn', label: 'Turn', copies: 1 }, // Wash (hue)
   { id: 'cure', label: 'Cure', copies: 1 }, // Wash × Cure
   { id: 'etch', label: 'Subliminal Etch', copies: 1 }, // Pixel glyph, hidden at the grain
-  // The deck itself (v4 notes §5.1–5.2): order-control, dealt by chance.
-  { id: 'cull', label: 'Cull', copies: 1 }, // Tutor: the remains open, take one
-  { id: 'skim', label: 'Skim', copies: 1 } // Scry: see the top, keep or bury
+  // The deck itself (v4 notes §5.1–5.2, §5.9): deck modifications, dealt
+  // by chance. `family: 'deck'` color-codes their faces apart from the
+  // image cards (cardFamily below).
+  { id: 'cull', label: 'Cull', copies: 1, family: 'deck' }, // Tutor: the remains open, take one
+  { id: 'skim', label: 'Skim', copies: 1, family: 'deck' }, // Scry: see the top, keep or bury
+  { id: 'delay', label: 'Delay', copies: 1, family: 'deck' } // The right to set the first Coda aside
   // Stashed until Stew trains his own style model — the demo ONNX styles
   // don't look good enough to ship. Card files, registry entries, and the
   // /style sidecar endpoint all stay in place; re-add these lines to deal
@@ -94,6 +100,7 @@ export function initialState() {
     deathShuffled: false,
     currentCard: null,
     skim: null, // Skim's round: null | { card, choice: null|'kept'|'buried' }
+    delayHeld: false, // Delay committed: the first Coda may be set aside
     history: []
   }
 }
@@ -112,11 +119,12 @@ export function deckReducer(state, action) {
       if (state.phase !== 'OPENING_PICK') return state
       const placed = action.placed ?? []
       const stashed = action.stashed ?? []
-      // Take two, strictly: one placed now, one stashed for later. The stash
-      // return is a constant beat — exactly one image, every session.
+      // Take two: place one + stash one (the stash returns after Act I), or
+      // place both — then the session simply has no stash beat (COMMIT's
+      // stash-return check already guards on stash.length).
       const legal =
-        placed.length === 1 &&
-        stashed.length === 1 &&
+        ((placed.length === 1 && stashed.length === 1) ||
+          (placed.length === 2 && stashed.length === 0)) &&
         [...placed, ...stashed].every((f) => state.grid.includes(f))
       if (!legal) return state
       return {
@@ -158,6 +166,12 @@ export function deckReducer(state, action) {
       if (state.deck.length === 0) return state
       const [card, ...deck] = state.deck
       if (card.kind === 'death') {
+        // Delay held (v4 notes §5.9): the ending becomes a choice, once.
+        // Nothing joins the record yet — the event is written by whichever
+        // resolution follows (ACCEPT_CODA / DELAY_CODA).
+        if (state.delayHeld) {
+          return { ...state, phase: 'CODA_CHOICE', deck, currentCard: card }
+        }
         // Instant end: no End press, no final modification.
         return {
           ...state,
@@ -171,6 +185,39 @@ export function deckReducer(state, action) {
         }
       }
       return { ...state, deck, currentCard: card }
+    }
+
+    // The Coda choice (v4 notes §5.9): only reachable while Delay is held.
+    // Accepting with the right unspent is the strongest ending — the piece
+    // was signed, not stopped.
+    case 'ACCEPT_CODA': {
+      if (state.phase !== 'CODA_CHOICE') return state
+      return {
+        ...state,
+        phase: 'COMPLETE',
+        history: [
+          ...state.history,
+          { event: 'death', cardId: state.currentCard.id, ts: Date.now() }
+        ]
+      }
+    }
+
+    case 'DELAY_CODA': {
+      // Not yet. The Coda slips back in at a random position — the same
+      // honest reinsert as Skim's bury (never the bottom) — and the next
+      // deal is blind: it can come straight back, and the right is spent.
+      if (state.phase !== 'CODA_CHOICE') return state
+      const deck = [...state.deck]
+      const at = Math.floor(Math.random() * (deck.length + 1))
+      deck.splice(at, 0, state.currentCard)
+      return {
+        ...state,
+        phase: 'WORKING',
+        deck,
+        currentCard: null,
+        delayHeld: false,
+        history: [...state.history, { event: 'delayed', ts: Date.now() }]
+      }
     }
 
     case 'PICK_FROM_DECK': {
@@ -240,6 +287,9 @@ export function deckReducer(state, action) {
         roundsDealt,
         currentCard: null,
         skim: null,
+        // Ending the Delay round is what grants the right — one code path
+        // whether it was dealt, culled, or skim-kept.
+        delayHeld: state.delayHeld || card.id === 'delay',
         history: [
           ...state.history,
           { event: 'card', cardId: card.id, ts: Date.now() }
@@ -296,6 +346,17 @@ const CARD_LABELS = Object.fromEntries(
   [...MOD_CARDS, DEATH_CARD].map((c) => [c.id, c.label])
 )
 
+// The two families of modification card (v4): image cards act on the
+// canvas; deck cards (Cull, Skim, Delay) act on the deck itself. Card.jsx
+// color-codes faces by family until Stew's designed art carries the
+// distinction. The Coda is neither — it has its own face.
+const DECK_FAMILY_IDS = new Set(
+  MOD_CARDS.filter((c) => c.family === 'deck').map((c) => c.id)
+)
+export function cardFamily(id) {
+  return DECK_FAMILY_IDS.has(id) ? 'deck' : 'image'
+}
+
 // The cards spent so far, in dealt order — the sequence view. Includes the
 // Coda once the session is COMPLETE (it already happened); never the card
 // still in hand (it hasn't been committed). A Cull round reads as two
@@ -305,6 +366,11 @@ export function spentCards(state) {
   for (const ev of state.history) {
     if (ev.event === 'cull') {
       out.push({ id: 'cull', label: CARD_LABELS.cull, kind: 'mod', tag: 'culled' })
+      continue
+    }
+    if (ev.event === 'delayed') {
+      // The Coda that came and was set aside — part of the piece's story.
+      out.push({ id: 'coda', label: CARD_LABELS.coda, kind: 'death', tag: 'set aside' })
       continue
     }
     if (ev.event !== 'card' && ev.event !== 'death') continue

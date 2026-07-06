@@ -35,8 +35,12 @@ function DeckPanel({
   exportState,
   onControlChange,
   onEndPlacement,
+  stashTone,
+  onStashToneChange,
   onDeal,
   onCommit,
+  onAcceptCoda,
+  onDelayCoda,
   onRestart,
   onOpenOutput,
   onOpenHistory
@@ -54,6 +58,8 @@ function DeckPanel({
           onReorderLayer={onReorderLayer}
           maskControls={maskControls}
           maskHistory={maskHistory}
+          stashTone={stashTone}
+          onStashToneChange={onStashToneChange}
           onMaskControlsChange={onMaskControlsChange}
           onMaskUndo={onMaskUndo}
           onMaskRedo={onMaskRedo}
@@ -75,6 +81,8 @@ function DeckPanel({
       ) : (
         <AwaitingDeal state={state} onDeal={onDeal} onOpenHistory={onOpenHistory} />
       )
+    case 'CODA_CHOICE':
+      return <CodaChoice state={state} onAcceptCoda={onAcceptCoda} onDelayCoda={onDelayCoda} />
     case 'COMPLETE':
       return (
         <Complete
@@ -136,6 +144,8 @@ function Placement({
   onReorderLayer,
   maskControls,
   maskHistory,
+  stashTone,
+  onStashToneChange,
   onMaskControlsChange,
   onMaskUndo,
   onMaskRedo,
@@ -164,6 +174,37 @@ function Placement({
             onControlChange={(key, value) => onMaskControlsChange({ [key]: value })}
           />
         </div>
+
+        {/* The stash was chosen against a piece that has moved on — tone
+            controls ease it into what the rounds since have made. */}
+        {returning && (
+          <div className="stash-tone">
+            <label className="ctrl">
+              <span className="ctrl-label">Hue</span>
+              <input
+                type="range"
+                min={-180}
+                max={180}
+                step={1}
+                value={stashTone.h}
+                onChange={(e) => onStashToneChange({ h: Number(e.target.value) })}
+              />
+              <span className="ctrl-value mono">{stashTone.h}°</span>
+            </label>
+            <label className="ctrl">
+              <span className="ctrl-label">Saturation</span>
+              <input
+                type="range"
+                min={0}
+                max={200}
+                step={1}
+                value={stashTone.s}
+                onChange={(e) => onStashToneChange({ s: Number(e.target.value) })}
+              />
+              <span className="ctrl-value mono">{stashTone.s}%</span>
+            </label>
+          </div>
+        )}
 
         {placedLayers.length > 0 ? (
           <>
@@ -207,9 +248,51 @@ function AwaitingDeal({ state, onDeal, onOpenHistory }) {
         <button type="button" className="secondary" onClick={onOpenHistory}>
           View the deck
         </button>
+        {/* Deck state, not card behavior: the right Delay granted, visible
+            where it matters — at the moment of the deal. */}
+        {state.delayHeld && (
+          <div className="delay-held">
+            <Card id="delay" label="Delay" size="tile" />
+            <span className="hint">held — the first Coda can be set aside</span>
+          </div>
+        )}
       </div>
       <button type="button" className="primary" title="Space" onClick={onDeal}>
         Deal
+      </button>
+    </aside>
+  )
+}
+
+// The Coda, dealt while Delay is held (deck.js CODA_CHOICE). Click-only,
+// deliberately — Enter deals and commits everywhere else, and neither
+// ending the piece nor refusing the ending should ever be a double-press
+// accident. The canvas stays visible behind the panel: the question is
+// about the piece, and the piece is right there.
+function CodaChoice({ state, onAcceptCoda, onDelayCoda }) {
+  const card = state.currentCard
+  const [zoomed, setZoomed] = useState(false)
+  return (
+    <aside className="deck-panel">
+      {zoomed && (
+        <CardZoom id={card.id} label={card.label} kind="death" onClose={() => setZoomed(false)} />
+      )}
+      <div className="panel-scroll">
+        <h2>THE CODA</h2>
+        <Card id={card.id} label={card.label} kind="death" size="panel" flip onClick={() => setZoomed(true)} />
+        <p className="card-name">{card.label}</p>
+        <p className="hint">
+          The deck says the piece is finished. You still hold Delay — accept
+          the ending, or set the Coda aside. It slips back into the deck and
+          the next deal is blind: it can come straight back, and the right is
+          spent.
+        </p>
+        <button type="button" className="secondary" onClick={onDelayCoda}>
+          Not yet — set it aside
+        </button>
+      </div>
+      <button type="button" className="primary" onClick={onAcceptCoda}>
+        Accept — the piece is finished
       </button>
     </aside>
   )

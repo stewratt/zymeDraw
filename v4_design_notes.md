@@ -375,6 +375,53 @@ essence at every single deal; that's a different game (a draft game). As a
 "choose from everything, once"; Fork says "choose from two, once." When you
 only get one tutor-shaped card, take the sharper one.
 
+### 5.9 Delay — the held ending *(BUILT 2026-07-06)*
+
+**Where it came from (2026-07-06, after tabling the §8.2 descents):** Stew
+wanted something smaller than descents that answers the same underlying
+desire — *slightly* more control over the end state, the power to push the
+Coda back. Two shapes were assessed:
+
+- **Option 1 — a standing rule:** the first Coda can always be set aside,
+  once, in every session. Rejected for the classic reason (Stew named it
+  himself): an always-available free option becomes a default. Everyone
+  skips the first Coda, the mechanic collapses into "sessions end on the
+  second Coda" — deck tuning with extra steps — and the first Coda, the
+  deck's most charged beat, is defanged in every session.
+- **Option 2 — a dealt card (×1) that grants the option.** Chosen, in the
+  grants-a-choice form (an auto-skip variant was considered and dropped:
+  it deletes the decision at the Coda moment, which is the whole payoff —
+  though its "the deck rejects the ending" flavor is noted here for the
+  record).
+
+**What shipped:** **Delay**, ×1, a deck-family card. Its round is a beat —
+it never touches the canvas (skipBake); committing it grants a standing
+right, shown as a small face-up card at the deal panel. When a Coda is
+dealt while the right is held, the session enters a choice (`CODA_CHOICE`):
+**accept** (the piece is finished, as ever) or **not yet — set it aside**.
+Setting aside spends the right and slips the Coda back at a random position
+(the same honest reinsert as Skim's bury, never the bottom); the redeal is
+the player's own blind Deal press — it can come straight back. The second
+Coda is absolute. The record shows a set-aside Coda tagged *set aside*;
+both choices are click-only (Enter must never end a piece, or refuse an
+ending, by accident).
+
+**Why scarcity fixes option 1's flaw:** the card can't be counted on, so
+the first Coda keeps its full dread in every session where Delay hasn't
+shown. When it *has* — the Coda moment becomes a real decision, and
+accepting while the right is still held is the strongest ending available:
+the piece was signed, not stopped. This is the locked §2 policy's shape
+exactly — end-control arrives only as a dealt/spent mechanic, and the deck
+decides whether this session includes it. Synergies came free: the card
+sits visible in REMAINS all session (hope, legible), Cull can deliberately
+take it (a whole round's creative content traded for insurance), Skim can
+reveal it on top.
+
+**Relation to §5.3 (the pass):** the pass refuses any *mod* card and
+explicitly could not touch the Coda; Delay is its inversion — it refuses
+*only* the Coda and leaves every mod card as forced as ever. The pass
+stays benched on its own merits.
+
 ---
 
 ## 6. Considered and rejected (kept honest, with reasons)
@@ -684,6 +731,11 @@ to *not* ship the later waves if the deck starts feeling like a menu.
    + 2 in reserve, descents dilute the deck. This is the deepest structural
    change proposed anywhere in these notes — isolate its playtest. Verify
    the ESRGAN depth ceiling empirically while at it.
+   *(TABLED 2026-07-06 — stays in §8 for later. In its place, the smaller
+   end-control mechanic shipped as **Delay** (§5.9): ×1 dealt card, the
+   right to set the first Coda aside. The deck also gained the visual
+   family split: image cards vs deck cards, color-coded until the real
+   faces land.)*
 4. **Wave 4 — only as needed:** the pass (§5.3) if forced-commitment
    complaints survive Waves 1–3; recall-the-stash (§5.5) and the cut (§5.4)
    remain on the bench; Riffle (§5.7) inherits a slot only if Cull or Skim

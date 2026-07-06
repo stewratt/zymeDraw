@@ -257,3 +257,7 @@ These target the active/topmost placed object (Deeper: the frame rect).
    committed states (the v4 state cache, notes §9) and back to the piece.
    The Coda screen's one key; Tier 1, no collisions (the brush grammar's
    scopes never coexist with the plinth).
+9. (2026-07-06) The Coda choice while Delay is held (notes §5.9) is
+   **click-only** — no Enter, no keys. Enter deals and commits everywhere
+   else; neither ending the piece nor refusing the ending may ever be a
+   double-press accident. Same manners as Skim's turn.

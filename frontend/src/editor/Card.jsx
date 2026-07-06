@@ -11,12 +11,17 @@
 // click never falls through to a close-on-click overlay behind it.
 
 import { getCardArt } from './cardArt.js'
+import { cardFamily } from './deck.js'
 
 function Card({ id, label, kind = 'mod', size = 'panel', count, dimmed, flip, onClick, title }) {
   const art = getCardArt(id)
+  // Mod cards split into two color-coded families (image vs deck) until
+  // the designed faces carry the distinction; the Coda stays its own thing.
+  const family = kind === 'mod' ? cardFamily(id) : null
   const classes = [
     'card',
     `card--${size}`,
+    family && `card--family-${family}`,
     kind === 'death' && 'card--death',
     dimmed && 'card--dimmed',
     flip && 'card--flip',
@@ -42,7 +47,7 @@ function Card({ id, label, kind = 'mod', size = 'panel', count, dimmed, flip, on
       ) : (
         <div className="card-text-face">
           <span className="card-kind">
-            {kind === 'mod' ? 'modification' : 'the deck is done'}
+            {kind !== 'mod' ? 'the deck is done' : family === 'deck' ? 'the deck' : 'modification'}
           </span>
           <span className="card-label">{label}</span>
         </div>

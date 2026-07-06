@@ -2,9 +2,9 @@
 // First consumer: the opening pick (place-or-stash). Ghost and Stamp reuse
 // the grid with single-pick behavior (CardGridPicker below).
 //
-// The opening deals a fixed grid (TUNING.openingGrid) and the rule is
-// strict: take two — one placed now, one stashed for later. The meaningful
-// choice is *which*, not *how many*.
+// The opening deals a fixed grid (TUNING.openingGrid) and the rule is:
+// take two — place one and stash one, or place both (then no stash beat
+// this session). The meaningful choice is *which*, not *how many*.
 //
 // Owns its selection state; reports the final choice via onConfirm(placed,
 // stashed). It never touches the deck reducer or the canvas.
@@ -13,9 +13,9 @@ import { useEffect, useState } from 'react'
 import { isFormTarget } from './keymap.js'
 
 function GridPicker({ grid, onConfirm }) {
-  // filename → 'place' | 'stash'. Clicking a thumb cycles
-  // unselected → place → stash → unselected, skipping a role another
-  // image already holds — there is exactly one of each.
+  // filename → 'place' | 'stash'. The first pick is a place (click again
+  // to put it back); the second pick cycles stash → place → back. A stash
+  // never exists without a place — deselecting the place promotes it.
   const [selection, setSelection] = useState({})
 
   // Esc backs out of the picks (hotkeys.md §5.1). Enter deliberately does
@@ -35,32 +35,34 @@ function GridPicker({ grid, onConfirm }) {
   function cycle(filename) {
     setSelection((prev) => {
       const cur = prev[filename]
-      const placeFree = !Object.entries(prev).some(([f, v]) => v === 'place' && f !== filename)
-      const stashFree = !Object.entries(prev).some(([f, v]) => v === 'stash' && f !== filename)
       const next = { ...prev }
-      if (!cur) {
-        if (placeFree) next[filename] = 'place'
-        else if (stashFree) next[filename] = 'stash'
+      if (cur === 'stash') {
+        // The second pick's cycle: stash → place (both placed, no stash).
+        next[filename] = 'place'
         return next
       }
-      if (cur === 'place' && stashFree) {
-        next[filename] = 'stash'
+      if (cur === 'place') {
+        delete next[filename]
+        // Never a stash without a place: the remaining pick steps up.
+        for (const f of Object.keys(next)) if (next[f] === 'stash') next[f] = 'place'
         return next
       }
-      delete next[filename]
+      const taken = Object.keys(prev).length
+      if (taken >= 2) return prev // two is the whole opening
+      next[filename] = taken === 0 ? 'place' : 'stash'
       return next
     })
   }
 
-  const ready = placed.length === 1 && stashed.length === 1
+  const ready = placed.length + stashed.length === 2
 
   return (
     <div className="grid-picker">
       <div className="grid-picker-head">
         <h2>THE OPENING</h2>
         <p className="hint">
-          Take two: one to <em>place now</em>, one to <em>stash for later</em>. Click an image to
-          cycle place → stash → pass.
+          Take two: one to <em>place now</em>, one to <em>stash for later</em> — or click the
+          stashed one again to <em>place both</em>, holding nothing back.
         </p>
       </div>
       {grid.length === 0 ? (
@@ -86,7 +88,8 @@ function GridPicker({ grid, onConfirm }) {
       )}
       <div className="grid-picker-foot">
         <span className="hint">
-          {placed.length ? '1 to place' : 'place —'} · {stashed.length ? '1 stashed' : 'stash —'}
+          {placed.length ? `${placed.length} to place` : 'place —'} ·{' '}
+          {stashed.length ? '1 stashed' : placed.length === 2 ? 'no stash' : 'stash —'}
         </span>
         <button
           type="button"

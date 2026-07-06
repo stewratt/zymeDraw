@@ -1,267 +1,154 @@
 # CLAUDE.md — Deck (zymeDraw)
 
-> This file is the persistent context for any Claude Code session in this repo.
-> Read it top-to-bottom before doing any work. It captures the invariants and
-> architectural decisions of a project in active iteration.
+> Persistent context for any Claude Code session. Read it top-to-bottom
+> before doing any work; keep §0 updated as work lands — it's the resume
+> point. This file records what is *true now* and *how we work*; history
+> lives in git and the design docs, never here.
 
 ---
 
-## 0. Current state — resume here (updated 2026-07-05)
+## 0. Current state — resume here (updated 2026-07-06)
 
-**`main` holds the complete v1 → v3 tool, all verified by Stew.**
+**`main` holds the complete v1 → v3 tool, verified by Stew.** The version
+story lives in the design docs: `design_changes_july2.md` (v1 lessons),
+`redesign_v2_plan.md` (v2: master raster + bake, brush core, ML sidecar),
+`version_3_design.md` (v3: card system, zyme register, mask brush).
 
-- **v1** — the original eight phases (scaffold → layers panel → tone
-  cleanup). Its lessons (add-card flooding, do-it-for-you cards, layer
-  management) drove v2; see `design_changes_july2.md`.
-- **v2** — the commitment redesign (`redesign_v2_plan.md`): master raster
-  (offscreen 2400×3000 truth + universal bake after every End; export
-  writes the master directly), the shared brush core (mask + reveal
-  stroke engines, within-card undo/redo), grid-pick placement sessions,
-  the Python ML sidecar (rembg cutouts + Real-ESRGAN upscale, ONNX
-  CPU-only, graceful degradation mandatory), and ten real card designs.
-  Per-phase history in §7's table.
-- **v3** — the card-system redesign (`version_3_design.md`): simplified
-  opening (fixed 6×4 grid of 24, strict take-two: one placed, one
-  stashed), the standing **mask brush** (Arrange · Erase · Restore ·
-  Soften — op key in code stays `conceal`), the zyme naming register
-  (Silt, Dissolve, Bruise, Turn, Steep, Rack), suit siblings (Stain,
-  Char, Cure), **Subliminal Etch** (replaced Pore — duration cards
-  collided with the deck; enclosure machinery deleted, in git history),
-  and deck tuning. The revision round landed: mask-mode icons, brush
-  retune (size max 300; Silt/Dissolve open big+faint), the full hotkey
-  map (**`hotkeys.md`** is the decision record + live reference;
-  `editor/keymap.js` dispatches; `KeysReference.jsx` is the in-app
-  overlay), the per-stroke Softness slider (default 50%), and **Rack
-  retired** (deck line commented out; file + registry stay). The
-  auto-deal experiment was tried and reverted — **the two-press rhythm
-  (End, then Deal) is the design; don't re-remove the Deal panel.**
+**Active work: v4, branch `v4` — the legible deck.** Read both v4 docs
+first: `v4_design.md` (spec for card history + the standardized card
+panel; built) and `v4_design_notes.md` (the randomness/control analysis
+— **its §10 waves are the active plan**).
 
-**The deck today: 20 mod cards + 3 Coda** (`MOD_CARDS` in `deck.js`.
-Rack and the two style-transfer cards are retired/stashed — files and
-registry entries stay, deck lines are commented out. Cull + Skim joined
-2026-07-06, one copy each — v4 Wave 2).
+**The deck today: 20 mod cards + 3 Coda** (`MOD_CARDS` in `deck.js`).
+Rack + the two style-transfer cards are retired/stashed — files and
+registry entries stay, deck lines commented out. Style-transfer works end
+to end but the demo ONNX styles aren't shippable; when Stew trains his
+own, re-add the two `MOD_CARDS` lines and swap the model.
 
-**Style-transfer (stashed 2026-07-03):** fast-neural-style shipped end to
-end (sidecar `/style` endpoint, committed demo models, Transfer +
-Shattered Transfer cards) but the demo ONNX styles aren't good enough to
-ship. Stew will train his own styles later; re-add the two `MOD_CARDS`
-lines (and swap the model) to revive it. Nothing was deleted.
+**Shipped and verified on the branch** (details in git log + v4 docs):
+the standardized card visual (`Card.jsx` 745×1040 + `cardArt.js`; current
+art is local-only gitignored placeholders — real faces drop in
+file-for-file, then need `!frontend/src/assets/cards/*.png` to commit),
+the deck overlay (SPENT in sequence / REMAINS unordered ×N) + card zoom +
+canvas-filling grids, the plinth (the piece as an orbitable three.js
+panel at the Coda; `Plinth.jsx`, lazy-loaded), and the state cache (every
+bake keeps a captioned full-res JPEG in memory; **C** leafs the plinth
+face through the states; Restart clears it; capture-and-view only).
 
-**v4 (branch `v4`, off `main`, 2026-07-05) — the legible deck. This is
-the active work.** Two documents drive it — read both before v4 work:
+**Awaiting Stew's browser verification: Cull + Skim (Wave 2, built
+2026-07-06)**, one copy each. Cull: remains face up, take one
+(`PICK_FROM_DECK`). Skim: turn the top card — sees everything, armed Coda
+included (the paid exception) — keep it or bury it (random reinsert,
+never bottom; the death shuffle preserves a kept top card). New generic
+machinery: Overlay props `deckView` + `onDeckAction`, registry `skipBake`
+(no canvas touched → no bake/state capture).
 
-- `v4_design.md` — the spec for card history + the standardized card
-  panel (**built**, see below)
-- `v4_design_notes.md` — the randomness/control design analysis: why the
-  deal stays blind, the splash-over tension, Deeper-as-keystone, the
-  state cache, and the candidate mechanics (Cull, Skim, the pass,
-  descents, recall-the-stash, the cut, the proof sheet). **Its §10 waves
-  are the active plan.**
+**Policy locked (notes §2): set-knowledge is free; order-knowledge and
+order-control are never ambient** — the deal stays blind, the remains
+stay unordered. Exceptions only as dealt/spent mechanics (Skim, Cull).
 
-Built on the branch so far (2026-07-05, awaiting Stew's browser
-verification):
-
-- **Standardized card visual** — every card face renders through
-  `editor/Card.jsx` at fixed 745×1040 (the designed-deck scale).
-  `editor/cardArt.js` glob-loads `frontend/src/assets/cards/<id>.png`;
-  missing art falls back to a text face, so clones without art still run.
-  Current art is **local-only copyrighted TCG placeholders** (the global
-  `*.png` gitignore keeps them out; `cardPNG/` at repo root is the
-  stand-in pool). Stew is designing real faces — they drop in
-  file-for-file, then need `!frontend/src/assets/cards/*.png` to commit.
-- **The deck overlay** — `HistoryOverlay.jsx` (header `deck` button +
-  "View the deck" on the deal panel): **SPENT** in sequence (including
-  the uncommitted card *in hand*, dimmed; the Coda closes a finished
-  sequence) and **REMAINS** as an unordered multiset with ×N counts —
-  the Coda never appears there. Pure selectors `spentCards` /
-  `remainingCounts` in `deck.js` do the order-stripping and
-  death-filtering so the UI cannot leak them.
-- **Card zoom** — `CardZoom.jsx`: click any face to enlarge; Esc backs
-  out one level at a time (zoom, then sheet).
-- **Card grids fill the canvas area** (notes §11.1) — one var-driven
-  `.grid-thumbs` layout (`--cols`/`--rows`); Ghost/Stain 4×2, Stamp 3×2.
-- **The plinth** (notes §11.2) — **SHIPPED, verified 2026-07-06**: at the
-  Coda the canvas area becomes a three.js scene, the piece an orbitable
-  shallow panel (unlit full-res master face, flat `#333333` edges).
-  `editor/Plinth.jsx`, lazy-loaded so `three` (~530 kB, the one big
-  dependency) only downloads when a piece finishes. Out of the plan.
-- **The state cache** (notes §9, Wave 1 — **SHIPPED, verified
-  2026-07-06**): every universal bake keeps a full-res JPEG of the
-  master in memory, captioned by what committed (*the opening · after
-  Silt · the stash return*). Editor-side only, zero `deck.js` change;
-  Restart clears it. Viewing lives on the plinth, not the deck overlay
-  (Stew simplified it away from the planned states grid): at the Coda,
-  **C** leafs the panel's face through the states and back to the piece
-  (`hotkeys.md` §9 item 8). Capture-and-view only — no mid-state export;
-  §9.3's *pull* decision stays open, and the capture makes it a one-day
-  build later.
-- **Cull + Skim** (notes §5.1–5.2, Wave 2 — built 2026-07-06, awaiting
-  browser verification): the overlay cashed in, one copy each. **Cull**
-  (the tutor): the remains laid face up, take one — it becomes the round;
-  the record shows Cull tagged *culled* then the taken card
-  (`PICK_FROM_DECK` in the reducer; `cards/cull.jsx`). **Skim** (the
-  scry): turn the top card — it sees *everything*, the armed Coda included
-  (the paid exception, decided 2026-07-06) — then keep it (your next deal)
-  or bury it (random reinsert, NOT bottom — bottom would grant lasting
-  order-knowledge). The death shuffle preserves a just-kept top card.
-  Generic machinery added for both: Overlay props `deckView` (selector
-  outputs only) + `onDeckAction` (fenced dispatch), and registry
-  `skipBake` (no canvas touched → no bake, no state capture). The pure
-  reducer paths have a 20-check headless smoke script (session scratch;
-  not committed).
-
-**Policy locked (v4_design_notes.md §2): set-knowledge is free;
-order-knowledge and order-control are never ambient — the deal stays
-blind, the remains stay unordered.** Exceptions exist only as dealt/spent
-mechanics (Skim, Cull).
-
-**Next actions, in order (the notes' §10):**
-
-1. Stew verifies Wave 2 (Cull + Skim) in the browser.
-2. **Playtest question** (notes §7.2): does the splash-over tension
-   survive now that remains-knowledge + occasional order-control exist?
-3. **Wave 3 — the descent experiment** (§8.2): 1 Deeper dealt + 2 in
-   reserve, descents dilute the deck; isolate its playtest.
-4. Later, after living with the states: decide mid-state *pulling* (the
-   printmaking "states of the plate" question, notes §9.3).
-
-Still open from v3: suits visible or backstage (§10.1), Echo (§7.3),
-Mount (§7.4), death-crop (parked since v2, re-raised in the notes' §6.5).
-
-> Keep this §0 updated as work lands; it's the resume point for every
-> fresh session.
+**Next actions (the notes' §10):** 1) Stew verifies Wave 2 in the
+browser. 2) Playtest question (§7.2): does the splash-over tension
+survive remains-knowledge + occasional order-control? 3) Wave 3 — the
+descent experiment (§8.2): 1 Deeper dealt + 2 in reserve. 4) Later:
+mid-state *pulling* (§9.3). Still open from v3: suits visible or
+backstage (§10.1), Echo (§7.3), Mount (§7.4), death-crop (§6.5).
 
 ---
 
 ## 1. The project
 
-**Deck** is a browser tool for digital collage whose workflow is driven by
-*drawing cards from a deck*. Each card constrains the UI to exactly one
-action — placing images, painting an effect with a brush, re-framing the
-canvas — the user works within that constraint, then presses **End**, which
-commits the result permanently and deals the next card.
+**Deck** is a browser tool for digital collage driven by *drawing cards
+from a deck*. Each card constrains the UI to exactly one action; the
+user works within that constraint, then presses **End**, which commits
+the result permanently and deals the next card.
 
-**Core philosophy: destructive, commitment-based.** There is no global
-undo/redo across committed steps. In v2 this goes further: **every End
-flattens the canvas to a single image.** No layers persist between cards.
-Within a card you can adjust freely (including within-card brush undo/redo);
-after End it is baked in. Commitment is the central mechanic, not a missing
-feature.
+**Core philosophy: destructive, commitment-based.** No global undo/redo
+across committed steps; every End flattens the canvas to a single image.
+Within a card you adjust freely (including within-card brush undo/redo);
+after End it is baked in. Commitment is the central mechanic, not a
+missing feature.
 
-**The session arc** (v3; the v2 arc with the opening simplified — v3
-detail in `version_3_design.md`):
+**The session arc** (v3 detail in `version_3_design.md`): opening pick
+(6×4 grid of 24; take two, strictly one *placed*, one *stashed*) →
+placement (move/scale/rotate + the standing mask brush) → Act I (~4 mod
+cards) → stash return → Act II (~2 rounds, then death cards shuffle in;
+deal until one appears) → the Coda: the piece is complete, export at
+full resolution.
 
-1. **Opening pick** — a fixed 6×4 grid of 24 images sampled from the input
-   folder. Take two, strictly: one *placed now*, one *stashed* for later.
-2. **Placement** — arrange the placed image with move/scale/rotate and the
-   standing **mask brush** (conceal / restore / soften — masking hard edges
-   is core to collage; the brush is a standing tool whenever images are
-   placed, not a card).
-3. **Act I** — deal ~4 modification cards from the shuffled deck.
-4. **Stash return** — the stashed image comes back as a placement session.
-5. **Act II** — ~2 more rounds, then death cards are shuffled into the
-   remaining deck; keep dealing until one appears.
-6. **Death card** — the piece is complete. Export at full resolution.
-
-**Card design rule: constraint outside, freedom inside.** No card may simply
-*do something to the image* with no room for judgment (v1's Flip Canvas was
-the canonical offender). Every card offers a short session of intentional
-editing within its constraint — a blur is a brush you compose with, not a
-filter that happens to you. Global whole-canvas modifiers are banned *except*
-color adjustments, and those must carry an influence/opacity control.
+**Card design rule: constraint outside, freedom inside.** No card may
+simply *do something to the image* with no room for judgment — a blur is
+a brush you compose with, not a filter that happens to you. Every card
+is a short session of intentional editing within its constraint.
 
 ### Tone — this is not a game (macro design invariant)
 
-Deck is an **artmaking tool**, not a game. It *borrows* game design — a deck,
-dealing, rolls, phases, randomness, commitment — purely to impose
-**constraint** on a creative process. The experience must never *present* as
-a game.
+Deck is an **artmaking tool**, not a game. It borrows game design — deck,
+dealing, phases, randomness, commitment — purely to impose **constraint**
+on a creative process. It must never *present* as a game.
 
-- **Language is a studio/darkroom/press, not an arcade.** Avoid "play," "win,"
-  "score," "level," "player," "turn." Prefer *draw, deal, commit, compose,
-  finish, export, this round.* "Card" and "deck" stay — they're the
-  instrument, not a genre signal. (Dice left the product in v3 step 1.)
-  v3 adds the **zyme register** for card names: one concrete process word —
-  Silt, Bruise, Turn, Steep, Rack, Stain, Char, Cure — never a
-  settings-menu label (`version_3_design.md` §4). Subliminal Etch is the
-  one deliberate two-word exception (Stew's call, revision round).
-- **No celebratory / gamer affect.** No win-states or congratulatory copy.
-  The end is a piece being *finished*, not a level being *beaten*.
-- **"Death card" is a design-conversation term, not UI copy.** On screen the
-  card is named **Coda** (decided in Phase 1).
-- **Apply this to everything user-facing:** copy, labels, card names, states,
-  and the names of anything new.
+- **Language is a studio/darkroom/press, not an arcade.** Avoid "play,"
+  "win," "score," "level," "player," "turn." Prefer *draw, deal, commit,
+  compose, finish, export, this round.* "Card" and "deck" stay.
+- Card names use the **zyme register**: one concrete process word (Silt,
+  Bruise, Turn, Steep, Stain, Char, Cure), never a settings-menu label
+  (`version_3_design.md` §4). Subliminal Etch is the one deliberate
+  two-word exception.
+- **No celebratory / gamer affect.** A piece is *finished*, not beaten.
+- **"Death card" is a design-conversation term, never UI copy** — on
+  screen it's the **Coda**.
+- Apply to everything user-facing: copy, labels, states, new names.
 
 ---
 
 ## 2. Working agreement (do not violate)
 
-The user (Stewart, "Stew") is **not a programmer by trade.** They use git
-and VS Code, can read JS/Python, but cannot write code from scratch. They
-explicitly want to *understand* the architecture as the project grows, not
-just receive working code they can't maintain.
+The user (Stewart, "Stew") is **not a programmer by trade** — he uses
+git and VS Code and reads JS/Python, but doesn't write code from
+scratch. He wants to *understand* the architecture, not just receive
+working code he can't maintain.
 
-**These are non-negotiable unless the user changes them in-session:**
+- **Build in phases, stop at every checkpoint.** One unit at a time:
+  summarize what was built, explain the *one* key concept in plain
+  language, wait for "continue." The active plan's phases are the
+  checkpoint map (today: `v4_design_notes.md` §10's waves).
+- **Check in before any non-trivial implementation** — present the
+  options before coding; `AskUserQuestion` helps make choices concrete.
+- **Keep code small and readable.** Boring/idiomatic > clever.
+- **Verify Fabric 6.x APIs against the installed version** — the
+  drawing/eraser/filter APIs changed across major versions; don't guess.
+- **Claude writes code; Stew verifies in the browser.** Hand him clear
+  test steps and wait; he doesn't run code on Claude's behalf unless asked.
 
-- **Build in phases, stop at every checkpoint.** Implement one unit at a
-  time, summarize what was built, explain the *one* key concept it introduced
-  in plain language, then wait for "continue." The active plan's phases are
-  the checkpoint map (today: `v4_design_notes.md` §10's waves).
-- **Before any non-trivial implementation, check in first.** If a step needs
-  a clever or unfamiliar technique, pause and present the options before
-  coding. Use `AskUserQuestion` if it helps make the choice concrete.
-- **Keep code small and readable.** Comment the non-obvious parts only.
-  Boring/idiomatic > clever.
-- **No global undo/redo across commits.** Within a single card the user can
-  adjust freely (v2 adds within-card brush undo/redo); after End it is
-  irreversible. This is by design.
-- **Verify current library APIs before using them.** Fabric.js has changed
-  its drawing/eraser/filter APIs across major versions. We target Fabric 6.x.
-  Check the actual installed version's API rather than guessing.
-- The user does not run code on Claude's behalf unless asked. **Claude
-  writes code; the user verifies in the browser.** Hand the user clear test
-  steps and wait.
-
-**Cross-machine setup.** The repo is cloned to:
-- Linux (Arch) — primary, `/home/stewrat/`
-- Mac laptop — `/Users/stewartbird/`
-- Windows — `C:\Users\birds\`
-
-Never hardcode input/output folder paths. They're chosen at runtime in the
-Setup UI and persisted to `~/.deck-config.json` per machine. The v2 Python
-sidecar must follow the same rule: per-machine setup documented in README,
-no hardcoded paths.
+**Cross-machine setup.** The repo is cloned on Arch Linux (primary,
+`/home/stewrat/`), Mac (`/Users/stewartbird/`), and Windows
+(`C:\Users\birds\`). Never hardcode input/output paths — they're chosen
+in Setup and persisted per machine to `~/.deck-config.json` (home
+directory, not the repo).
 
 ---
 
 ## 3. Tech stack
 
-- **Frontend**: Vite 5 + React 18 + **Fabric.js 6.x** for the canvas. Plain
-  JavaScript (no TypeScript). React `StrictMode` is *intentionally disabled*
-  in `main.jsx` because Fabric doesn't tolerate the double-effect dev
-  behavior.
-- **`@erase2d/fabric`** — dropped in v2 Phase 2 (uninstalled). The universal
-  mask-based erase brush (Phase 3b) replaces it.
-- **Backend**: Node 20+ + Express 4. Reads/serves images, writes the export
-  PNG, reveals the output folder, persists folder config. No deck logic.
-- **Python 3.10+ + FastAPI sidecar** (shipped in v2 Phase 7): rembg
-  (cutouts) + Real-ESRGAN 4× upscale, both on **ONNX Runtime, CPU-only**
-  (~150 MB venv, no torch). The ESRGAN onnx model is committed in-repo
-  (`backend/ml/models/`; provenance script in `backend/ml/tools/`). Venv
-  lives at `backend/ml/.venv` per machine (README); auto-started by
-  `npm run dev` via `backend/ml/start.js` (exits politely if no venv).
-  Proxied by Express under `/api/ml/*`. **Graceful degradation is a
-  requirement**: the session never blocks on ML.
-- **Communication**: plain REST on localhost. Vite proxies `/api/*` → Express
-  on port 5174. JSON body limit 64 MB (holds one full-res base64 export).
-- **Dev runtime**: `npm run dev` at repo root uses `concurrently`;
-  first-time install is `npm run install:all`.
+- **Frontend**: Vite 5 + React 18 + **Fabric.js 6.x**. Plain JavaScript,
+  no TypeScript. React `StrictMode` is intentionally disabled in
+  `main.jsx` — Fabric doesn't tolerate the double-effect dev behavior.
+- **Backend**: Node 20+ + Express 4. Files only: reads/serves images,
+  writes the export PNG, persists folder config. No deck logic.
+- **Python 3.10+ FastAPI sidecar**: rembg cutouts + Real-ESRGAN 4×
+  upscale on ONNX Runtime, CPU-only (models committed in
+  `backend/ml/models/`). Per-machine venv at `backend/ml/.venv` (README);
+  auto-started by `npm run dev`, exits politely without a venv; proxied
+  under `/api/ml/*`. **Graceful degradation is a requirement** — the
+  session never blocks on ML.
+- **Communication**: REST on localhost; Vite proxies `/api/*` → Express
+  on :5174. JSON body limit 64 MB (one full-res base64 export).
 
-**Architectural invariant: frontend = brain, backend = hands.** The deck
-state machine, canvas logic, and card behavior live in React. Express (and
-the Python sidecar) exist only for what the browser sandbox can't do:
-filesystem and heavy ML inference. If new functionality doesn't touch a file
-or a model, it doesn't belong in the backend.
+**Architectural invariant: frontend = brain, backend = hands.** Deck
+state, canvas logic, and card behavior live in React; Express and the
+sidecar exist only for what the browser sandbox can't do (filesystem,
+heavy ML). If it doesn't touch a file or a model, it doesn't belong in
+the backend.
 
 ---
 
@@ -269,301 +156,158 @@ or a model, it doesn't belong in the backend.
 
 ```
 zymeDraw/
-├── CLAUDE.md                 # this file
-├── README.md                 # install/run + once-per-machine Python setup
-├── design_changes_july2.md   # v2 design notes (the why)
-├── redesign_v2_plan.md       # v2 plan of attack (the how)
-├── version_3_design.md       # v3 card-system redesign (mechanic × suit, zyme register)
-├── v4_design.md              # v4 spec: card history + standardized card panel
-├── v4_design_notes.md        # v4 design analysis: randomness/control — ACTIVE PLAN (§10)
-├── hotkeys.md                # the hotkey map: decision record + live reference
-├── cardPNG/                  # local-only placeholder card art pool (gitignored)
-├── package.json              # root: `concurrently` + scripts (3 dev processes)
-├── frontend/
-│   └── src/
-│       ├── main.jsx          # React entry; StrictMode disabled by choice
-│       ├── App.jsx           # top router: loading → setup → editor
-│       ├── Setup.jsx         # folder-picker screen
-│       ├── assets/cards/     # card faces <id>.png, 745×1040 (placeholders gitignored)
-│       └── editor/
-│           ├── Editor.jsx       # registry dispatcher (no per-card logic!)
-│           ├── CanvasStage.jsx  # Fabric canvas, forwarded ref
-│           ├── DeckPanel.jsx    # right sidebar: per-phase panels + Tools + End
-│           ├── deck.js          # PURE state machine + pure selectors — the session script
-│           ├── masterRaster.js  # offscreen 2400×3000 truth + bake
-│           ├── brushCore.js     # stroke engine: mask + reveal sessions
-│           ├── Card.jsx         # THE card visual (745×1040 everywhere; art or text face)
-│           ├── cardArt.js       # glob loader: card id → art URL (or null)
-│           ├── CardZoom.jsx     # click-to-enlarge card overlay
-│           ├── HistoryOverlay.jsx # the deck overlay: SPENT / REMAINS
-│           ├── KeysReference.jsx  # the keys overlay (hotkeys.md in-app)
-│           ├── keymap.js        # scoped hotkey dispatcher
-│           ├── GridPicker.jsx   # opening pick overlay + CardGridPicker (single-pick)
-│           ├── placement.js     # free-transform placement sessions
-│           ├── PlacementLayers.jsx # placement stack reorder UI
-│           ├── sampling.js      # random-sample fetch w/ client fallback
-│           ├── shatter.js       # stencil reading (Rails, Char, Shattered Transfer)
-│           ├── editor.css
-│           └── cards/
-│               ├── registry.jsx        # one entry per card
-│               ├── effectCardFactory.jsx  # reveal card = applyEffect + sliders
-│               ├── graftCardFactory.jsx   # graft card = grid pick + blend config
-│               ├── maskControls.jsx       # standing-brush UI (Arrange·Erase·Restore·Soften)
-│               ├── ghost.jsx / stain.jsx  # Graft × Rise / × Sink (thin configs)
-│               ├── stamp.jsx / rails.jsx / char.jsx
-│               ├── silt.jsx / dissolve.jsx / bruise.jsx
-│               ├── steep.jsx / turn.jsx / cure.jsx
-│               ├── deeper.jsx / rack.jsx  # re-frames (rack retired, file stays)
-│               ├── transfer.jsx / shatteredTransfer.jsx  # stashed (style models)
-│               └── etch.jsx               # pixel glyph at the master's grain
+├── CLAUDE.md · README.md · hotkeys.md   # this file / setup / hotkey map
+├── design_changes_july2.md · redesign_v2_plan.md · version_3_design.md
+├── v4_design.md · v4_design_notes.md    # v4 spec / ACTIVE PLAN (its §10)
+├── cardPNG/                  # local-only placeholder card art (gitignored)
+├── frontend/src/             # main.jsx · App.jsx · Setup.jsx
+│   ├── assets/cards/         # card faces <id>.png, 745×1040
+│   └── editor/
+│       ├── Editor.jsx        # registry dispatcher (no per-card logic!)
+│       ├── DeckPanel.jsx     # right sidebar: phase panels + Tools + End
+│       ├── deck.js           # PURE state machine + selectors
+│       ├── masterRaster.js   # offscreen 2400×3000 truth + universal bake
+│       ├── brushCore.js      # stroke engine: mask + reveal sessions
+│       ├── Card.jsx · cardArt.js · CardZoom.jsx · HistoryOverlay.jsx
+│       ├── keymap.js · KeysReference.jsx · CanvasStage.jsx · GridPicker.jsx
+│       ├── placement.js · PlacementLayers.jsx · sampling.js · shatter.js · Plinth.jsx
+│       └── cards/            # registry.jsx + one file per card + the factories
 └── backend/
-    ├── server.js             # all Express routes (see §6) + /api/ml proxy
-    ├── config-store.js       # reads/writes ~/.deck-config.json
-    └── ml/                   # the sidecar
-        ├── main.py           # FastAPI: /health /cutout /upscale /style
-        ├── upscaler.py       # tiled Real-ESRGAN x4 on onnxruntime
-        ├── requirements.txt  # venv deps (install per machine, README)
-        ├── start.js          # npm-run-dev launcher; no venv → polite exit
-        ├── models/           # committed .onnx models (ESRGAN ~5 MB, style demos)
-        └── tools/            # one-time model conversion scripts (provenance)
+    ├── server.js             # all Express routes + /api/ml proxy
+    ├── config-store.js       # ~/.deck-config.json
+    └── ml/                   # sidecar: main.py · upscaler.py · start.js
+                              #   · models/ (committed .onnx) · tools/
 ```
-
-The config file `~/.deck-config.json` lives in the user's home directory,
-NOT the repo. Each machine has its own.
 
 ---
 
 ## 5. The two patterns that hold everything together
 
-### 5.1 The deck state machine (in `editor/deck.js`)
+### 5.1 The deck state machine (`editor/deck.js`)
 
-`deck.js` is a **pure reducer**. It has no knowledge of Fabric, the DOM, or
-any side effect. It holds card ids and filenames, never images or canvas
-objects. Anyone reading it should understand the entire session rulebook in
-two minutes. **This purity rule survives v2 unchanged.**
+A **pure reducer** — no Fabric, no DOM, no side effects. It holds card
+ids and filenames, never images or canvas objects; the whole session
+rulebook should read in two minutes. All tuning numbers live in one place
+(`TUNING` + `MOD_CARDS`). The v4 selectors (`spentCards`,
+`remainingCounts`) derive the deck-overlay views — order-stripping and
+death-filtering happen here, never in the UI.
 
-What's in the file today is the v3 session script: opening pick + stash →
-placement → Act I → stash return → Act II → death cards shuffled in →
-complete. All tuning numbers (act lengths, deck copy counts, death count)
-live in one place in this file (`TUNING` + `MOD_CARDS`). v4 added **pure
-selectors** (`spentCards`, `remainingCounts`) — derived views for the deck
-overlay; order-stripping and death-filtering happen here, never in the UI.
+### 5.2 The card registry (`editor/cards/registry.jsx`)
 
-### 5.2 The card registry (in `editor/cards/registry.jsx`)
+`Editor.jsx` doesn't know what any card does — it looks up
+`cardRegistry[id]` and calls lifecycle hooks (`begin`/`update`/`commit`/
+`cleanup`, plus a `Tools` component and control declarations). Adding a
+card = ONE registry entry + ONE behavior file. **Never add per-card
+branches to Editor.jsx or DeckPanel.jsx** — extend the registry shape
+with an optional field Editor applies generically (current shape in
+`registry.jsx`'s header comment: `Overlay`, async `commit`,
+begin-awaits-user, `hotkeys`, `skipBake`, …).
 
-`Editor.jsx` doesn't know what any specific card does. It looks up
-`cardRegistry[currentCard.id]` and calls lifecycle hooks
-(`begin` / `update` / `commit` / `cleanup`, plus a `Tools` component and
-control declarations). Adding a new card = ONE registry entry + ONE behavior
-file. **Never add per-card branches to Editor.jsx or DeckPanel.jsx** — if a
-card needs something the registry shape can't express, extend the shape with
-an optional field that Editor applies generically.
-
-**The contract (since v2):**
-- After a card's `commit` hook runs, Editor performs the **universal bake**:
-  the whole canvas is flattened into the single base image at master
-  resolution. Cards never implement flattening. There is only ever one
-  committed layer.
-- Cards opt into shared infrastructure: the **brush core** (mask mode /
-  reveal mode), the **image grid pickers** (opening, Ghost, Stamp), the
-  **placement sessions**. These are shared modules, not Editor special
-  cases.
-- Optional registry fields Editor applies generically: `Overlay`
-  (canvas-area UI), async `commit`, begin-awaits-user, `hotkeys` — see the
-  header comment in `registry.jsx` for the full current shape.
+**The contract:** after a card's `commit`, Editor performs the
+**universal bake** — the canvas flattens into the single base image at
+master resolution. Cards never implement flattening; there is only ever
+one committed layer. Cards build on the shared modules (brush core, grid
+pickers, placement sessions), not on Editor special cases.
 
 ---
 
-## 6. Backend API
+## 6. Backend notes
 
-| Route | Purpose |
-|---|---|
-| `GET /api/ping`              | Sanity check `{ ok: true }`. |
-| `GET /api/config`            | Returns `{ inputFolder, outputFolder, homedir }`. |
-| `POST /api/config`           | Validates both paths, persists `~/.deck-config.json`. |
-| `POST /api/pick-folder`      | `{ mode:'read'\|'write', current? }` → opens the OS native folder dialog, returns `{ ok, path, cancelled? }`. macOS `osascript`, Windows PowerShell `FolderBrowserDialog`, Linux `zenity`→`kdialog`. Setup's Browse buttons. |
-| `GET /api/images`            | Lists images in the configured input folder. |
-| `GET /api/images/sample?n=`  | Random sample of n filenames (opening grid, Ghost/Stamp grids). Registered BEFORE `:filename`. |
-| `GET /api/images/:filename`  | Streams one image. Path-traversal-safe. |
-| `POST /api/export`           | `{ pngBase64 }` → writes `composition_YYYYMMDD_HHMMSS.png` to the output folder. |
-| `POST /api/open-output`      | Reveals the output folder in the OS file manager. |
-| `GET /api/ml/health`         | Sidecar health; answers `{ok:false}` fast (1.5 s timeout) when down. |
-| `POST /api/ml/cutout` `/upscale` | Raw image bytes in → PNG bytes out (proxied to the sidecar; 503 when down). |
-
-Backend patterns to follow: tilde expansion via `expandTilde`, path-traversal
-safety (`path.basename()` + `startsWith` check), re-validate folders on every
-request.
+Routes live in `backend/server.js` — read them there. Patterns to
+preserve: tilde expansion via `expandTilde`, path-traversal safety
+(`path.basename()` + `startsWith` check), re-validate folders on every
+request, and `/api/images/sample` stays registered BEFORE
+`/api/images/:filename`.
 
 ---
 
-## 7. Build history and v2 progress
+## 7. Live invariants
 
-**v1 (complete, on `main`):** scaffold + folder setup + Fabric canvas +
-deck reducer (phases 0–2); Add cards (3); the eight midgame/endgame card
-phases (4–5) including export + finished screen; polish — card-flip
-animation, keyboard shortcuts, saved thumbnail (6); card-set revision —
-removed Vignette/Pencil, added Flip/Remove Layer/Shuffle/Zoom&Flatten (7);
-layers-panel redesign with drag-to-reorder (8); tone cleanup. v1 taught us
-what to keep (registry pattern, purity, commitment) and what failed
-(add-card flooding, do-it-for-you cards, layer management) — see
-`design_changes_july2.md`.
-
-**v2 (in progress — update this table as phases land):**
-
-| Phase | Status | What it ships |
-|---|---|---|
-| 0 — Plan lock + docs | ✅ done (2026-07-02) | Decisions locked, plan committed, this file rewritten. |
-| 1 — deck.js v2 | ✅ done (2026-07-02) | New state machine, clickable end-to-end with stub cards. Coda / one-session stash return / grid 8+d8, pick 1+d3. |
-| 2 — Bake engine + master raster | ✅ done (2026-07-02) | masterRaster.js (offscreen 2400×3000 truth, proxy view, universal bake, direct export); layers infra + 16 v1 card files deleted; @erase2d/fabric dropped. |
-| 3a — The opening | ✅ done (2026-07-02) | Dice reveal, GridPicker overlay (thumbs, place/stash), placement.js free-transform sessions, /api/images/sample. |
-| 3b — Erase brush core | ✅ done (2026-07-02) | brushCore.js: mask-based erase, hard/soft, undo/redo, Arrange/Erase toggle in placement sessions. |
-| 4 — Effect-brush infra + Noise | ✅ done (2026-07-02) | Shared stroke engine + createRevealSession; Noise Brush card; generic card undo/redo via ctx.report. |
-| 5 — Brush/global replication | ✅ done (2026-07-02) | effectCardFactory; Blur brush, HSV brush, Color Overlay, Global HSV, Reposition. 6 of 10 designs real. |
-| 6 — Ghost | ✅ done (2026-07-02) | CardGridPicker single-pick grid; screen-blend placement + opacity/BC + erase; generic Overlay registry field; begin-awaits-user pattern. |
-| 7 — ML sidecar | ✅ done (2026-07-02) | FastAPI on onnxruntime CPU-only; ESRGAN onnx committed in-repo; /api/ml proxy; start.js auto-start; degradation verified; README setup. |
-| 8 — Stamp | ✅ done (2026-07-02) | Grid of 6 → rembg cutout via sidecar → place/opacity/erase; live degradation path; shared ArrangeEraseControls. |
-| 9 — Deeper | ✅ done (2026-07-02) | 4:5-locked frame → master re-frame + true-detail ESRGAN restore; generic async commit hooks + Committing… state. |
-| 10 — Rails | ✅ done (2026-07-02) | shatter.js most-shattered alpha cutout → solid color / opacity / erase; pure canvas2d, no sidecar. 10 of 10 designs real. |
-| 11 — Tuning + polish | ⬜ (→ v3) | Pacing/deck balance, death-crop decision, tone pass, merge `v2`. Folded into the v3 redesign — see `version_3_design.md`. |
-
-**v3 (complete, on `main`):** all six build-order steps plus the revision
-round — simplified opening, mask brush, zyme renames, suit siblings,
-Subliminal Etch (replacing Pore), deck tuning, hotkeys, softness, Rack
-retired. Details condensed into §0; full history in git.
-
-**v4 (in progress, branch `v4`):** the legible deck. Shipped: standardized
-`Card.jsx` visual + art pipeline, the deck overlay (SPENT/REMAINS), card
-zoom. Next: the `v4_design_notes.md` §10 waves (state cache → Cull + Skim →
-descents).
-
----
-
-## 8. Live invariants worth knowing
-
-- **Canvas orientation is fixed:** portrait, working view 800×1000, export
-  2400×3000. In v2 the *master raster* (Phase 2) holds the true pixels at
-  export resolution; the visible canvas is a scaled proxy. All bakes and ML
-  passes happen at master resolution; export writes the master directly.
-- **No session round-cap.** A session ends only when a death card is dealt.
-  Pacing is tuned by deck composition + death-card count in `deck.js`.
-- **The mask brush is a standing tool, not a card** (v3; grew out of v2's
-  erase). Any time images are being placed (opening, stash return, Ghost,
-  Stain, Stamp, Rails, Char), the conceal/restore/soften brush is available.
-  Masks are image-native, so they travel with the image through
-  move/scale/rotate.
+- **Canvas is fixed portrait**: working view 800×1000, master/export
+  2400×3000. The master raster holds the true pixels; the visible canvas
+  is a scaled proxy. Bakes and ML passes happen at master resolution;
+  export writes the master directly.
+- **No session round-cap** — only a death card ends a session. Pacing is
+  tuned by deck composition + death count in `deck.js`.
+- **The mask brush is a standing tool, not a card** — available whenever
+  images are placed (op key in code stays `conceal`). Masks are
+  image-native; they travel through move/scale/rotate.
 - **Within-card undo/redo exists for brushes only, never across End.**
-- **Global modifiers are banned except color adjustments**, which must carry
-  an influence/opacity slider (Steep, Turn, Cure).
-- **Color pickers start on a random hue every time.** Any control named
-  `color` (Steep, Rails, and any future card) is seeded with a fresh
-  random color when the card is dealt — its `defaultControls` value is only a
-  placeholder. Randomization is centralized in `Editor.jsx`
-  (`randomizeColors`, keyed on the control name `color`), so a new color card
-  gets this for free just by naming its control `color`.
-- **A card may own the viewport for its session** (Etch zooms to the
-  master's grain), but it must restore the identity transform in both
-  commit and cleanup — the universal bake snapshots through the CURRENT
-  viewport (`toCanvasElement`), so a leaked zoom would bake wrong.
-- **Every card face renders through `editor/Card.jsx`** at fixed 745×1040
-  — nothing else may hardcode card geometry. Art is keyed by card id in
-  `assets/cards/` (glob-loaded; missing art → text face). A new card gets
-  a face by dropping in `<id>.png`, no code change.
-- **Deck legibility policy (v4):** set-knowledge is free (the overlay's
-  REMAINS multiset), order-knowledge and order-control are never ambient —
-  the deal stays blind, remains stay unordered, and the Coda never appears
-  in REMAINS. Order-stripping/death-filtering live in `deck.js` selectors
-  (`spentCards`/`remainingCounts`) so the UI cannot leak them. Exceptions
-  are dealt/spent mechanics only (`v4_design_notes.md` §2).
+- **Global modifiers are banned except color adjustments**, which must
+  carry an influence slider (Steep, Turn, Cure).
+- **Color pickers start on a random hue.** Any control named `color` is
+  seeded per deal (`randomizeColors` in `Editor.jsx`) — new color cards
+  get this for free by naming the control `color`.
+- **A card may own the viewport for its session** (Etch), but must
+  restore the identity transform in both commit AND cleanup — the bake
+  snapshots through the current viewport; a leaked zoom bakes wrong.
+- **Every card face renders through `Card.jsx`** at 745×1040 — nothing
+  else may hardcode card geometry.
+- **Deck legibility (v4)**: set-knowledge is free, order-knowledge and
+  order-control are never ambient; the Coda never appears in REMAINS.
+  The `deck.js` selectors enforce this, not the UI.
+- **The two-press rhythm (End, then Deal) is the design** — auto-deal was
+  tried and reverted. Don't re-remove the Deal panel.
 - **Browser tab dependency**: closing the tab loses in-progress work. By
   design — commitment is the mechanic.
 
 ---
 
-## 9. Known issues / things to verify
+## 8. Known issues / things to verify
 
-- **v1's 3× export WebGL texture cap** (blank PNG on conservative devices):
-  the Phase 2 master raster removed the multiplier *export*, but bakes still
-  render at 3× — filter-heavy cards could hit texture caps at *bake* time.
-  Verify on all three machines once the first filter card lands (Phase 4).
-- ~~**`screen` blend + WebGL filters in Fabric 6**~~ — resolved in Phase 6
-  by design: no v2 card uses Fabric's WebGL filters (Ghost/HSV/Blur redraw
-  through 2d `ctx.filter` instead), and per-object
-  `globalCompositeOperation` is confirmed to survive `toCanvasElement`
-  bakes and export (Color Overlay + Ghost, verified on screen and in the
-  exported PNG).
-- **2d `ctx.filter` needs Safari 18+** — Blur brush, HSV brush/global, and
-  Ghost's brightness/contrast silently no-op on older Safari. Fine on
-  Chrome/Firefox/Edge. Add a pixel-loop fallback only if a machine needs it.
-- **`xdg-open` on minimal Linux desktops** may be missing; `POST
-  /api/open-output` fails silently and the path shown on screen is the
-  fallback.
-- **Native folder dialog on Linux** (`POST /api/pick-folder`, Setup's Browse
-  buttons) needs **`zenity` or `kdialog`** installed. When neither is present
-  the route returns `{ ok:false }` and Setup shows a note — typing the path by
-  hand still works. macOS/Windows use built-in tooling (`osascript` /
-  PowerShell). The macOS `choose folder` dialog can open *behind* the browser
-  window; add `activate` to the AppleScript if that becomes annoying.
-- **Filter flush race on End**: `canvas.renderAll()` is called immediately
-  before snapshotting to flush filter pipelines. If a bake/export ever
-  doesn't match the screen, investigate this timing first.
-- **Sidecar cold start** (Phase 7+): models lazy-load on first call; the
-  first Stamp/Deeper of a session will be slow. Communicate it in the UI,
-  don't spinner-block the whole app.
+- **Bakes render at 3×** — filter-heavy cards could hit WebGL texture
+  caps at bake time on conservative devices; verify across machines.
+- **2d `ctx.filter` needs Safari 18+** — Blur/HSV brushes and Ghost's
+  brightness/contrast silently no-op there. Fine on Chrome/Firefox/Edge.
+- **Linux**: the folder dialog needs `zenity`/`kdialog` (hand-typed
+  paths still work); `xdg-open` may be missing (open-output fails silently).
+- **Filter flush race on End**: `renderAll()` runs right before the
+  snapshot; if a bake/export ever mismatches the screen, look here first.
+- **Sidecar cold start**: models lazy-load — the first Stamp/Deeper of a
+  session is slow. Communicate it in the UI, don't spinner-block.
 
 ---
 
-## 10. How to run
+## 9. How to run
 
 ```
 npm run install:all     # first time only
-npm run dev             # frontend :5173, backend :5174 (+ sidecar, Phase 7+)
+npm run dev             # frontend :5173, backend :5174, sidecar
 ```
 
-Open <http://localhost:5173>. Setup screen prefilled from
-`~/.deck-config.json`. Two absolute paths (input folder must exist with
-images, output folder must be writable). Continue → Editor.
-
-**Keyboard shortcuts** (Editor): **Space** = deal, **Enter** = primary
-action, **Shift+R** = restart; the full map (brush grammar W·E·R·S, arrange
-nudge/rotate/scale, card accents) is in `hotkeys.md`. Suppressed while focus
-is in any form control (`editor/keymap.js` owns dispatch).
+Open <http://localhost:5173>; Setup prefills from `~/.deck-config.json`.
+Hotkeys: **Space** = deal, **Enter** = primary action, **Shift+R** =
+restart; the full map is **`hotkeys.md`** (the decision record + live
+reference). `editor/keymap.js` dispatches — suppressed while focus is in
+a form control; `KeysReference.jsx` is the in-app overlay.
 
 ---
 
-## 11. Style notes for code
+## 10. Style notes for code
 
-- Plain JavaScript everywhere. No TS. JSX files use `.jsx`.
+- Plain JavaScript everywhere; JSX files use `.jsx`. No TypeScript.
 - One file per card behavior, exporting its hooks AND its Tools component.
-- `deck.js` stays pure forever. Never import Fabric or React there.
-- Never add per-card branches to `Editor.jsx` or `DeckPanel.jsx`; extend the
-  registry shape generically instead.
-- Shared infrastructure (brush core, grid picker, bake engine) lives in its
-  own module under `editor/`, imported by cards — not baked into Editor.
-- Comments: only when the *why* isn't obvious. Don't narrate the *what*.
-- React StrictMode is intentionally OFF — don't re-enable it.
+- Shared infrastructure lives in its own module under `editor/`,
+  imported by cards — not baked into Editor. (§5's rules are style rules
+  too: `deck.js` stays pure; no per-card branches in Editor/DeckPanel.)
+- Comments only when the *why* isn't obvious.
+- React StrictMode stays OFF — don't re-enable it.
 - All user-facing copy obeys the §1 tone invariant.
 
 ---
 
-## 12. How to add a new card (v2)
+## 11. How to add a new card
 
-1. Design it as a *named chain* with freedom inside the constraint (§1). Add
-   the card descriptor + copy count to the deck list in `deck.js`.
-2. Create `frontend/src/editor/cards/<name>.jsx`. Build on the shared
-   modules: brush core (erase/effect mode), grid picker, bake engine.
-3. Add a registry entry in `cards/registry.jsx`.
-4. Give it a face: drop `frontend/src/assets/cards/<id>.png` (745×1040).
-   Until then the text face stands in automatically.
-5. Do not touch `Editor.jsx` / `DeckPanel.jsx`; extend the registry shape if
-   needed.
-6. Hand Stew browser test steps; wait for verification before commit.
+1. Design freedom inside the constraint (§1); name it in the zyme
+   register. Add the descriptor + copy count to `deck.js`.
+2. Create `editor/cards/<name>.jsx` on the shared modules; add a
+   registry entry. Don't touch `Editor.jsx` / `DeckPanel.jsx`.
+3. Drop `assets/cards/<id>.png` (745×1040) — text face stands in until then.
+4. Hand Stew browser test steps; wait for verification before commit.
 
 ### Where to start a fresh session
 
-1. Read this file (you're here). §0 says where work stands.
-2. Read `v4_design_notes.md` (its §10 is the active plan) and `v4_design.md`
-   (the built v4 spec).
-3. Read `editor/deck.js` — the session rulebook.
-4. Skim `cards/registry.jsx` and one card file near what you're building.
-5. Check in with Stew before non-trivial work (§2). Build one unit,
-   checkpoint, wait for "continue."
+This file (§0 is the state) → `v4_design_notes.md` (§10 is the active
+plan) + `v4_design.md` → `editor/deck.js` (the session rulebook) → skim
+`cards/registry.jsx` and one nearby card file. Check in with Stew before
+non-trivial work (§2): build one unit, checkpoint, wait for "continue."

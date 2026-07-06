@@ -99,6 +99,29 @@ function Editor({ config, onBackToSetup }) {
     maskSessionRef.current?.setActive(maskControls.mode !== 'arrange')
   }, [maskControls])
 
+  // Stash-return tone: the stash was chosen rounds ago, against a piece
+  // that has since moved on — hue/saturation lets it ease into the
+  // composition. Ghost's mechanism exactly: the image element becomes a
+  // canvas redrawn from the original through 2d ctx.filter BEFORE the mask
+  // session captures it as source, so tone, brush strokes, and the bake
+  // stack cleanly at full resolution.
+  const stashToneRef = useRef(null) // [{ original, filtered }] while returning
+  const [stashTone, setStashTone] = useState({ h: 0, s: 100 })
+
+  useEffect(() => {
+    const entries = stashToneRef.current
+    if (!entries) return
+    for (const { original, filtered } of entries) {
+      const fctx = filtered.getContext('2d')
+      fctx.save()
+      fctx.clearRect(0, 0, filtered.width, filtered.height)
+      fctx.filter = `hue-rotate(${stashTone.h}deg) saturate(${stashTone.s}%)`
+      fctx.drawImage(original, 0, 0)
+      fctx.restore()
+    }
+    maskSessionRef.current?.refresh()
+  }, [stashTone])
+
   // True while an (async) card commit is running — End disabled, generic
   // "Committing…" label. The ref guards re-entry across renders.
   const committingRef = useRef(false)
@@ -174,9 +197,24 @@ function Editor({ config, onBackToSetup }) {
     setPlacedLayers([])
     setMaskControls({ mode: 'arrange', size: 40, hardness: 'soft', softness: 0.5, strength: 1 })
     setMaskHistory({ canUndo: false, canRedo: false })
+    setStashTone({ h: 0, s: 100 })
     placeImages(canvas, state.toPlace, () => cancelled)
       .then((imgs) => {
         if (cancelled || imgs.length === 0) return
+        // The stash return gets the tone controls: swap each element for a
+        // redrawable canvas before the mask session snapshots its source.
+        stashToneRef.current =
+          state.phase === 'STASH_RETURN'
+            ? imgs.map((img) => {
+                const original = img.getElement()
+                const filtered = document.createElement('canvas')
+                filtered.width = img.width
+                filtered.height = img.height
+                filtered.getContext('2d').drawImage(original, 0, 0)
+                img.setElement(filtered)
+                return { original, filtered }
+              })
+            : null
         maskSessionRef.current = createMaskSession(canvas, imgs, {
           getControls: () => maskControlsRef.current,
           onHistoryChange: (canUndo, canRedo) => setMaskHistory({ canUndo, canRedo }),
@@ -201,6 +239,7 @@ function Editor({ config, onBackToSetup }) {
       cancelled = true
       maskSessionRef.current?.dispose()
       maskSessionRef.current = null
+      stashToneRef.current = null
       setPlacedLayers([])
     }
   }, [state.phase])
@@ -733,6 +772,8 @@ function Editor({ config, onBackToSetup }) {
             onReorderLayer={handleReorderLayer}
             maskControls={maskControls}
             maskHistory={maskHistory}
+            stashTone={stashTone}
+            onStashToneChange={(patch) => setStashTone((prev) => ({ ...prev, ...patch }))}
             onMaskControlsChange={(patch) => setMaskControls((prev) => ({ ...prev, ...patch }))}
             onMaskUndo={() => maskSessionRef.current?.undo()}
             onMaskRedo={() => maskSessionRef.current?.redo()}
@@ -741,6 +782,8 @@ function Editor({ config, onBackToSetup }) {
             onEndPlacement={handleEndPlacement}
             onDeal={() => dispatch({ type: 'DEAL' })}
             onCommit={handleCommit}
+            onAcceptCoda={() => dispatch({ type: 'ACCEPT_CODA' })}
+            onDelayCoda={() => dispatch({ type: 'DELAY_CODA' })}
             onRestart={handleRestart}
             onOpenOutput={handleOpenOutput}
             onOpenHistory={() => setHistoryOpen(true)}
