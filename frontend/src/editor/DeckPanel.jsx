@@ -9,7 +9,10 @@
 // It knows nothing about specific cards — it renders whatever Tools
 // component the current registry entry provides.
 
+import { useState } from 'react'
 import { progressLabel } from './deck.js'
+import Card from './Card.jsx'
+import CardZoom from './CardZoom.jsx'
 import PlacementLayers from './PlacementLayers.jsx'
 import { ArrangeMaskControls, maskHint } from './cards/maskControls.jsx'
 
@@ -35,7 +38,8 @@ function DeckPanel({
   onDeal,
   onCommit,
   onRestart,
-  onOpenOutput
+  onOpenOutput,
+  onOpenHistory
 }) {
   switch (state.phase) {
     case 'OPENING_PICK':
@@ -69,7 +73,7 @@ function DeckPanel({
           onCommit={onCommit}
         />
       ) : (
-        <AwaitingDeal state={state} onDeal={onDeal} />
+        <AwaitingDeal state={state} onDeal={onDeal} onOpenHistory={onOpenHistory} />
       )
     case 'COMPLETE':
       return (
@@ -189,7 +193,7 @@ function Placement({
   )
 }
 
-function AwaitingDeal({ state, onDeal }) {
+function AwaitingDeal({ state, onDeal, onOpenHistory }) {
   return (
     <aside className="deck-panel">
       <div className="panel-scroll">
@@ -199,6 +203,10 @@ function AwaitingDeal({ state, onDeal }) {
           {state.stash.length > 0 ? ` · ${state.stash.length} stashed` : ''}
         </p>
         <p className="hint">{progressLabel(state)}</p>
+        {/* The moment you're deciding is the moment to consult the deck. */}
+        <button type="button" className="secondary" onClick={onOpenHistory}>
+          View the deck
+        </button>
       </div>
       <button type="button" className="primary" title="Space" onClick={onDeal}>
         Deal
@@ -211,15 +219,24 @@ function CardRevealed({ state, entry, controls, info, ready, committing, onContr
   const card = state.currentCard
   const ToolsComponent = entry?.Tools
   const commitDisabled = !ready || committing
+  const [zoomed, setZoomed] = useState(false)
 
   return (
     <aside className="deck-panel">
+      {zoomed && (
+        <CardZoom id={card.id} label={card.label} kind={card.kind} onClose={() => setZoomed(false)} />
+      )}
       <div className="panel-scroll">
         <h2>THIS ROUND</h2>
-        <div className={`card-face card-${card.kind}`}>
-          <span className="card-kind">{card.kind === 'mod' ? 'modification' : card.kind}</span>
-          <span className="card-label">{card.label}</span>
-        </div>
+        <Card
+          id={card.id}
+          label={card.label}
+          kind={card.kind}
+          size="panel"
+          flip
+          onClick={() => setZoomed(true)}
+        />
+        <p className="card-name">{card.label}</p>
         <div className="tool-area">
           {ToolsComponent ? (
             <ToolsComponent
@@ -242,14 +259,29 @@ function CardRevealed({ state, entry, controls, info, ready, committing, onContr
 
 function Complete({ state, exportState, onRestart, onOpenOutput }) {
   const status = exportState?.status ?? 'idle'
+  const [zoomed, setZoomed] = useState(false)
+  const codaLabel = state.currentCard?.label ?? 'Coda'
   return (
     <aside className="deck-panel complete">
+      {zoomed && (
+        <CardZoom
+          id={state.currentCard?.id ?? 'coda'}
+          label={codaLabel}
+          kind="death"
+          onClose={() => setZoomed(false)}
+        />
+      )}
       <div className="panel-scroll">
         <h2>FINISHED</h2>
-        <div className="card-face card-death">
-          <span className="card-kind">the deck is done</span>
-          <span className="card-label">{state.currentCard?.label ?? 'Coda'}</span>
-        </div>
+        <Card
+          id={state.currentCard?.id ?? 'coda'}
+          label={codaLabel}
+          kind="death"
+          size="panel"
+          flip
+          onClick={() => setZoomed(true)}
+        />
+        <p className="card-name">{codaLabel}</p>
         <p className="hint">The piece is complete.</p>
         {status === 'exporting' && <p className="hint">Writing PNG to your output folder…</p>}
         {status === 'done' && (

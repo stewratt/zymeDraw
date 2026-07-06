@@ -216,6 +216,46 @@ export function deckReducer(state, action) {
   }
 }
 
+// ---- Derived views (v4) ----
+// Pure selectors for the deck overlay. The UI never reads history or the
+// deck array directly — what these return is exactly what a user may know.
+
+const CARD_LABELS = Object.fromEntries(
+  [...MOD_CARDS, DEATH_CARD].map((c) => [c.id, c.label])
+)
+
+// The cards spent so far, in dealt order — the sequence view. Includes the
+// Coda once the session is COMPLETE (it already happened); never the card
+// still in hand (it hasn't been committed).
+export function spentCards(state) {
+  const out = []
+  for (const ev of state.history) {
+    if (ev.event !== 'card' && ev.event !== 'death') continue
+    out.push({
+      id: ev.cardId,
+      label: CARD_LABELS[ev.cardId] ?? ev.cardId,
+      kind: ev.event === 'death' ? 'death' : 'mod'
+    })
+  }
+  return out
+}
+
+// The undealt modification cards as an unordered multiset — one entry per
+// design with a count, sorted by label. Death cards are filtered out and
+// order is stripped HERE, in deck logic, so the UI cannot leak what it
+// never receives: the Coda's place in the deck stays a genuine surprise
+// (that it is armed at all is already public via progressLabel).
+export function remainingCounts(state) {
+  const counts = new Map()
+  for (const card of state.deck) {
+    if (card.kind !== 'mod') continue
+    counts.set(card.id, (counts.get(card.id) ?? 0) + 1)
+  }
+  return [...counts.entries()]
+    .map(([id, count]) => ({ id, label: CARD_LABELS[id] ?? id, count }))
+    .sort((a, b) => a.label.localeCompare(b.label))
+}
+
 // Short human label for where the session stands. Derived, never stored.
 export function progressLabel(state) {
   if (state.phase !== 'WORKING') return null

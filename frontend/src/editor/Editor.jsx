@@ -3,6 +3,7 @@ import CanvasStage, { CANVAS_WIDTH, CANVAS_HEIGHT } from './CanvasStage.jsx'
 import DeckPanel from './DeckPanel.jsx'
 import GridPicker from './GridPicker.jsx'
 import KeysReference from './KeysReference.jsx'
+import HistoryOverlay from './HistoryOverlay.jsx'
 import { TUNING, deckReducer, initialState } from './deck.js'
 import { cardRegistry } from './cards/registry.jsx'
 import { placeImages, layerThumbUrl } from './placement.js'
@@ -101,6 +102,10 @@ function Editor({ config, onBackToSetup }) {
   // The Keys reference overlay (header button). While open it blocks the
   // whole keymap itself (KeysReference swallows keys at the capture phase).
   const [keysOpen, setKeysOpen] = useState(false)
+
+  // The deck overlay (v4): spent sequence + remaining multiset. Same modal
+  // pattern as the Keys reference.
+  const [historyOpen, setHistoryOpen] = useState(false)
 
   const [imageList, setImageList] = useState({
     status: 'loading',
@@ -628,11 +633,17 @@ function Editor({ config, onBackToSetup }) {
           ← setup
         </button>
         <h1>DECK</h1>
-        <button type="button" className="link keys-button" onClick={() => setKeysOpen(true)}>
-          keys
-        </button>
+        <div className="header-actions">
+          <button type="button" className="link keys-button" onClick={() => setHistoryOpen(true)}>
+            deck
+          </button>
+          <button type="button" className="link keys-button" onClick={() => setKeysOpen(true)}>
+            keys
+          </button>
+        </div>
       </header>
       {keysOpen && <KeysReference onClose={() => setKeysOpen(false)} />}
+      {historyOpen && <HistoryOverlay state={state} onClose={() => setHistoryOpen(false)} />}
 
       <main className="editor-main">
         <section className="canvas-area">
@@ -678,6 +689,7 @@ function Editor({ config, onBackToSetup }) {
             onCommit={handleCommit}
             onRestart={handleRestart}
             onOpenOutput={handleOpenOutput}
+            onOpenHistory={() => setHistoryOpen(true)}
           />
         </aside>
       </main>
