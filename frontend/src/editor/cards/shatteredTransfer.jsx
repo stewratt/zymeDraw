@@ -171,7 +171,8 @@ export async function beginShatteredTransfer(ctx) {
     resolveTarget: () => overlay,
     getControls: () => controlsRef.current,
     snapshotSettings: snapshotMaskSettings,
-    onHistoryChange: (canUndo, canRedo) => ctx.report({ canUndo, canRedo })
+    onHistoryChange: (canUndo, canRedo) => ctx.report({ canUndo, canRedo }),
+    onSizeChange: (size) => ctx.setControl('size', size)
   })
 
   const onTransform = (opt) => {

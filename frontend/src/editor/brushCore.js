@@ -31,11 +31,21 @@
 // While a brush is active, a thin circle follows the pointer at the brush's
 // on-screen size, so coverage is visible before and during a stroke.
 //
+// SHIFT+DRAG RESIZES THE BRUSH (any brush with a size slider): pressing with
+// shift held starts a sizing drag instead of a stroke — the circle anchors
+// where you pressed and drag right/left grows/shrinks it, 1 dragged pixel =
+// 1 size pixel. The engine reports the new size out through `onSizeChange`
+// so the consumer's slider state stays the single source of truth.
+//
 // Within-card undo/redo: a stroke is recorded points + settings, so undo =
 // drop the last stroke and replay the rest into a fresh committed layer.
 // History never survives an End — commitment stays absolute.
 
 import * as fabric from 'fabric'
+
+// One range for every size slider AND the shift+drag clamp.
+export const BRUSH_SIZE_MIN = 6
+export const BRUSH_SIZE_MAX = 300
 
 // Convert a scene-space point to target-local source pixels. The transform
 // matrix handles position, scale, rotation and flips in one step.
@@ -56,29 +66,45 @@ export function clearLayer(layer) {
   layer.getContext('2d').clearRect(0, 0, layer.width, layer.height)
 }
 
-function drawDab(ctx, x, y, radius, hardness) {
+// A dab is an ellipse in mask space (radiusX/radiusY undo the target's
+// scaleX/scaleY separately) so that the image's transform maps it back to
+// a true circle on screen — a squashed image must not squash the brush.
+//
+// Softness (0–1) shapes the soft dab's falloff: the solid core shrinks from
+// 25% of the radius toward 0 and the fade eases from linear toward cubic —
+// at 0 the dab is exactly the pre-slider soft brush; at 1 it's all feather.
+function drawDab(ctx, x, y, radiusX, radiusY, hardness, softness) {
+  ctx.save()
+  ctx.translate(x, y)
+  ctx.scale(radiusX, radiusY)
   if (hardness === 'hard') {
     ctx.fillStyle = 'rgba(0, 0, 0, 1)'
   } else {
-    const g = ctx.createRadialGradient(x, y, radius * 0.25, x, y, radius)
-    g.addColorStop(0, 'rgba(0, 0, 0, 1)')
-    g.addColorStop(1, 'rgba(0, 0, 0, 0)')
+    const s = softness ?? 0
+    const g = ctx.createRadialGradient(0, 0, 0.25 * (1 - s), 0, 0, 1)
+    const ease = 1 + 2 * s
+    for (let i = 0; i <= 6; i++) {
+      const t = i / 6
+      g.addColorStop(t, `rgba(0, 0, 0, ${Math.pow(1 - t, ease).toFixed(4)})`)
+    }
     ctx.fillStyle = g
   }
   ctx.beginPath()
-  ctx.arc(x, y, radius, 0, Math.PI * 2)
+  ctx.arc(0, 0, 1, 0, Math.PI * 2)
   ctx.fill()
+  ctx.restore()
 }
 
 // Stamp dabs from `from` to `to`, spaced at ~35% of the radius so strokes
-// read as continuous lines rather than beads.
-function drawSegment(ctx, from, to, radius, hardness) {
+// read as continuous lines rather than beads (the tighter axis sets the
+// spacing so anisotropic dabs still overlap).
+function drawSegment(ctx, from, to, radiusX, radiusY, hardness, softness) {
   const dist = Math.hypot(to.x - from.x, to.y - from.y)
-  const step = Math.max(1, radius * 0.35)
+  const step = Math.max(1, Math.min(radiusX, radiusY) * 0.35)
   const count = Math.max(1, Math.ceil(dist / step))
   for (let i = 1; i <= count; i++) {
     const t = i / count
-    drawDab(ctx, from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t, radius, hardness)
+    drawDab(ctx, from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t, radiusX, radiusY, hardness, softness)
   }
 }
 
@@ -89,7 +115,7 @@ function renderStroke(mask, stroke) {
   ctx.clearRect(0, 0, mask.width, mask.height)
   for (let i = 0; i < stroke.points.length; i++) {
     const from = stroke.points[Math.max(0, i - 1)]
-    drawSegment(ctx, from, stroke.points[i], stroke.radius, stroke.hardness)
+    drawSegment(ctx, from, stroke.points[i], stroke.radiusX, stroke.radiusY, stroke.hardness, stroke.softness)
   }
 }
 
@@ -102,13 +128,19 @@ function createBrushCursor(canvas, getControls) {
   el.className = 'brush-cursor'
   canvas.wrapperEl.appendChild(el)
   let enabled = false
+  let frozen = false // sizing drag: the circle stays anchored where it began
+
+  // Brush size lives in scene units; getZoom() covers any zoomed viewport
+  // and the CSS scale converts to on-screen pixels.
+  function diameter(size) {
+    const rect = canvas.wrapperEl.getBoundingClientRect()
+    return Math.max(4, size * canvas.getZoom() * (rect.width / canvas.getWidth()))
+  }
 
   function move(e) {
-    if (!enabled) return
+    if (!enabled || frozen) return
     const rect = canvas.wrapperEl.getBoundingClientRect()
-    // getZoom() covers any zoomed viewport: brush size lives in scene
-    // units, so zoomed-in views show a proportionally bigger circle.
-    const d = Math.max(4, getControls().size * canvas.getZoom() * (rect.width / canvas.getWidth()))
+    const d = diameter(getControls().size)
     el.style.width = `${d}px`
     el.style.height = `${d}px`
     el.style.left = `${e.clientX - rect.left}px`
@@ -125,7 +157,18 @@ function createBrushCursor(canvas, getControls) {
   return {
     setEnabled(next) {
       enabled = next
+      frozen = false
       if (!next) hide()
+    },
+    setFrozen(next) {
+      frozen = next
+    },
+    // Live diameter during a sizing drag — takes the size explicitly
+    // because the consumer's React state is a frame behind the pointer.
+    preview(size) {
+      const d = diameter(size)
+      el.style.width = `${d}px`
+      el.style.height = `${d}px`
     },
     dispose() {
       canvas.wrapperEl.removeEventListener('pointermove', move)
@@ -145,18 +188,19 @@ function createBrushCursor(canvas, getControls) {
 //   recomposite(live): rebuild the visible composite; `live` is the stroke
 //                      record still riding on strokeMask, or null
 //
-// A stroke record: { points, radius, hardness, settings }. `settings` is
+// A stroke record: { points, radius, hardness, softness, settings }. `settings` is
 // snapshotSettings(controls) — the consumer's per-stroke snapshot (mask:
 // strength + op; reveal: influence + effect params).
 // `resolveTarget(scenePoint, brushRadius)` picks which object a stroke
 // sticks to (the whole stroke stays on it). It may say "none yet": a stroke
 // begun on empty canvas keeps recording and attaches to the first target it
 // resolves to mid-drag, so strokes can start outside every image.
-export function createStrokeEngine(canvas, { states, resolveTarget, getControls, snapshotSettings, onHistoryChange }) {
+export function createStrokeEngine(canvas, { states, resolveTarget, getControls, snapshotSettings, onHistoryChange, onSizeChange }) {
   const undoStack = [] // { img, stroke } in global stroke order
   let redoStack = []
   let active = false
   let drawing = null // { img, stroke, maskCtx, lastPoint } while the pointer is down
+  let sizing = null // { onMove, onUp } window listeners while shift+drag resizes
   const cursor = createBrushCursor(canvas, getControls)
   const savedCanvasProps = {
     skipTargetFind: canvas.skipTargetFind,
@@ -184,28 +228,63 @@ export function createStrokeEngine(canvas, { states, resolveTarget, getControls,
   // a stroke may have travelled over empty canvas before reaching a target,
   // and the path segment that crosses the edge must still land.
   function beginStroke(img, scenePoints, controls) {
-    // Brush size is felt in display pixels; convert to source pixels so the
-    // dab matches what's under the cursor regardless of the target's scale.
-    const radius = controls.size / 2 / ((Math.abs(img.scaleX) + Math.abs(img.scaleY)) / 2)
+    // Brush size is felt in display pixels; convert to source pixels per
+    // axis so the dab matches what's under the cursor regardless of the
+    // target's scale — including non-uniform squashes.
+    const radiusX = controls.size / 2 / (Math.abs(img.scaleX) || 1)
+    const radiusY = controls.size / 2 / (Math.abs(img.scaleY) || 1)
     const points = scenePoints.map((sp) => toLocal(img, sp))
     const stroke = {
       points,
-      radius,
+      radiusX,
+      radiusY,
       hardness: controls.hardness,
+      softness: controls.softness ?? 0.5,
       settings: snapshotSettings(controls)
     }
     const s = states.get(img)
     clearLayer(s.strokeMask)
     const maskCtx = s.strokeMask.getContext('2d')
     for (let i = 0; i < points.length; i++) {
-      drawSegment(maskCtx, points[Math.max(0, i - 1)], points[i], radius, stroke.hardness)
+      drawSegment(maskCtx, points[Math.max(0, i - 1)], points[i], radiusX, radiusY, stroke.hardness, stroke.softness)
     }
     drawing = { img, stroke, maskCtx, lastPoint: points[points.length - 1] }
     s.recomposite(stroke)
   }
 
+  // Shift+drag sizing. Listeners live on window so the drag keeps working
+  // past the canvas edge; the circle anchors where the drag began.
+  function beginSizing(e) {
+    const startX = e.clientX
+    const startSize = getControls().size
+    const onMove = (ev) => {
+      const size = Math.round(
+        Math.min(BRUSH_SIZE_MAX, Math.max(BRUSH_SIZE_MIN, startSize + (ev.clientX - startX)))
+      )
+      onSizeChange(size)
+      cursor.preview(size)
+    }
+    const onUp = () => endSizing()
+    sizing = { onMove, onUp }
+    cursor.setFrozen(true)
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
+
+  function endSizing() {
+    if (!sizing) return
+    window.removeEventListener('pointermove', sizing.onMove)
+    window.removeEventListener('pointerup', sizing.onUp)
+    sizing = null
+    cursor.setFrozen(false)
+  }
+
   function onMouseDown(opt) {
-    if (!active || drawing) return
+    if (!active || drawing || sizing) return
+    if (opt.e?.shiftKey && onSizeChange) {
+      beginSizing(opt.e)
+      return
+    }
     const scenePoint = opt.scenePoint ?? canvas.getScenePoint(opt.e)
     const controls = getControls()
     const img = resolveTarget(scenePoint, controls.size / 2)
@@ -228,7 +307,15 @@ export function createStrokeEngine(canvas, { states, resolveTarget, getControls,
       return
     }
     const point = toLocal(drawing.img, scenePoint)
-    drawSegment(drawing.maskCtx, drawing.lastPoint, point, drawing.stroke.radius, drawing.stroke.hardness)
+    drawSegment(
+      drawing.maskCtx,
+      drawing.lastPoint,
+      point,
+      drawing.stroke.radiusX,
+      drawing.stroke.radiusY,
+      drawing.stroke.hardness,
+      drawing.stroke.softness
+    )
     drawing.stroke.points.push(point)
     drawing.lastPoint = point
     states.get(drawing.img).recomposite(drawing.stroke)
@@ -270,6 +357,7 @@ export function createStrokeEngine(canvas, { states, resolveTarget, getControls,
         canvas.defaultCursor = 'none' // the circle is the cursor
       } else {
         drawing = null
+        endSizing()
         canvas.skipTargetFind = savedCanvasProps.skipTargetFind
         canvas.defaultCursor = savedCanvasProps.defaultCursor
       }
@@ -312,6 +400,7 @@ export function createStrokeEngine(canvas, { states, resolveTarget, getControls,
       canvas.skipTargetFind = savedCanvasProps.skipTargetFind
       canvas.defaultCursor = savedCanvasProps.defaultCursor
       drawing = null
+      endSizing()
     }
   }
 }
@@ -337,13 +426,14 @@ export function applyMaskOp(mask, strokeMask, blurScratch, stroke) {
   const ctx = mask.getContext('2d')
   if (op === 'soften') {
     // Feather = lerp the mask toward a blurred copy of itself, only under
-    // the stroke. The blur radius rides the brush (half the dab radius).
+    // the stroke. The blur radius rides the brush (half the dab radius —
+    // the two axes' mean, since ctx.filter blur is isotropic).
     // ctx.filter blur needs Safari 18+ — same caveat as the effect brushes;
     // older Safari just gets a no-op.
     const b = blurScratch.getContext('2d')
     b.save()
     b.clearRect(0, 0, blurScratch.width, blurScratch.height)
-    b.filter = `blur(${Math.max(1, stroke.radius * 0.5)}px)`
+    b.filter = `blur(${Math.max(1, (stroke.radiusX + stroke.radiusY) / 2 * 0.5)}px)`
     b.drawImage(mask, 0, 0)
     b.filter = 'none'
     b.globalCompositeOperation = 'destination-in'
@@ -366,7 +456,7 @@ export function applyMaskOp(mask, strokeMask, blurScratch, stroke) {
   ctx.restore()
 }
 
-export function createMaskSession(canvas, images, { getControls, onHistoryChange }) {
+export function createMaskSession(canvas, images, { getControls, onHistoryChange, onSizeChange }) {
   // Per-image mask state, set up front: the Fabric object's element is
   // swapped for a same-size composite canvas so display and bake both
   // render the masked result from full-resolution pixels. committedMask
@@ -436,15 +526,17 @@ export function createMaskSession(canvas, images, { getControls, onHistoryChange
     },
     getControls,
     snapshotSettings: snapshotMaskSettings,
-    onHistoryChange
+    onHistoryChange,
+    onSizeChange
   })
 }
 
 // ---------- reveal mode (effect cards) ----------
 
 // Everything a control panel shows that isn't the brush itself is an effect
-// param, snapshotted per stroke.
-const BRUSH_KEYS = new Set(['size', 'hardness', 'intensity'])
+// param, snapshotted per stroke. (softness must live here: if it leaked into
+// params, sliding it would miss the effect cache and re-roll Silt's grain.)
+const BRUSH_KEYS = new Set(['size', 'hardness', 'softness', 'intensity'])
 
 function effectParams(controls) {
   const params = {}
@@ -460,7 +552,7 @@ const clampAlpha = (v) => Math.max(0, Math.min(1, v))
 // copy of the master. The session calls it lazily per unique params combo
 // and caches the copies, so a stroke's first dab and undo replay stay fast
 // — and Noise's grain (params never change) doesn't re-roll.
-export function createRevealSession(canvas, { applyEffect, master, getControls, onHistoryChange }) {
+export function createRevealSession(canvas, { applyEffect, master, getControls, onHistoryChange, onSizeChange }) {
   const accumulated = makeLayer(master.width, master.height) // locked strokes
   const strokeMask = makeLayer(master.width, master.height)
   const scratch = makeLayer(master.width, master.height)
@@ -543,7 +635,8 @@ export function createRevealSession(canvas, { applyEffect, master, getControls, 
     resolveTarget: () => overlay,
     getControls,
     snapshotSettings: (c) => ({ intensity: c.intensity, params: effectParams(c) }),
-    onHistoryChange
+    onHistoryChange,
+    onSizeChange
   })
   engine.setActive(true)
   // Warm the cache at the default settings so the first stroke doesn't pay

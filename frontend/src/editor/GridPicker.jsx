@@ -9,13 +9,25 @@
 // Owns its selection state; reports the final choice via onConfirm(placed,
 // stashed). It never touches the deck reducer or the canvas.
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { isFormTarget } from './keymap.js'
 
 function GridPicker({ grid, onConfirm }) {
   // filename → 'place' | 'stash'. Clicking a thumb cycles
   // unselected → place → stash → unselected, skipping a role another
   // image already holds — there is exactly one of each.
   const [selection, setSelection] = useState({})
+
+  // Esc backs out of the picks (hotkeys.md §5.1). Enter deliberately does
+  // NOT confirm the opening — that choice stays explicit and mouse-made.
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key !== 'Escape' || isFormTarget(e)) return
+      setSelection({})
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [])
 
   const placed = grid.filter((f) => selection[f] === 'place')
   const stashed = grid.filter((f) => selection[f] === 'stash')
@@ -54,20 +66,22 @@ function GridPicker({ grid, onConfirm }) {
       {grid.length === 0 ? (
         <p className="hint">Dealing images…</p>
       ) : (
-        <div className="grid-thumbs opening">
-          {grid.map((f) => (
-            <button
-              key={f}
-              type="button"
-              className={`grid-thumb ${selection[f] || ''}`}
-              onClick={() => cycle(f)}
-            >
-              <img src={`/api/images/${encodeURIComponent(f)}`} alt={f} loading="lazy" />
-              {selection[f] && (
-                <span className="thumb-badge">{selection[f] === 'place' ? 'PLACE' : 'STASH'}</span>
-              )}
-            </button>
-          ))}
+        <div className="grid-thumbs-fit">
+          <div className="grid-thumbs opening">
+            {grid.map((f) => (
+              <button
+                key={f}
+                type="button"
+                className={`grid-thumb ${selection[f] || ''}`}
+                onClick={() => cycle(f)}
+              >
+                <img src={`/api/images/${encodeURIComponent(f)}`} alt={f} loading="lazy" />
+                {selection[f] && (
+                  <span className="thumb-badge">{selection[f] === 'place' ? 'PLACE' : 'STASH'}</span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       )}
       <div className="grid-picker-foot">
@@ -92,6 +106,24 @@ function GridPicker({ grid, onConfirm }) {
 // confirm.
 export function CardGridPicker({ title, hint, files, confirmLabel, onConfirm }) {
   const [chosen, setChosen] = useState(null)
+
+  // Enter confirms once an image is taken — a card grid is a smaller
+  // decision than the opening, which keeps its no-Enter rule (hotkeys.md
+  // §9.3). Esc puts the image back.
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (isFormTarget(e) || e.metaKey || e.ctrlKey || e.altKey) return
+      if (e.key === 'Enter' && chosen) {
+        e.preventDefault()
+        onConfirm(chosen)
+      } else if (e.key === 'Escape') {
+        setChosen(null)
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [chosen, onConfirm])
+
   return (
     <div className="grid-picker">
       <div className="grid-picker-head">
@@ -117,7 +149,7 @@ export function CardGridPicker({ title, hint, files, confirmLabel, onConfirm }) 
       )}
       <div className="grid-picker-foot">
         <span className="hint">{chosen ? '1 taken' : 'take one'}</span>
-        <button type="button" className="primary" disabled={!chosen} onClick={() => onConfirm(chosen)}>
+        <button type="button" className="primary" title="Enter" disabled={!chosen} onClick={() => onConfirm(chosen)}>
           {confirmLabel}
         </button>
       </div>

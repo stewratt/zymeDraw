@@ -220,6 +220,41 @@ the whole branch and feeding back. Landed so far:
   the two-press rhythm (End — commit, then Deal) is the design. Stew
   will rework the deal beat's UI himself later — don't re-remove the
   Deal panel.
+- **Hotkeys (2026-07-05, awaiting Stew's browser verification).** First
+  shift+drag brush sizing (any brush with a size slider: shift+drag on
+  the canvas, anchored-circle preview; the engine reports back through
+  `onSizeChange`/`ctx.setControl` so the slider follows). Then the full
+  map — designed, locked and built the same day, all in **`hotkeys.md`**
+  (the decision record + live reference): `editor/keymap.js` is the one
+  scoped dispatcher (card accents → brush → arrange → global; form
+  fields always win); **Restart moved to Shift+R** (plain R too cheap
+  for a no-confirm destroy); brush grammar **W·E·R·S** (Arrange / Erase
+  / Restore / Soften) + `[`/`]` size, X swap, H hardness; arrange keys
+  (arrows nudge, `,`/`.` rotate, `-`/`=` scale — they respect Fabric
+  lock flags and fire the events a mouse gesture would); card accents
+  via the registry's optional `hotkeys` field (Rack F/Shift+F, Etch
+  Enter + brackets; N re-rolls any `color` control generically); Enter
+  confirms card grids (the opening keeps its no-Enter rule; Esc backs
+  out of selections); hover titles name every key, and a `keys` button
+  in the header opens a modal reference overlay listing the whole map
+  (`editor/KeysReference.jsx` — it swallows app keys while open).
+  **Conceal renamed to Erase across the UI** (Stew's call, with the
+  W·E·R·S row) — the op key in code stays `conceal`.
+- **Softness slider (2026-07-05, awaiting Stew's browser verification).**
+  Every soft brush (mask brush + effect cards) gained a per-stroke
+  Softness slider, shown only while Soft is selected, **default 50%**
+  (Stew's call). 0% is exactly the
+  old soft dab (solid core to 25% of the radius, linear fade); sliding up
+  shrinks the core toward 0 and eases the falloff toward cubic — 100% is
+  all feather. Lives in `drawDab` (brushCore.js); `softness` is a
+  BRUSH_KEY so sliding it never misses the reveal-mode effect cache
+  (Silt's grain must not re-roll).
+- **Rack retired (2026-07-05).** Playtest verdict: flipping a piece
+  after several rounds of work never felt worth doing. Its `MOD_CARDS`
+  line is commented out (same treatment as the Transfers); the card
+  file, registry entry, and F/Shift+F accents all stay in place — only
+  its row in the Keys overlay was removed. Re-add the deck line (and
+  the KeysReference row) to bring it back.
 
 Still open from the doc: suits visible or backstage (§10.1), Echo (§7.3),
 Mount (§7.4), death-crop (parked since v2). **Next action: more of Stew's
@@ -610,8 +645,10 @@ Open <http://localhost:5173>. Setup screen prefilled from
 `~/.deck-config.json`. Two absolute paths (input folder must exist with
 images, output folder must be writable). Continue → Editor.
 
-**Keyboard shortcuts** (Editor): **Space** = draw/deal, **Enter** = primary
-action, **R** = restart. Suppressed while focus is in any form control.
+**Keyboard shortcuts** (Editor): **Space** = deal, **Enter** = primary
+action, **Shift+R** = restart; the full map (brush grammar W·E·R·S, arrange
+nudge/rotate/scale, card accents) is in `hotkeys.md`. Suppressed while focus
+is in any form control (`editor/keymap.js` owns dispatch).
 
 ---
 

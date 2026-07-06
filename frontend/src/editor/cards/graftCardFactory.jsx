@@ -67,7 +67,8 @@ export function makeGraftCard(config) {
     const controlsRef = { current: ctx.controls }
     const session = createMaskSession(ctx.canvas, [img], {
       getControls: () => controlsRef.current,
-      onHistoryChange: (canUndo, canRedo) => ctx.report({ canUndo, canRedo })
+      onHistoryChange: (canUndo, canRedo) => ctx.report({ canUndo, canRedo }),
+      onSizeChange: (size) => ctx.setControl('size', size)
     })
     ctx.report({
       stage: 'work',
@@ -177,7 +178,7 @@ export function makeGraftCard(config) {
 
 // Shared registry shape for graft cards.
 export const graftControls = {
-  controls: ['opacity', 'brightness', 'contrast', 'mode', 'size', 'hardness', 'strength'],
+  controls: ['opacity', 'brightness', 'contrast', 'mode', 'size', 'hardness', 'softness', 'strength'],
   defaultControls: {
     opacity: 1,
     brightness: 100,
@@ -185,6 +186,7 @@ export const graftControls = {
     mode: 'arrange',
     size: 40,
     hardness: 'soft',
+    softness: 0.5,
     strength: 1
   }
 }

@@ -10,7 +10,7 @@
 // unique effect-params combo and caches the copies; painted strokes never
 // change.
 
-import { createRevealSession } from '../brushCore.js'
+import { BRUSH_SIZE_MAX, BRUSH_SIZE_MIN, createRevealSession } from '../brushCore.js'
 
 export function makeEffectCardHooks(applyEffect) {
   function begin(ctx) {
@@ -19,7 +19,8 @@ export function makeEffectCardHooks(applyEffect) {
       applyEffect,
       master: ctx.master,
       getControls: () => controlsRef.current,
-      onHistoryChange: (canUndo, canRedo) => ctx.report({ canUndo, canRedo })
+      onHistoryChange: (canUndo, canRedo) => ctx.report({ canUndo, canRedo }),
+      onSizeChange: (size) => ctx.setControl('size', size)
     })
     ctx.report({ undo: session.undo, redo: session.redo, canUndo: false, canRedo: false })
     return { session, controlsRef }
@@ -52,12 +53,12 @@ export function makeEffectCardHooks(applyEffect) {
 export function BrushControls({ controls, info, onControlChange }) {
   return (
     <>
-      <label className="ctrl">
+      <label className="ctrl" title="[ and ] — or Shift+drag on the canvas">
         <span className="ctrl-label">Size</span>
         <input
           type="range"
-          min="6"
-          max="300"
+          min={BRUSH_SIZE_MIN}
+          max={BRUSH_SIZE_MAX}
           value={controls.size}
           onChange={(e) => onControlChange('size', Number(e.target.value))}
         />
@@ -78,6 +79,7 @@ export function BrushControls({ controls, info, onControlChange }) {
         <button
           type="button"
           className={controls.hardness === 'soft' ? 'active' : ''}
+          title="H toggles soft / hard"
           onClick={() => onControlChange('hardness', 'soft')}
         >
           Soft
@@ -85,16 +87,30 @@ export function BrushControls({ controls, info, onControlChange }) {
         <button
           type="button"
           className={controls.hardness === 'hard' ? 'active' : ''}
+          title="H toggles soft / hard"
           onClick={() => onControlChange('hardness', 'hard')}
         >
           Hard
         </button>
       </div>
+      {controls.hardness === 'soft' && (
+        <label className="ctrl" title="0% is the plain soft brush; higher is all feather">
+          <span className="ctrl-label">Softness</span>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={Math.round((controls.softness ?? 0.5) * 100)}
+            onChange={(e) => onControlChange('softness', Number(e.target.value) / 100)}
+          />
+          <span className="ctrl-value mono">{Math.round((controls.softness ?? 0.5) * 100)}%</span>
+        </label>
+      )}
       <div className="undo-row">
-        <button type="button" className="secondary" disabled={!info.canUndo} onClick={() => info.undo?.()}>
+        <button type="button" className="secondary" title="Cmd/Ctrl+Z" disabled={!info.canUndo} onClick={() => info.undo?.()}>
           Undo
         </button>
-        <button type="button" className="secondary" disabled={!info.canRedo} onClick={() => info.redo?.()}>
+        <button type="button" className="secondary" title="Cmd/Ctrl+Shift+Z" disabled={!info.canRedo} onClick={() => info.redo?.()}>
           Redo
         </button>
       </div>

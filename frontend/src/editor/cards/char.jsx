@@ -63,7 +63,8 @@ export async function beginChar(ctx) {
   const controlsRef = { current: ctx.controls }
   const session = createMaskSession(ctx.canvas, [img], {
     getControls: () => controlsRef.current,
-    onHistoryChange: (canUndo, canRedo) => ctx.report({ canUndo, canRedo })
+    onHistoryChange: (canUndo, canRedo) => ctx.report({ canUndo, canRedo }),
+    onSizeChange: (size) => ctx.setControl('size', size)
   })
   ctx.report({
     stage: 'work',

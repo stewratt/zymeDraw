@@ -1,15 +1,24 @@
 // The standing mask brush's shared control blocks.
 //
-// ArrangeMaskControls — the flat mode row (Arrange · Conceal · Restore ·
+// ArrangeMaskControls — the flat mode row (Arrange · Erase · Restore ·
 // Soften) plus the brush block while a brush op is in hand. Used by every
 // card that places one image with the standing brush (Ghost, Stamp, Rails).
 // Cards render their own effect sliders (opacity, brightness…) below it.
 //
 // MaskBrushControls — the brush block on its own, for cards whose brush is
 // always in hand (Transfer — nothing to arrange, so no Arrange button; the
-// op row still offers conceal/restore/soften).
+// op row still offers erase/restore/soften).
+//
+// Naming: the op's code key stays `conceal` everywhere (engine, controls,
+// masks); its UI name became **Erase** in the hotkeys revision (decided
+// with Stew, 2026-07-05) — E is its key and its name.
 
-export const MASK_OP_LABELS = { conceal: 'Conceal', restore: 'Restore', soften: 'Soften' }
+import { BRUSH_SIZE_MAX, BRUSH_SIZE_MIN } from '../brushCore.js'
+
+export const MASK_OP_LABELS = { conceal: 'Erase', restore: 'Restore', soften: 'Soften' }
+
+// The W·E·R·S row (hotkeys.md §5.2) — shown in each button's hover title.
+const MODE_KEYS = { arrange: 'W', conceal: 'E', restore: 'R', soften: 'S' }
 
 // The mode buttons are icons, not words (decided with Stew, 2026-07-04 —
 // abstract names were hard to teach). Hovering shows the name; the hint
@@ -57,11 +66,11 @@ const MODE_ICONS = {
 export function maskHint(mode, subject = 'the image') {
   switch (mode) {
     case 'conceal':
-      return `Paint over ${subject} to conceal it.`
+      return `Paint over ${subject} to erase it.`
     case 'restore':
-      return `Paint to bring concealed areas of ${subject} back.`
+      return `Paint to bring erased areas of ${subject} back.`
     case 'soften':
-      return 'Paint along a concealed edge to feather it.'
+      return 'Paint along an erased edge to feather it.'
     default:
       return null
   }
@@ -78,7 +87,7 @@ function OpButtons({ controls, onControlChange, extra = [] }) {
             key={op}
             type="button"
             className={controls.mode === op ? 'active' : ''}
-            title={label}
+            title={`${label} — ${MODE_KEYS[op]}`}
             aria-label={label}
             onClick={() => onControlChange('mode', op)}
           >
@@ -93,12 +102,12 @@ function OpButtons({ controls, onControlChange, extra = [] }) {
 function BrushSliders({ controls, info, onControlChange }) {
   return (
     <>
-      <label className="ctrl">
+      <label className="ctrl" title="[ and ] — or Shift+drag on the canvas">
         <span className="ctrl-label">Size</span>
         <input
           type="range"
-          min="6"
-          max="300"
+          min={BRUSH_SIZE_MIN}
+          max={BRUSH_SIZE_MAX}
           value={controls.size}
           onChange={(e) => onControlChange('size', Number(e.target.value))}
         />
@@ -119,6 +128,7 @@ function BrushSliders({ controls, info, onControlChange }) {
         <button
           type="button"
           className={controls.hardness === 'soft' ? 'active' : ''}
+          title="H toggles soft / hard"
           onClick={() => onControlChange('hardness', 'soft')}
         >
           Soft
@@ -126,16 +136,30 @@ function BrushSliders({ controls, info, onControlChange }) {
         <button
           type="button"
           className={controls.hardness === 'hard' ? 'active' : ''}
+          title="H toggles soft / hard"
           onClick={() => onControlChange('hardness', 'hard')}
         >
           Hard
         </button>
       </div>
+      {controls.hardness === 'soft' && (
+        <label className="ctrl" title="0% is the plain soft brush; higher is all feather">
+          <span className="ctrl-label">Softness</span>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={Math.round((controls.softness ?? 0.5) * 100)}
+            onChange={(e) => onControlChange('softness', Number(e.target.value) / 100)}
+          />
+          <span className="ctrl-value mono">{Math.round((controls.softness ?? 0.5) * 100)}%</span>
+        </label>
+      )}
       <div className="undo-row">
-        <button type="button" className="secondary" disabled={!info.canUndo} onClick={() => info.undo?.()}>
+        <button type="button" className="secondary" title="Cmd/Ctrl+Z" disabled={!info.canUndo} onClick={() => info.undo?.()}>
           Undo
         </button>
-        <button type="button" className="secondary" disabled={!info.canRedo} onClick={() => info.redo?.()}>
+        <button type="button" className="secondary" title="Cmd/Ctrl+Shift+Z" disabled={!info.canRedo} onClick={() => info.redo?.()}>
           Redo
         </button>
       </div>

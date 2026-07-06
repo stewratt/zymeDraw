@@ -4,7 +4,7 @@
 // mask brush. End bakes it down.
 //
 // Graceful degradation (mandatory, CLAUDE.md §3): if the sidecar is down
-// or the cutout fails, the WHOLE image is placed instead and the conceal
+// or the cutout fails, the WHOLE image is placed instead and the erase
 // brush becomes the scissors — the session never blocks on ML. The panel
 // says which mode you're in.
 //
@@ -48,7 +48,7 @@ export async function beginStamp(ctx) {
   try {
     url = await fetchCutoutUrl(chosen)
   } catch {
-    // degrade: place the full image, conceal brush becomes the scissors
+    // degrade: place the full image, the erase brush becomes the scissors
   }
   if (ctx.isCancelled?.()) {
     if (url) URL.revokeObjectURL(url)
@@ -81,7 +81,8 @@ export async function beginStamp(ctx) {
   const controlsRef = { current: ctx.controls }
   const session = createMaskSession(ctx.canvas, [img], {
     getControls: () => controlsRef.current,
-    onHistoryChange: (canUndo, canRedo) => ctx.report({ canUndo, canRedo })
+    onHistoryChange: (canUndo, canRedo) => ctx.report({ canUndo, canRedo }),
+    onSizeChange: (size) => ctx.setControl('size', size)
   })
   ctx.report({
     stage: 'work',
@@ -145,7 +146,7 @@ export function StampTools({ controls, info, ready, onControlChange }) {
     <div className="brush-tools card-tools">
       <p className="hint">
         {info.degraded
-          ? 'The cutout service is unavailable, so the whole image was placed — the conceal brush is your scissors.'
+          ? 'The cutout service is unavailable, so the whole image was placed — the erase brush is your scissors.'
           : brushing
             ? maskHint(controls.mode, 'the stamp')
             : 'Drag, scale, rotate the stamp into place.'}

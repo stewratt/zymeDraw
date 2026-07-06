@@ -92,13 +92,21 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  /* Take the available column height and scroll internally when the content
-     (a tall Coda thumbnail, a deep placement stack) exceeds it, so the End /
-     commit / restart buttons at the bottom stay reachable at any image size
-     instead of being clipped by the fixed grid row. */
+  flex: 1 1 auto;
+  min-height: 0;
+  /* The panel itself never scrolls: content scrolls inside .panel-scroll and
+     the primary action button stays pinned below it — End and Deal land in
+     the exact same spot every round, so the two-press rhythm (End, then
+     Deal) is two clicks without moving the mouse. */
+  overflow: hidden;
+}
+.panel-scroll {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 .deck-panel.endgame,
 .deck-panel.complete {
@@ -142,19 +150,28 @@
   align-content: start;
   padding: 2px;
 }
-/* The opening's fixed 6×4 deal fills the canvas area exactly — every image
-   visible, never a scrollbar. The 1fr tracks shrink with the screen; the
-   thumbs give up their square ratio and let object-fit crop instead.
+/* The opening's fixed 6×4 deal fills the canvas area — every image visible,
+   never a scrollbar, and every cell a true square at any window size. The
+   wrapper is a size container; each cell is the largest square where 6
+   columns fit the width AND 4 rows fit the height (gaps subtracted), and
+   the grid centers in whatever space is left over.
    Card grids (Ghost, Stamp) keep the square auto-fill layout above. */
-.grid-thumbs.opening {
-  overflow: hidden;
-  grid-template-columns: repeat(6, 1fr);
-  grid-template-rows: repeat(4, 1fr);
-}
-.grid-thumbs.opening .grid-thumb {
-  aspect-ratio: auto;
+.grid-thumbs-fit {
+  flex: 1;
   min-height: 0;
   min-width: 0;
+  container-type: size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.grid-thumbs.opening {
+  --cell: min((100cqw - 5 * 8px) / 6, (100cqh - 3 * 8px) / 4);
+  flex: none;
+  overflow: hidden;
+  padding: 0;
+  grid-template-columns: repeat(6, var(--cell));
+  grid-template-rows: repeat(4, var(--cell));
 }
 .grid-thumb {
   position: relative;
@@ -761,4 +778,73 @@
   border-radius: 50%;
   transform: translate(-50%, -50%);
   z-index: 5;
+}
+
+/* ---------- keys reference (KeysReference.jsx) ---------- */
+
+.keys-button {
+  margin-left: auto;
+  letter-spacing: 0.15em;
+}
+.keys-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 40; /* above the canvas overlays, below nothing */
+  cursor: pointer; /* the whole sheet closes on click */
+}
+.keys-panel {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  width: min(560px, calc(100vw - 48px));
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.keys-panel h2 {
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  color: #ccc;
+  margin: 0;
+}
+.keys-section h3 {
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  margin: 0 0 8px;
+}
+.keys-row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 12px;
+  align-items: baseline;
+  padding: 3px 0;
+}
+.keys-row kbd {
+  justify-self: start;
+  font-size: 0.7rem;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 1px 7px;
+  white-space: nowrap;
+}
+.keys-row span {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+.keys-panel .hint {
+  color: var(--text-mute);
+  font-size: 0.75rem;
+  margin: 0;
 }

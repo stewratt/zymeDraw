@@ -21,8 +21,34 @@ import { MASTER_SCALE, MASTER_WIDTH, MASTER_HEIGHT } from '../masterRaster.js'
 const GLYPH_W = 96 // master px — display 32, zoom ≈ 25×
 const GLYPH_H = 120
 const UNDO_CAP = 50
+const PIXEL_MIN = 1
+const PIXEL_MAX = 4
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
+
+// Keyboard accents (hotkeys.md §5.4), dispatched via the registry's
+// `hotkeys` field. Enter advances the chain only at the frame stage —
+// returning false passes the key along, so during the draw stage it falls
+// through to the global Enter (End). The brackets step the pixel size: the
+// card has no `size` control, so the generic bracket binding doesn't apply
+// and these take its place at the glyph's own tiny scale.
+export const etchHotkeys = [
+  {
+    key: 'Enter',
+    run: ({ info }) => {
+      if (info.stage !== 'frame' || !info.confirm) return false
+      info.confirm()
+    }
+  },
+  {
+    code: 'BracketLeft',
+    run: ({ controls, setControl }) => setControl('pixel', clamp((controls.pixel ?? 1) - 1, PIXEL_MIN, PIXEL_MAX))
+  },
+  {
+    code: 'BracketRight',
+    run: ({ controls, setControl }) => setControl('pixel', clamp((controls.pixel ?? 1) + 1, PIXEL_MIN, PIXEL_MAX))
+  }
+]
 
 // The placement frame: a white-under-black dashed pair so it reads on any
 // ground (it's far too small for a plain white stroke to survive).
@@ -234,7 +260,7 @@ export function EtchTools({ controls, info, ready, onControlChange }) {
           Drag the small frame to where the mark should hide. Its size is
           fixed — about a hundred pixels of the piece.
         </p>
-        <button type="button" className="primary" onClick={() => info.confirm?.()}>
+        <button type="button" className="primary" title="Enter" onClick={() => info.confirm?.()}>
           Zoom in
         </button>
       </div>
@@ -247,7 +273,7 @@ export function EtchTools({ controls, info, ready, onControlChange }) {
         You are at the grain — every square is one pixel of the piece. Etch a
         small glyph. At full size it will be almost nothing.
       </p>
-      <label className="ctrl">
+      <label className="ctrl" title="N — new hue">
         <span className="ctrl-label">Color</span>
         <input
           type="color"
@@ -256,22 +282,22 @@ export function EtchTools({ controls, info, ready, onControlChange }) {
         />
         <span className="ctrl-value mono">{controls.color}</span>
       </label>
-      <label className="ctrl">
+      <label className="ctrl" title="[ and ]">
         <span className="ctrl-label">Pixel</span>
         <input
           type="range"
-          min="1"
-          max="4"
+          min={PIXEL_MIN}
+          max={PIXEL_MAX}
           value={controls.pixel}
           onChange={(e) => onControlChange('pixel', Number(e.target.value))}
         />
         <span className="ctrl-value mono">{controls.pixel}px</span>
       </label>
       <div className="undo-row">
-        <button type="button" className="secondary" disabled={!info.canUndo} onClick={() => info.undo?.()}>
+        <button type="button" className="secondary" title="Cmd/Ctrl+Z" disabled={!info.canUndo} onClick={() => info.undo?.()}>
           Undo
         </button>
-        <button type="button" className="secondary" disabled={!info.canRedo} onClick={() => info.redo?.()}>
+        <button type="button" className="secondary" title="Cmd/Ctrl+Shift+Z" disabled={!info.canRedo} onClick={() => info.redo?.()}>
           Redo
         </button>
       </div>

@@ -32,7 +32,10 @@ export const MOD_CARDS = [
   { id: 'rails', label: 'Rails', copies: 1 }, // Stencil × solid
   { id: 'char', label: 'Char', copies: 1 }, // Stencil × Sink
   { id: 'deeper', label: 'Deeper', copies: 2 }, // Re-frame, inward
-  { id: 'rack', label: 'Rack', copies: 1 }, // Re-frame, neutral
+  // Rack retired (2026-07-05): flipping a piece you've worked several
+  // rounds never felt worth doing. Card + registry entry stay in place;
+  // re-add this line to deal it again.
+  // { id: 'rack', label: 'Rack', copies: 1 }, // Re-frame, neutral
   { id: 'silt', label: 'Silt', copies: 2 }, // Reveal × deposit
   { id: 'bruise', label: 'Bruise', copies: 1 }, // Reveal × Bruise
   { id: 'dissolve', label: 'Dissolve', copies: 1 }, // Reveal × blur — provisional (§6.3)

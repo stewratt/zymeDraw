@@ -2,11 +2,13 @@ import { useEffect, useReducer, useRef, useState } from 'react'
 import CanvasStage, { CANVAS_WIDTH, CANVAS_HEIGHT } from './CanvasStage.jsx'
 import DeckPanel from './DeckPanel.jsx'
 import GridPicker from './GridPicker.jsx'
+import KeysReference from './KeysReference.jsx'
 import { TUNING, deckReducer, initialState } from './deck.js'
 import { cardRegistry } from './cards/registry.jsx'
 import { placeImages, layerThumbUrl } from './placement.js'
 import { sampleImages } from './sampling.js'
-import { createMaskSession } from './brushCore.js'
+import { BRUSH_SIZE_MAX, BRUSH_SIZE_MIN, createMaskSession } from './brushCore.js'
+import { dispatchKey } from './keymap.js'
 import {
   bake,
   createMaster,
@@ -79,7 +81,7 @@ function Editor({ config, onBackToSetup }) {
   // one of the brush ops (conceal / restore / soften).
   const maskSessionRef = useRef(null)
   const maskControlsRef = useRef(null)
-  const [maskControls, setMaskControls] = useState({ mode: 'arrange', size: 40, hardness: 'soft', strength: 1 })
+  const [maskControls, setMaskControls] = useState({ mode: 'arrange', size: 40, hardness: 'soft', softness: 0.5, strength: 1 })
   const [maskHistory, setMaskHistory] = useState({ canUndo: false, canRedo: false })
 
   useEffect(() => {
@@ -95,6 +97,10 @@ function Editor({ config, onBackToSetup }) {
   // Export state. Driven by a useEffect that fires when the deck
   // transitions to COMPLETE. Reset on Restart.
   const [exportState, setExportState] = useState({ status: 'idle', savedPath: null, error: null })
+
+  // The Keys reference overlay (header button). While open it blocks the
+  // whole keymap itself (KeysReference swallows keys at the capture phase).
+  const [keysOpen, setKeysOpen] = useState(false)
 
   const [imageList, setImageList] = useState({
     status: 'loading',
@@ -141,14 +147,16 @@ function Editor({ config, onBackToSetup }) {
     let cancelled = false
     setPlacementReady(false)
     setPlacedLayers([])
-    setMaskControls({ mode: 'arrange', size: 40, hardness: 'soft', strength: 1 })
+    setMaskControls({ mode: 'arrange', size: 40, hardness: 'soft', softness: 0.5, strength: 1 })
     setMaskHistory({ canUndo: false, canRedo: false })
     placeImages(canvas, state.toPlace, () => cancelled)
       .then((imgs) => {
         if (cancelled || imgs.length === 0) return
         maskSessionRef.current = createMaskSession(canvas, imgs, {
           getControls: () => maskControlsRef.current,
-          onHistoryChange: (canUndo, canRedo) => setMaskHistory({ canUndo, canRedo })
+          onHistoryChange: (canUndo, canRedo) => setMaskHistory({ canUndo, canRedo }),
+          // Shift+drag on the canvas resizes the brush; the slider follows.
+          onSizeChange: (size) => setMaskControls((prev) => ({ ...prev, size }))
         })
         // placeImages adds bottom-to-top; the panel reads top-to-bottom.
         const layers = imgs.map((img, i) => ({
@@ -259,6 +267,9 @@ function Editor({ config, onBackToSetup }) {
         canvasWidth: CANVAS_WIDTH,
         canvasHeight: CANVAS_HEIGHT,
         report: (patch) => setCardInfo((prev) => ({ ...prev, ...patch })),
+        // Lets a card session write a control back (shift+drag brush sizing
+        // reports through here so the panel slider follows the gesture).
+        setControl: (key, value) => setCardControls((prev) => ({ ...prev, [key]: value })),
         // Cards whose begin awaits (Ghost's pick + image load) check this
         // after each await so a restart can't leave objects behind.
         isCancelled: () => cancelled
@@ -293,64 +304,15 @@ function Editor({ config, onBackToSetup }) {
     })
   }, [cardControls, state.currentCard, cardReady])
 
-  // Keyboard shortcuts. Space = deal, Enter = primary action (End /
-  // restart — never confirms the opening pick, which needs an explicit
-  // choice), R = Restart. Disabled while focus is in any form control so
-  // sliders, color pickers and text inputs behave normally.
+  // Keyboard: one persistent listener; the bindings it walks are rebuilt
+  // every render (below, after the handlers they close over) so each run
+  // sees current state. keymap.js owns matching and form-field suppression.
+  const bindingsRef = useRef([])
   useEffect(() => {
-    const handler = (e) => {
-      const t = e.target
-      const tag = t?.tagName
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t?.isContentEditable) {
-        return
-      }
-      // Cmd/Ctrl+Z (+Shift for redo): within-card brush undo. Placement
-      // sessions route to the mask brush; cards route to whatever undo the
-      // card reported (effect brushes). Never crosses an End.
-      if ((e.metaKey || e.ctrlKey) && (e.key === 'z' || e.key === 'Z')) {
-        if (state.phase === 'PLACEMENT' || state.phase === 'STASH_RETURN') {
-          e.preventDefault()
-          if (e.shiftKey) maskSessionRef.current?.redo()
-          else maskSessionRef.current?.undo()
-        } else if (state.phase === 'WORKING' && state.currentCard) {
-          e.preventDefault()
-          if (e.shiftKey) cardInfo.redo?.()
-          else cardInfo.undo?.()
-        }
-        return
-      }
-      if (e.metaKey || e.ctrlKey || e.altKey) return
-
-      if (e.key === ' ' || e.code === 'Space') {
-        if (state.phase === 'WORKING' && !state.currentCard) {
-          e.preventDefault()
-          dispatch({ type: 'DEAL' })
-        }
-      } else if (e.key === 'Enter') {
-        if (state.phase === 'COMPLETE') {
-          e.preventDefault()
-          handleRestart()
-        } else if (
-          (state.phase === 'PLACEMENT' || state.phase === 'STASH_RETURN') &&
-          placementReady
-        ) {
-          e.preventDefault()
-          handleEndPlacement()
-        } else if (state.phase === 'WORKING' && state.currentCard && cardReady) {
-          e.preventDefault()
-          handleCommit()
-        } else if (state.phase === 'WORKING' && !state.currentCard) {
-          e.preventDefault()
-          dispatch({ type: 'DEAL' })
-        }
-      } else if (e.key === 'r' || e.key === 'R') {
-        e.preventDefault()
-        handleRestart()
-      }
-    }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [state.currentCard, state.phase, cardReady, placementReady, cardInfo])
+    const onKeyDown = (e) => dispatchKey(bindingsRef.current, e)
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [])
 
   function handleControlChange(key, value) {
     setCardControls((prev) => ({ ...prev, [key]: value }))
@@ -452,6 +414,213 @@ function Editor({ config, onBackToSetup }) {
   // generically, same props as Tools.
   const CardOverlay = state.phase === 'WORKING' ? currentEntry?.Overlay : null
 
+  // ---- the hotkey map (hotkeys.md §5) ----
+  // Rebuilt each render, ordered most-specific-first: card accents → brush
+  // grammar → arrange → global. keymap.js dispatches (listener above).
+
+  const clampBrushSize = (v) => Math.min(BRUSH_SIZE_MAX, Math.max(BRUSH_SIZE_MIN, v))
+
+  // The brush grammar (§5.2), identical everywhere a brush exists. read/
+  // write route to whichever state owns the brush — the standing mask brush
+  // or the current card's controls — so the panel always reflects the keys,
+  // same rule as shift+drag sizing. `conceal` is the op's code name; on
+  // screen it's Erase, and E is its key.
+  function brushBindings(read, write, { canArrange, hasMode, hasHardness }) {
+    const step = (e) => (e.shiftKey ? 10 : 5)
+    const b = [
+      { code: 'BracketLeft', run: (e) => write({ size: clampBrushSize(read().size - step(e)) }) },
+      { code: 'BracketRight', run: (e) => write({ size: clampBrushSize(read().size + step(e)) }) }
+    ]
+    if (canArrange) b.push({ key: 'w', run: () => write({ mode: 'arrange' }) })
+    if (hasMode) {
+      b.push(
+        { key: 'e', run: () => write({ mode: 'conceal' }) },
+        { key: 'r', shift: false, run: () => write({ mode: 'restore' }) }, // Shift+R stays Restart
+        { key: 's', run: () => write({ mode: 'soften' }) },
+        {
+          // The correction loop: swap Erase ↔ Restore. From any other mode
+          // X does nothing — E and R already jump there directly.
+          key: 'x',
+          run: () => {
+            const mode = read().mode
+            if (mode === 'conceal') write({ mode: 'restore' })
+            else if (mode === 'restore') write({ mode: 'conceal' })
+          }
+        }
+      )
+    }
+    if (hasHardness) {
+      b.push({ key: 'h', run: () => write({ hardness: read().hardness === 'soft' ? 'hard' : 'soft' }) })
+    }
+    return b
+  }
+
+  // Keyboard free-transform (§5.3): the active object, else the topmost
+  // interactive one (Deeper's frame, Rack's vessel). Respects the object's
+  // own lock flags (Etch's frame is position-only by construction) and fires
+  // the events a mouse gesture would, so per-card transform listeners stay
+  // in sync.
+  function transformArrangeTarget(motion, apply) {
+    const canvas = canvasStageRef.current?.getCanvas()
+    if (!canvas) return
+    let obj = canvas.getActiveObject()
+    if (!obj) {
+      const objects = canvas.getObjects()
+      for (let i = objects.length - 1; i >= 0 && !obj; i--) {
+        if (objects[i].selectable && objects[i].evented) obj = objects[i]
+      }
+    }
+    if (!obj || !apply(obj)) return
+    obj.setCoords()
+    obj.fire(motion)
+    canvas.fire(`object:${motion}`, { target: obj })
+    canvas.fire('object:modified', { target: obj })
+    canvas.requestRenderAll()
+  }
+
+  function arrangeBindings() {
+    const nudge = (dx, dy) => (e) =>
+      transformArrangeTarget('moving', (obj) => {
+        if (obj.lockMovementX && obj.lockMovementY) return false
+        const step = e.shiftKey ? 10 : 1
+        if (!obj.lockMovementX) obj.left += dx * step
+        if (!obj.lockMovementY) obj.top += dy * step
+        return true
+      })
+    const rotate = (dir) => (e) =>
+      transformArrangeTarget('rotating', (obj) => {
+        if (obj.lockRotation) return false
+        obj.angle = (obj.angle + dir * (e.shiftKey ? 15 : 1)) % 360
+        return true
+      })
+    const scale = (dir) => (e) =>
+      transformArrangeTarget('scaling', (obj) => {
+        if (obj.lockScalingX || obj.lockScalingY) return false
+        const f = 1 + dir * (e.shiftKey ? 0.1 : 0.02)
+        obj.scaleX *= f
+        obj.scaleY *= f
+        return true
+      })
+    return [
+      { key: 'ArrowLeft', run: nudge(-1, 0) },
+      { key: 'ArrowRight', run: nudge(1, 0) },
+      { key: 'ArrowUp', run: nudge(0, -1) },
+      { key: 'ArrowDown', run: nudge(0, 1) },
+      { code: 'Comma', run: rotate(-1) },
+      { code: 'Period', run: rotate(1) },
+      { code: 'Minus', run: scale(-1) },
+      { code: 'Equal', run: scale(1) }
+    ]
+  }
+
+  const bindings = []
+  const inPlacement = state.phase === 'PLACEMENT' || state.phase === 'STASH_RETURN'
+  const cardUp = state.phase === 'WORKING' && !!state.currentCard
+
+  // Card accents (§5.4): declared in the registry (`hotkeys`), live for the
+  // whole card — even before ready (Etch's Enter advances the frame stage).
+  if (cardUp) {
+    for (const hk of currentEntry?.hotkeys ?? []) {
+      bindings.push({
+        ...hk,
+        run: (e) =>
+          hk.run(
+            {
+              controls: cardControls,
+              setControl: (key, value) => setCardControls((prev) => ({ ...prev, [key]: value })),
+              info: cardInfo,
+              session: cardSessionRef.current,
+              canvas: canvasStageRef.current?.getCanvas()
+            },
+            e
+          )
+      })
+    }
+    // N re-rolls any `color` control — the random-hue invariant, mid-session.
+    if (currentEntry?.controls?.includes('color')) {
+      bindings.push({
+        key: 'n',
+        run: () => setCardControls((prev) => ({ ...prev, color: randomHexColor() }))
+      })
+    }
+  }
+
+  // Brush grammar. Etch has no `size` control, so its bracket accents above
+  // take the brackets' place; which mode keys exist follows the registry's
+  // control list (no per-card branches).
+  if (inPlacement && placementReady) {
+    bindings.push(
+      ...brushBindings(
+        () => maskControls,
+        (patch) => setMaskControls((prev) => ({ ...prev, ...patch })),
+        { canArrange: true, hasMode: true, hasHardness: true }
+      )
+    )
+  } else if (cardUp && cardReady && currentEntry?.controls?.includes('size')) {
+    bindings.push(
+      ...brushBindings(
+        () => cardControls,
+        (patch) => setCardControls((prev) => ({ ...prev, ...patch })),
+        {
+          canArrange: currentEntry.defaultControls?.mode === 'arrange',
+          hasMode: currentEntry.controls.includes('mode'),
+          hasHardness: currentEntry.controls.includes('hardness')
+        }
+      )
+    )
+  }
+
+  // Arrange keys, wherever a free transform is in hand. Cards without a
+  // mode control (Deeper, Rack) count as always arranging; where nothing is
+  // interactive the transform simply finds no target.
+  const arranging = inPlacement
+    ? placementReady && maskControls.mode === 'arrange'
+    : cardUp && (!currentEntry?.controls?.includes('mode') || cardControls.mode === 'arrange')
+  if (arranging) bindings.push(...arrangeBindings())
+
+  // Global (§5.1), including the one Cmd/Ctrl family we own. Enter never
+  // confirms the opening pick (deliberate); the card grids own their Enter
+  // locally (GridPicker).
+  if (inPlacement) {
+    bindings.push(
+      { key: 'z', mod: true, shift: false, run: () => maskSessionRef.current?.undo() },
+      { key: 'z', mod: true, shift: true, run: () => maskSessionRef.current?.redo() }
+    )
+  } else if (cardUp) {
+    bindings.push(
+      { key: 'z', mod: true, shift: false, run: () => cardInfo.undo?.() },
+      { key: 'z', mod: true, shift: true, run: () => cardInfo.redo?.() }
+    )
+  }
+  if (state.phase === 'WORKING' && !state.currentCard) {
+    bindings.push(
+      { code: 'Space', run: () => dispatch({ type: 'DEAL' }) },
+      { key: 'Enter', run: () => dispatch({ type: 'DEAL' }) }
+    )
+  } else if (state.phase === 'COMPLETE') {
+    bindings.push({ key: 'Enter', run: handleRestart })
+  } else if (inPlacement && placementReady) {
+    bindings.push({ key: 'Enter', run: handleEndPlacement })
+  } else if (cardUp && cardReady) {
+    bindings.push({ key: 'Enter', run: handleCommit })
+  }
+  bindings.push(
+    // Restart is destructive with no confirm — a single letter was too
+    // cheap for it (hotkeys.md §5.1); Shift+R keeps it deliberate and
+    // frees plain R for Restore.
+    { key: 'r', shift: true, run: handleRestart },
+    {
+      key: 'Escape', // back out of a selection; never ends or commits
+      run: () => {
+        const canvas = canvasStageRef.current?.getCanvas()
+        if (!canvas?.getActiveObject()) return false
+        canvas.discardActiveObject()
+        canvas.requestRenderAll()
+      }
+    }
+  )
+  bindingsRef.current = bindings
+
   return (
     <div className="editor">
       <header className="editor-header">
@@ -459,7 +628,11 @@ function Editor({ config, onBackToSetup }) {
           ← setup
         </button>
         <h1>DECK</h1>
+        <button type="button" className="link keys-button" onClick={() => setKeysOpen(true)}>
+          keys
+        </button>
       </header>
+      {keysOpen && <KeysReference onClose={() => setKeysOpen(false)} />}
 
       <main className="editor-main">
         <section className="canvas-area">

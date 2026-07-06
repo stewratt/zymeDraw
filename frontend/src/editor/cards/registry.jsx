@@ -25,6 +25,11 @@
 //     Editor awaits it and shows a generic "committing" state.
 //   - begin may await the user (Ghost's pick, Etch's frame) — End stays
 //     disabled until it resolves; begin's ctx has isCancelled for restarts.
+//   - `hotkeys`: keyboard accents [{ key|code, shift?, run(ctx, e) }]
+//     (hotkeys.md §5.4). Editor dispatches them ahead of the shared scopes
+//     (keymap.js); run gets { controls, setControl, info, session, canvas }
+//     and may return false to pass the key along. Any card with a `color`
+//     control gets N (re-roll the hue) for free, like the random opening.
 
 import { ghostCard } from './ghost.jsx'
 import { stainCard } from './stain.jsx'
@@ -32,8 +37,8 @@ import { graftControls } from './graftCardFactory.jsx'
 import { RailsTools, beginRails, cleanupRails, commitRails, updateRails } from './rails.jsx'
 import { CharTools, beginChar, cleanupChar, commitChar, updateChar } from './char.jsx'
 import { DeeperTools, beginDeeper, cleanupDeeper, commitDeeper } from './deeper.jsx'
-import { RackTools, beginRack, cleanupRack, updateRack } from './rack.jsx'
-import { EtchTools, beginEtch, cleanupEtch, commitEtch, updateEtch } from './etch.jsx'
+import { RackTools, beginRack, cleanupRack, rackHotkeys, updateRack } from './rack.jsx'
+import { EtchTools, beginEtch, cleanupEtch, commitEtch, etchHotkeys, updateEtch } from './etch.jsx'
 import {
   StampOverlay,
   StampTools,
@@ -71,8 +76,8 @@ export const cardRegistry = {
   stain: { ...graftControls, ...stainCard },
 
   stamp: {
-    controls: ['opacity', 'mode', 'size', 'hardness', 'strength'],
-    defaultControls: { opacity: 1, mode: 'arrange', size: 40, hardness: 'soft', strength: 1 },
+    controls: ['opacity', 'mode', 'size', 'hardness', 'softness', 'strength'],
+    defaultControls: { opacity: 1, mode: 'arrange', size: 40, hardness: 'soft', softness: 0.5, strength: 1 },
     Tools: StampTools,
     Overlay: StampOverlay,
     begin: beginStamp,
@@ -84,8 +89,8 @@ export const cardRegistry = {
   // ---- Stencil (image read as an alpha cutout of itself) ----
 
   rails: {
-    controls: ['color', 'opacity', 'mode', 'size', 'hardness', 'strength'],
-    defaultControls: { color: '#c43c28', opacity: 1, mode: 'arrange', size: 40, hardness: 'soft', strength: 1 },
+    controls: ['color', 'opacity', 'mode', 'size', 'hardness', 'softness', 'strength'],
+    defaultControls: { color: '#c43c28', opacity: 1, mode: 'arrange', size: 40, hardness: 'soft', softness: 0.5, strength: 1 },
     Tools: RailsTools,
     begin: beginRails,
     update: updateRails,
@@ -94,8 +99,8 @@ export const cardRegistry = {
   },
 
   char: {
-    controls: ['depth', 'opacity', 'mode', 'size', 'hardness', 'strength'],
-    defaultControls: { depth: 0.7, opacity: 1, mode: 'arrange', size: 40, hardness: 'soft', strength: 1 },
+    controls: ['depth', 'opacity', 'mode', 'size', 'hardness', 'softness', 'strength'],
+    defaultControls: { depth: 0.7, opacity: 1, mode: 'arrange', size: 40, hardness: 'soft', softness: 0.5, strength: 1 },
     Tools: CharTools,
     begin: beginChar,
     update: updateChar,
@@ -118,6 +123,7 @@ export const cardRegistry = {
     controls: ['flipX', 'flipY'],
     defaultControls: { flipX: false, flipY: false },
     Tools: RackTools,
+    hotkeys: rackHotkeys,
     begin: beginRack,
     update: updateRack,
     cleanup: cleanupRack
@@ -128,22 +134,22 @@ export const cardRegistry = {
   silt: {
     // Playtest tuning (2026-07-04): Stew works these two brushes big and
     // faint — open there instead of small and full-strength.
-    controls: ['size', 'hardness', 'intensity'],
-    defaultControls: { size: 180, hardness: 'soft', intensity: 0.15 },
+    controls: ['size', 'hardness', 'softness', 'intensity'],
+    defaultControls: { size: 180, hardness: 'soft', softness: 0.5, intensity: 0.15 },
     Tools: SiltTools,
     ...siltHooks
   },
 
   dissolve: {
-    controls: ['size', 'hardness', 'intensity', 'radius'],
-    defaultControls: { size: 180, hardness: 'soft', intensity: 0.7, radius: 10 },
+    controls: ['size', 'hardness', 'softness', 'intensity', 'radius'],
+    defaultControls: { size: 180, hardness: 'soft', softness: 0.5, intensity: 0.7, radius: 10 },
     Tools: DissolveTools,
     ...dissolveHooks
   },
 
   bruise: {
-    controls: ['size', 'hardness', 'intensity', 'h', 's', 'v'],
-    defaultControls: { size: 60, hardness: 'soft', intensity: 1, h: 0, s: 100, v: 100 },
+    controls: ['size', 'hardness', 'softness', 'intensity', 'h', 's', 'v'],
+    defaultControls: { size: 60, hardness: 'soft', softness: 0.5, intensity: 1, h: 0, s: 100, v: 100 },
     Tools: BruiseTools,
     ...bruiseHooks
   },
@@ -183,6 +189,7 @@ export const cardRegistry = {
     controls: ['color', 'pixel'],
     defaultControls: { color: '#c43c28', pixel: 1 },
     Tools: EtchTools,
+    hotkeys: etchHotkeys,
     begin: beginEtch,
     update: updateEtch,
     commit: commitEtch,
@@ -192,9 +199,9 @@ export const cardRegistry = {
   // ---- Stashed (await Stew's trained style models — see deck.js) ----
 
   transfer: {
-    controls: ['opacity', 'mode', 'size', 'hardness', 'strength'],
+    controls: ['opacity', 'mode', 'size', 'hardness', 'softness', 'strength'],
     // No arrange here — the brush is always in hand, opening on conceal.
-    defaultControls: { opacity: 1, mode: 'conceal', size: 60, hardness: 'soft', strength: 1 },
+    defaultControls: { opacity: 1, mode: 'conceal', size: 60, hardness: 'soft', softness: 0.5, strength: 1 },
     Tools: TransferTools,
     begin: beginTransfer,
     update: updateTransfer,
@@ -203,8 +210,8 @@ export const cardRegistry = {
   },
 
   shatteredTransfer: {
-    controls: ['opacity', 'mode', 'size', 'hardness', 'strength'],
-    defaultControls: { opacity: 1, mode: 'arrange', size: 40, hardness: 'soft', strength: 1 },
+    controls: ['opacity', 'mode', 'size', 'hardness', 'softness', 'strength'],
+    defaultControls: { opacity: 1, mode: 'arrange', size: 40, hardness: 'soft', softness: 0.5, strength: 1 },
     Tools: ShatteredTransferTools,
     Overlay: ShatteredTransferOverlay,
     begin: beginShatteredTransfer,

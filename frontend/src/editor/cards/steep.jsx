@@ -49,7 +49,7 @@ export function SteepTools({ controls, ready, onControlChange }) {
   return (
     <div className="brush-tools card-tools">
       <p className="hint">The piece steeps in a dye bath. Influence is steeping time.</p>
-      <label className="ctrl">
+      <label className="ctrl" title="N — new hue">
         <span className="ctrl-label">Dye</span>
         <input
           type="color"

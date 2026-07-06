@@ -45,7 +45,8 @@ export async function beginTransfer(ctx) {
   const controlsRef = { current: ctx.controls }
   const session = createMaskSession(ctx.canvas, [img], {
     getControls: () => controlsRef.current,
-    onHistoryChange: (canUndo, canRedo) => ctx.report({ canUndo, canRedo })
+    onHistoryChange: (canUndo, canRedo) => ctx.report({ canUndo, canRedo }),
+    onSizeChange: (size) => ctx.setControl('size', size)
   })
   // Nothing to arrange — the brush stays in hand for the whole card.
   session.setActive(true)
@@ -101,7 +102,7 @@ export function TransferTools({ controls, info, ready, onControlChange }) {
   return (
     <div className="brush-tools card-tools">
       <p className="hint">
-        The whole piece has been redrawn. Conceal to cut the original back
+        The whole piece has been redrawn. Erase to cut the original back
         through; influence sets how strongly the redraw sits.
       </p>
       <label className="ctrl">

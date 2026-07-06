@@ -11,6 +11,13 @@
 import * as fabric from 'fabric'
 import { showMaster } from '../masterRaster.js'
 
+// Keyboard accents (hotkeys.md §5.4), dispatched generically via the
+// registry's `hotkeys` field: F / Shift+F mirror the two flip buttons.
+export const rackHotkeys = [
+  { key: 'f', shift: false, run: ({ controls, setControl }) => setControl('flipX', !controls.flipX) },
+  { key: 'f', shift: true, run: ({ controls, setControl }) => setControl('flipY', !controls.flipY) }
+]
+
 export function beginRack(ctx) {
   const { canvas, master } = ctx
   canvas.backgroundImage = null
@@ -52,6 +59,7 @@ export function RackTools({ controls, ready, onControlChange }) {
         <button
           type="button"
           className={controls.flipX ? 'active' : ''}
+          title="F"
           onClick={() => onControlChange('flipX', !controls.flipX)}
         >
           Flip H
@@ -59,6 +67,7 @@ export function RackTools({ controls, ready, onControlChange }) {
         <button
           type="button"
           className={controls.flipY ? 'active' : ''}
+          title="Shift+F"
           onClick={() => onControlChange('flipY', !controls.flipY)}
         >
           Flip V

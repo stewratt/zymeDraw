@@ -58,7 +58,8 @@ export async function beginRails(ctx) {
   const controlsRef = { current: ctx.controls }
   const session = createMaskSession(ctx.canvas, [img], {
     getControls: () => controlsRef.current,
-    onHistoryChange: (canUndo, canRedo) => ctx.report({ canUndo, canRedo })
+    onHistoryChange: (canUndo, canRedo) => ctx.report({ canUndo, canRedo }),
+    onSizeChange: (size) => ctx.setControl('size', size)
   })
   ctx.report({
     stage: 'work',
@@ -109,7 +110,7 @@ export function RailsTools({ controls, info, ready, onControlChange }) {
         fade them, work into them with the brush.
       </p>
       <ArrangeMaskControls controls={controls} info={info} onControlChange={onControlChange} />
-      <label className="ctrl">
+      <label className="ctrl" title="N — new hue">
         <span className="ctrl-label">Color</span>
         <input
           type="color"
