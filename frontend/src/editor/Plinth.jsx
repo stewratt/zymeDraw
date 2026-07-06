@@ -32,14 +32,14 @@ export default function Plinth({ master }) {
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100)
 
-    // The artwork face is unlit so the piece shows exactly as exported —
-    // no lighting tint. The edges are lit grey (a step above the app
-    // background) so the box shades subtly as it turns.
+    // Everything is unlit: the artwork face shows exactly as exported (no
+    // lighting tint), and the edges hold a constant grey — the UI's --fill,
+    // the primary-button colour — from every angle. No lights in the scene.
     const texture = new THREE.CanvasTexture(master)
     texture.colorSpace = THREE.SRGBColorSpace
     texture.anisotropy = renderer.capabilities.getMaxAnisotropy()
 
-    const edge = new THREE.MeshLambertMaterial({ color: 0x2e2e2e })
+    const edge = new THREE.MeshBasicMaterial({ color: 0x333333 })
     const front = new THREE.MeshBasicMaterial({ map: texture })
     // BoxGeometry material order: +x, -x, +y, -y, +z (front), -z (back).
     const panel = new THREE.Mesh(
@@ -47,11 +47,6 @@ export default function Plinth({ master }) {
       [edge, edge, edge, edge, front, edge]
     )
     scene.add(panel)
-
-    scene.add(new THREE.AmbientLight(0xffffff, 0.7))
-    const key = new THREE.DirectionalLight(0xffffff, 0.8)
-    key.position.set(2, 3, 4)
-    scene.add(key)
 
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true

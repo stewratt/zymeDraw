@@ -715,41 +715,25 @@ deck or card changes.
 tile scale since card faces are known quantities, but *image* picks are
 always judged-by-eye and deserve maximum area.)
 
-### 11.2 The plinth — a three.js viewer for the finished piece
+### 11.2 The plinth — the finished piece as an object *(shipped)*
 
-> **Status: built (2026-07-06, on `v4`), awaiting browser verification.**
-> Went straight to three.js (skipped the CSS-3D spike — real orbit/zoom
-> was the point). `editor/Plinth.jsx`, lazy-loaded so three's ~530 kB is
-> its own chunk that only downloads at the Coda. It renders automatically
-> over the canvas area during COMPLETE (no button needed — the flat canvas
-> is beneath it anyway): unlit artwork face at full master resolution,
-> lit `#2e2e2e` edges, drag-orbit / scroll-zoom / right-drag-pan. Edge
-> wrap and the proof-sheet-on-the-back idea remain future notes below.
+> **Status: SHIPPED — verified by Stew 2026-07-06. Out of the plan;
+> kept here as the record.** "Adds such a nice reward at the end."
 
-Stew's concept: when the piece is complete, offer a viewer where the final
-composition sits on a **floating panel with slight physical depth** — a
-stretched-canvas / mounted-board look — in a three.js scene. You grab it
-and orbit; you zoom in close. Not a mechanic, not part of the session: a
-way to *behold* the thing you made, the way you'd pick up a finished print
-and tilt it in the light.
+What shipped: when the Coda lands, the canvas area becomes a three.js
+scene where the piece floats as a shallow 4:5 panel — the full-res master
+as an unlit front face (displays exactly as exported), flat `#333333`
+edges (the UI's `--fill`, matching the primary buttons), no lights.
+Drag-orbit, scroll-zoom, right-drag-pan. `editor/Plinth.jsx`, lazy-loaded
+via `React.lazy` so three's ~530 kB chunk only downloads at the Coda; it
+overlays the still-mounted working canvas, so restart needed no changes.
+Went straight to three.js (skipped the planned CSS-3D spike — real
+orbit/zoom was the point) and skipped the "view the piece" button (it
+just appears — the flat canvas beneath was redundant anyway).
 
-Notes for when this gets built:
+Still-future ideas, not scheduled:
 
-- **Tone-safe by nature** — galleries, plinths, and racking a canvas to
-  the light are pure studio register. Keep materials matte and the scene
-  dark/neutral (the existing UI palette); no gloss, no skybox, no
-  showroom floor.
-- **The master is the texture** — 2400×3000 is a perfectly reasonable
-  texture size; the zoomed-in inspection is genuinely full-res. Slight
-  edge wrap (the image continuing around the panel's ~2–3% depth, like a
-  gallery wrap) would sell the object-ness cheaply.
-- **Where it lives:** the COMPLETE phase, next to the export — a `view
-  the piece` button opening a full-canvas-area viewer (or the whole
-  window). Orbit + zoom only; no editing affordances whatsoever.
-- **Dependency note:** this adds `three` to a codebase that deliberately
-  has few dependencies — worth it only when the feature is actually
-  wanted. A cheaper spike exists (CSS 3D transform on a div with the
-  export image + drag-to-tilt), which would prove the *feel* before
-  committing to a real renderer. If the states cache (§9) exists by
-  then, a stretch idea: flip the panel over to find the proof sheet
-  printed on the back.
+- **Gallery-wrap edges** — the image continuing around the panel's depth
+  would sell the object-ness cheaply.
+- **Proof sheet on the back** — once the states cache (§9) exists, flip
+  the panel over to find the session's states printed on the reverse.

@@ -77,6 +77,13 @@ verification):
   death-filtering so the UI cannot leak them.
 - **Card zoom** — `CardZoom.jsx`: click any face to enlarge; Esc backs
   out one level at a time (zoom, then sheet).
+- **Card grids fill the canvas area** (notes §11.1) — one var-driven
+  `.grid-thumbs` layout (`--cols`/`--rows`); Ghost/Stain 4×2, Stamp 3×2.
+- **The plinth** (notes §11.2) — **SHIPPED, verified 2026-07-06**: at the
+  Coda the canvas area becomes a three.js scene, the piece an orbitable
+  shallow panel (unlit full-res master face, flat `#333333` edges).
+  `editor/Plinth.jsx`, lazy-loaded so `three` (~530 kB, the one big
+  dependency) only downloads when a piece finishes. Out of the plan.
 
 **Policy locked (v4_design_notes.md §2): set-knowledge is free;
 order-knowledge and order-control are never ambient — the deal stays
