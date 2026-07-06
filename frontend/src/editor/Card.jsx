@@ -12,7 +12,7 @@
 
 import { getCardArt } from './cardArt.js'
 
-function Card({ id, label, kind = 'mod', size = 'panel', count, dimmed, flip, onClick }) {
+function Card({ id, label, kind = 'mod', size = 'panel', count, dimmed, flip, onClick, title }) {
   const art = getCardArt(id)
   const classes = [
     'card',
@@ -28,7 +28,7 @@ function Card({ id, label, kind = 'mod', size = 'panel', count, dimmed, flip, on
   return (
     <div
       className={classes}
-      title={onClick ? 'View larger' : undefined}
+      title={onClick ? (title ?? 'View larger') : undefined}
       onClick={
         onClick &&
         ((e) => {

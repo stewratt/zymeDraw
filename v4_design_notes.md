@@ -159,7 +159,11 @@ Each with: what it does, what it costs the design, tone-register name
 candidates, implementation weight against the current architecture, and a
 verdict. Ordered roughly by conviction.
 
-### 5.1 The tutor — pick your next card *(Stew's idea — build it)*
+### 5.1 The tutor — pick your next card *(Stew's idea — BUILT 2026-07-06 as **Cull**)*
+
+> Build record: `PICK_FROM_DECK` in the reducer; `cards/cull.jsx`; the
+> spent view shows Cull tagged *culled*, then the card it took (decided
+> 2026-07-06 — the choice is part of the record).
 
 **What:** A card that, when dealt, opens the remains (the exact grid the
 overlay already renders) and lets you take any remaining mod — that card
@@ -192,7 +196,14 @@ from `state.deck`, set as `currentCard` — pure, ~10 lines), one card file
 whose `begin` awaits the user (the Ghost pattern), reusing the overlay's
 remains grid as its Overlay component. The v4 work already built 90% of it.
 
-### 5.2 Skim — look at the top, keep or bury *(build it)*
+### 5.2 Skim — look at the top, keep or bury *(BUILT 2026-07-06)*
+
+> Build record: `SKIM` / `SKIM_KEEP` / `SKIM_BURY` in the reducer;
+> `cards/skim.jsx`. Decisions 2026-07-06: **Skim sees everything** (the
+> recommendation below stands); **bury is a random reinsert**, not
+> bottom-of-deck — bottom would grant lasting order-knowledge ("it comes
+> last"), violating §2. The death shuffle preserves a just-kept top card
+> so the "your next deal" promise survives the Act II boundary.
 
 **What:** A card (or possibly a standing once-per-act right — start as a
 card) that reveals the top card of the deck, then offers one choice: leave
@@ -658,12 +669,16 @@ spends against that. Ship in small doses, playtest each dose, and be ready
 to *not* ship the later waves if the deck starts feeling like a menu.
 
 1. **Wave 1 — the state cache + states grid (§9), capture-and-view only.**
+   *(SHIPPED 2026-07-06 — simplified in review: the states live on the
+   plinth, C cycles them; no grid in the deck overlay. Capture is at every
+   bake as specced, so the §9.3 pull decision stays open.)*
    Moved to the front: it's Editor-side, zero philosophical risk at
    view-only scope, it answers the splash-over tension better than any
    mechanic (§3c), and every session it runs builds the evidence for the
    §9.3 pull decision. Decide mid-state *pulling* after living with the
    grid for a while.
-2. **Wave 2 — Cull + Skim (§5.1, §5.2).** As before: the overlay cashed in,
+2. **Wave 2 — Cull + Skim (§5.1, §5.2).** *(BUILT 2026-07-06 — see the
+   build records in §5.1/§5.2.)* As before: the overlay cashed in,
    one copy each, light builds.
 3. **Wave 3 — the descent experiment (§8.2 hybrid), alone.** 1 Deeper dealt
    + 2 in reserve, descents dilute the deck. This is the deepest structural

@@ -253,6 +253,39 @@
   gap: 12px;
 }
 
+/* Cull (the tutor): the remains laid out face up in the canvas area. Card
+   faces are known quantities, so tile scale is enough (v4 notes §11.1);
+   the chosen one takes the pick green, same signal as the opening grid. */
+.cull-row {
+  flex: 1;
+  align-content: start;
+  overflow-y: auto;
+  padding-top: 6px;
+}
+.cull-row .card--clickable {
+  cursor: pointer; /* a take, not a zoom */
+}
+.cull-row .deck-cell.chosen .card {
+  border-color: #7da869;
+}
+
+/* Skim (the scry): one card, center stage, one choice. */
+.skim-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+.skim-choices {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 .deck-panel h2 {
   font-size: 0.75rem;
   font-weight: 400;
@@ -317,6 +350,11 @@
    height-led — the name below still fits on screen. */
 .card--zoom {
   width: min(440px, calc((100vh - 140px) * 745 / 1040), calc(100vw - 80px));
+}
+/* The revealed card (Skim): center stage in the canvas area, with room
+   left for the hint and the choice below it. */
+.card--reveal {
+  width: min(300px, calc((100vh - 320px) * 745 / 1040));
 }
 .card--death {
   border-color: var(--border-strong);

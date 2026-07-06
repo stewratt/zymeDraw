@@ -42,7 +42,10 @@ export const MOD_CARDS = [
   { id: 'steep', label: 'Steep', copies: 1 }, // Wash × Sink
   { id: 'turn', label: 'Turn', copies: 1 }, // Wash (hue)
   { id: 'cure', label: 'Cure', copies: 1 }, // Wash × Cure
-  { id: 'etch', label: 'Subliminal Etch', copies: 1 } // Pixel glyph, hidden at the grain
+  { id: 'etch', label: 'Subliminal Etch', copies: 1 }, // Pixel glyph, hidden at the grain
+  // The deck itself (v4 notes §5.1–5.2): order-control, dealt by chance.
+  { id: 'cull', label: 'Cull', copies: 1 }, // Tutor: the remains open, take one
+  { id: 'skim', label: 'Skim', copies: 1 } // Scry: see the top, keep or bury
   // Stashed until Stew trains his own style model — the demo ONNX styles
   // don't look good enough to ship. Card files, registry entries, and the
   // /style sidecar endpoint all stay in place; re-add these lines to deal
@@ -90,6 +93,7 @@ export function initialState() {
     stashReturned: false,
     deathShuffled: false,
     currentCard: null,
+    skim: null, // Skim's round: null | { card, choice: null|'kept'|'buried' }
     history: []
   }
 }
@@ -169,6 +173,63 @@ export function deckReducer(state, action) {
       return { ...state, deck, currentCard: card }
     }
 
+    case 'PICK_FROM_DECK': {
+      // Cull, the tutor (v4 notes §5.1): while Cull is in hand the remains
+      // are open, and the chosen mod becomes this round — Cull itself never
+      // touches the canvas. Only mods are findable, so the Coda can never
+      // be picked even if the UI misbehaved. The choice joins the record:
+      // spentCards shows Cull (culled) and then the card it took.
+      if (state.phase !== 'WORKING' || state.currentCard?.id !== 'cull') {
+        return state
+      }
+      const i = state.deck.findIndex(
+        (c) => c.kind === 'mod' && c.id === action.cardId
+      )
+      if (i === -1) return state
+      const deck = [...state.deck]
+      const [card] = deck.splice(i, 1)
+      return {
+        ...state,
+        deck,
+        currentCard: card,
+        history: [
+          ...state.history,
+          { event: 'cull', cardId: card.id, ts: Date.now() }
+        ]
+      }
+    }
+
+    // Skim, the scry (v4 notes §5.2): the smallest unit of order-knowledge
+    // and order-control, sold together as one dealt card. It sees
+    // EVERYTHING on top — the Coda included, once armed; that is the paid,
+    // one-card exception to "death timing stays secret" (decided
+    // 2026-07-06). The reveal lives in state.skim only for the round; the
+    // UI shows it while Skim is in hand and COMMIT clears it.
+    case 'SKIM': {
+      if (state.phase !== 'WORKING' || state.currentCard?.id !== 'skim') {
+        return state
+      }
+      if (state.skim) return state
+      return { ...state, skim: { card: state.deck[0] ?? null, choice: null } }
+    }
+
+    case 'SKIM_KEEP': {
+      // Leave it where it lies — the next deal. The deck doesn't move.
+      if (!state.skim?.card || state.skim.choice) return state
+      return { ...state, skim: { ...state.skim, choice: 'kept' } }
+    }
+
+    case 'SKIM_BURY': {
+      // Slipped back in somewhere random, NOT the bottom — bottom would
+      // grant lasting order-knowledge ("it comes last"), which the §2
+      // policy forbids. The knowledge you bought expires as you bury.
+      if (!state.skim?.card || state.skim.choice) return state
+      const [top, ...rest] = state.deck
+      const at = Math.floor(Math.random() * (rest.length + 1))
+      rest.splice(at, 0, top)
+      return { ...state, deck: rest, skim: { ...state.skim, choice: 'buried' } }
+    }
+
     case 'COMMIT': {
       if (state.phase !== 'WORKING' || !state.currentCard) return state
       const card = state.currentCard
@@ -178,6 +239,7 @@ export function deckReducer(state, action) {
         ...state,
         roundsDealt,
         currentCard: null,
+        skim: null,
         history: [
           ...state.history,
           { event: 'card', cardId: card.id, ts: Date.now() }
@@ -199,6 +261,16 @@ export function deckReducer(state, action) {
       const actsDone =
         roundsDealt >= TUNING.actOneRounds + TUNING.actTwoRounds
       if (!state.deathShuffled && (actsDone || next.deck.length === 0)) {
+        // The death shuffle must not break Skim's promise: a card just
+        // kept on top stays on top — the deaths join the deck behind it.
+        if (state.skim?.choice === 'kept' && next.deck.length > 0) {
+          const [kept, ...rest] = next.deck
+          return {
+            ...next,
+            deck: [kept, ...shuffle([...rest, ...deathCards()])],
+            deathShuffled: true
+          }
+        }
         return {
           ...next,
           deck: shuffle([...next.deck, ...deathCards()]),
@@ -226,10 +298,15 @@ const CARD_LABELS = Object.fromEntries(
 
 // The cards spent so far, in dealt order — the sequence view. Includes the
 // Coda once the session is COMPLETE (it already happened); never the card
-// still in hand (it hasn't been committed).
+// still in hand (it hasn't been committed). A Cull round reads as two
+// entries: Cull tagged "culled", then the card it took.
 export function spentCards(state) {
   const out = []
   for (const ev of state.history) {
+    if (ev.event === 'cull') {
+      out.push({ id: 'cull', label: CARD_LABELS.cull, kind: 'mod', tag: 'culled' })
+      continue
+    }
     if (ev.event !== 'card' && ev.event !== 'death') continue
     out.push({
       id: ev.cardId,

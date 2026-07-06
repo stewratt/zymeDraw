@@ -20,11 +20,16 @@
 //
 // Optional shape extensions Editor applies generically:
 //   - `Overlay`: a component rendered over the canvas area while the card
-//     is live (the grid picks). Same props as Tools.
+//     is live (the grid picks). Same props as Tools, plus `deckView`
+//     (deck.js selector outputs only — the legibility policy holds) and
+//     `onDeckAction` (a fenced dispatch for the deck-facing cards' actions:
+//     Cull's pick).
 //   - commit may be async (Deeper awaits the sidecar's detail restore);
 //     Editor awaits it and shows a generic "committing" state.
 //   - begin may await the user (Ghost's pick, Etch's frame) — End stays
 //     disabled until it resolves; begin's ctx has isCancelled for restarts.
+//   - `skipBake`: the card never touches the canvas (Cull), so End skips
+//     the universal bake and the state capture — nothing changed.
 //   - `hotkeys`: keyboard accents [{ key|code, shift?, run(ctx, e) }]
 //     (hotkeys.md §5.4). Editor dispatches them ahead of the shared scopes
 //     (keymap.js); run gets { controls, setControl, info, session, canvas }
@@ -47,6 +52,8 @@ import {
   commitStamp,
   updateStamp
 } from './stamp.jsx'
+import { CullOverlay, CullTools, beginCull } from './cull.jsx'
+import { SkimOverlay, SkimTools, beginSkim } from './skim.jsx'
 import { SiltTools, siltHooks } from './silt.jsx'
 import { DissolveTools, dissolveHooks } from './dissolve.jsx'
 import { BruiseTools, bruiseHooks } from './bruise.jsx'
@@ -181,6 +188,26 @@ export const cardRegistry = {
     begin: beginCure,
     update: updateCure,
     cleanup: cleanupCure
+  },
+
+  // ---- The deck itself (v4 Wave 2: order-control, dealt by chance) ----
+
+  cull: {
+    controls: [],
+    defaultControls: {},
+    Tools: CullTools,
+    Overlay: CullOverlay,
+    begin: beginCull,
+    skipBake: true
+  },
+
+  skim: {
+    controls: [],
+    defaultControls: {},
+    Tools: SkimTools,
+    Overlay: SkimOverlay,
+    begin: beginSkim,
+    skipBake: true
   },
 
   // ---- Etch (pixel glyph at the master's grain) ----

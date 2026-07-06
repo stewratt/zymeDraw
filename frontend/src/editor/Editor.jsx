@@ -4,7 +4,7 @@ import DeckPanel from './DeckPanel.jsx'
 import GridPicker from './GridPicker.jsx'
 import KeysReference from './KeysReference.jsx'
 import HistoryOverlay from './HistoryOverlay.jsx'
-import { TUNING, deckReducer, initialState } from './deck.js'
+import { TUNING, deckReducer, initialState, remainingCounts } from './deck.js'
 import { cardRegistry } from './cards/registry.jsx'
 import { placeImages, layerThumbUrl } from './placement.js'
 import { sampleImages } from './sampling.js'
@@ -51,6 +51,11 @@ function randomizeColors(defaults) {
   }
   return out
 }
+
+// The deck actions a card's Overlay may fire (v4 Wave 2: Cull, Skim). The
+// reducer's legality guards are the real gate — this fence just means no
+// card ever holds raw dispatch.
+const CARD_DECK_ACTIONS = new Set(['PICK_FROM_DECK', 'SKIM', 'SKIM_KEEP', 'SKIM_BURY'])
 
 // Editor is a generic dispatcher. It doesn't know what any card does — it
 // looks up the current card in cardRegistry and calls
@@ -358,8 +363,12 @@ function Editor({ config, onBackToSetup }) {
             session: cardSessionRef.current
           })
         }
-        masterRef.current = bake(canvas)
-        captureState(masterRef.current, `after ${state.currentCard.label}`)
+        // Cards that never touch the canvas (Cull's empty-remains round)
+        // skip the bake and the state capture — nothing changed.
+        if (!entry?.skipBake) {
+          masterRef.current = bake(canvas)
+          captureState(masterRef.current, `after ${state.currentCard.label}`)
+        }
       }
     } finally {
       committingRef.current = false
@@ -439,6 +448,15 @@ function Editor({ config, onBackToSetup }) {
   // Cards can declare a canvas-area overlay (Ghost's grid pick) — rendered
   // generically, same props as Tools.
   const CardOverlay = state.phase === 'WORKING' ? currentEntry?.Overlay : null
+
+  // What a deck-facing card may know and do (v4 Wave 2). deckView carries
+  // selector outputs only — the legibility policy stays enforced in deck.js.
+  // state.skim is the one raw field: the paid exception, shown only while
+  // Skim itself is in hand (the reducer clears it on COMMIT).
+  const deckView = { remaining: remainingCounts(state), skim: state.skim }
+  function handleDeckAction(action) {
+    if (CARD_DECK_ACTIONS.has(action.type)) dispatch(action)
+  }
 
   // ---- the hotkey map (hotkeys.md §5) ----
   // Rebuilt each render, ordered most-specific-first: card accents → brush
@@ -683,6 +701,8 @@ function Editor({ config, onBackToSetup }) {
               info={cardInfo}
               ready={cardReady}
               onControlChange={handleControlChange}
+              deckView={deckView}
+              onDeckAction={handleDeckAction}
             />
           )}
           {/* Finished: the piece floats as a 3d panel over the (still

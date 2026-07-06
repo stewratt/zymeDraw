@@ -36,9 +36,10 @@
   auto-deal experiment was tried and reverted — **the two-press rhythm
   (End, then Deal) is the design; don't re-remove the Deal panel.**
 
-**The deck today: 18 mod cards + 3 Coda** (`MOD_CARDS` in `deck.js`.
+**The deck today: 20 mod cards + 3 Coda** (`MOD_CARDS` in `deck.js`.
 Rack and the two style-transfer cards are retired/stashed — files and
-registry entries stay, deck lines are commented out).
+registry entries stay, deck lines are commented out. Cull + Skim joined
+2026-07-06, one copy each — v4 Wave 2).
 
 **Style-transfer (stashed 2026-07-03):** fast-neural-style shipped end to
 end (sidecar `/style` endpoint, committed demo models, Transfer +
@@ -94,6 +95,20 @@ verification):
   (`hotkeys.md` §9 item 8). Capture-and-view only — no mid-state export;
   §9.3's *pull* decision stays open, and the capture makes it a one-day
   build later.
+- **Cull + Skim** (notes §5.1–5.2, Wave 2 — built 2026-07-06, awaiting
+  browser verification): the overlay cashed in, one copy each. **Cull**
+  (the tutor): the remains laid face up, take one — it becomes the round;
+  the record shows Cull tagged *culled* then the taken card
+  (`PICK_FROM_DECK` in the reducer; `cards/cull.jsx`). **Skim** (the
+  scry): turn the top card — it sees *everything*, the armed Coda included
+  (the paid exception, decided 2026-07-06) — then keep it (your next deal)
+  or bury it (random reinsert, NOT bottom — bottom would grant lasting
+  order-knowledge). The death shuffle preserves a just-kept top card.
+  Generic machinery added for both: Overlay props `deckView` (selector
+  outputs only) + `onDeckAction` (fenced dispatch), and registry
+  `skipBake` (no canvas touched → no bake, no state capture). The pure
+  reducer paths have a 20-check headless smoke script (session scratch;
+  not committed).
 
 **Policy locked (v4_design_notes.md §2): set-knowledge is free;
 order-knowledge and order-control are never ambient — the deal stays
@@ -102,11 +117,12 @@ mechanics (Skim, Cull).
 
 **Next actions, in order (the notes' §10):**
 
-1. **Wave 2 — Cull + Skim** (§5.1–5.2): the tutor and the scry card,
-   one copy each.
-2. **Wave 3 — the descent experiment** (§8.2): 1 Deeper dealt + 2 in
+1. Stew verifies Wave 2 (Cull + Skim) in the browser.
+2. **Playtest question** (notes §7.2): does the splash-over tension
+   survive now that remains-knowledge + occasional order-control exist?
+3. **Wave 3 — the descent experiment** (§8.2): 1 Deeper dealt + 2 in
    reserve, descents dilute the deck; isolate its playtest.
-3. Later, after living with the states: decide mid-state *pulling* (the
+4. Later, after living with the states: decide mid-state *pulling* (the
    printmaking "states of the plate" question, notes §9.3).
 
 Still open from v3: suits visible or backstage (§10.1), Echo (§7.3),

@@ -58,6 +58,7 @@ export default function HistoryOverlay({ state, onClose }) {
                     onClick={() => setZoom({ id: c.id, label: c.label, kind: c.kind })}
                   />
                   <span className="deck-cell-name">{c.label}</span>
+                  {c.tag && <span className="deck-cell-tag">{c.tag}</span>}
                 </div>
               ))}
               {inHand && (
