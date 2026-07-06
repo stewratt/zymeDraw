@@ -21,9 +21,14 @@
 // Optional shape extensions Editor applies generically:
 //   - `Overlay`: a component rendered over the canvas area while the card
 //     is live (the grid picks). Same props as Tools, plus `deckView`
-//     (deck.js selector outputs only — the legibility policy holds) and
-//     `onDeckAction` (a fenced dispatch for the deck-facing cards' actions:
-//     Cull's pick).
+//     (deck.js selector outputs only — the legibility policy holds),
+//     `onDeckAction` (a fenced dispatch for the deck-facing cards'
+//     actions: Cull's pick, Skim's choices), and `workUrl` (the latest
+//     committed state as an image — overlays cover the canvas, so a card
+//     whose decision is about the piece shows the piece).
+//   - `randomize`: (defaults) => defaults, applied when the card is dealt
+//     — for cards that open on a random setting (Bruise's hue), beyond
+//     the automatic `color` re-roll.
 //   - commit may be async (Deeper awaits the sidecar's detail restore);
 //     Editor awaits it and shows a generic "committing" state.
 //   - begin may await the user (Ghost's pick, Etch's frame) — End stays
@@ -141,8 +146,9 @@ export const cardRegistry = {
   silt: {
     // Playtest tuning (2026-07-04): Stew works these two brushes big and
     // faint — open there instead of small and full-strength.
+    // (2026-07-06): influence opens at 30% — 15% was too faint a start.
     controls: ['size', 'hardness', 'softness', 'intensity'],
-    defaultControls: { size: 180, hardness: 'soft', softness: 0.5, intensity: 0.15 },
+    defaultControls: { size: 180, hardness: 'soft', softness: 0.5, intensity: 0.3 },
     Tools: SiltTools,
     ...siltHooks
   },
@@ -157,6 +163,9 @@ export const cardRegistry = {
   bruise: {
     controls: ['size', 'hardness', 'softness', 'intensity', 'h', 's', 'v'],
     defaultControls: { size: 60, hardness: 'soft', softness: 0.5, intensity: 1, h: 0, s: 100, v: 100 },
+    // Playtest tuning (2026-07-06): open on a small random hue shift
+    // (±20°) so the bruise never starts on the same tint twice.
+    randomize: (d) => ({ ...d, h: Math.round(Math.random() * 40) - 20 }),
     Tools: BruiseTools,
     ...bruiseHooks
   },

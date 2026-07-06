@@ -22,7 +22,7 @@ export async function beginCull(ctx) {
   return null
 }
 
-export function CullOverlay({ info, deckView, onDeckAction }) {
+export function CullOverlay({ info, deckView, onDeckAction, workUrl }) {
   const remaining = deckView?.remaining ?? []
   const [chosen, setChosen] = useState(null) // a card id, or null
 
@@ -62,20 +62,30 @@ export function CullOverlay({ info, deckView, onDeckAction }) {
       </div>
       {!empty && (
         <>
-          <div className="deck-row cull-row">
-            {remaining.map((c) => (
-              <div className={`deck-cell${chosen === c.id ? ' chosen' : ''}`} key={c.id}>
-                <Card
-                  id={c.id}
-                  label={c.label}
-                  size="tile"
-                  count={c.count}
-                  title="Take it"
-                  onClick={() => setChosen((cur) => (cur === c.id ? null : c.id))}
-                />
-                <span className="deck-cell-name">{c.label}</span>
-              </div>
-            ))}
+          {/* The work beside the choice — you're picking FOR the piece as
+              it stands, so it stands right there. */}
+          <div className="cull-body">
+            {workUrl && (
+              <figure className="work-glance">
+                <img src={workUrl} alt="The work as it stands" />
+                <figcaption className="hint">the work, as it stands</figcaption>
+              </figure>
+            )}
+            <div className="deck-row cull-row">
+              {remaining.map((c) => (
+                <div className={`deck-cell${chosen === c.id ? ' chosen' : ''}`} key={c.id}>
+                  <Card
+                    id={c.id}
+                    label={c.label}
+                    size="tile"
+                    count={c.count}
+                    title="Take it"
+                    onClick={() => setChosen((cur) => (cur === c.id ? null : c.id))}
+                  />
+                  <span className="deck-cell-name">{c.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
           <div className="grid-picker-foot">
             <span className="hint">{chosen ? 'take it — or click again to put it back' : 'take one'}</span>

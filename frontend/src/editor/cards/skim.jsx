@@ -20,7 +20,7 @@ export async function beginSkim(ctx) {
   return null
 }
 
-export function SkimOverlay({ info, deckView, onDeckAction }) {
+export function SkimOverlay({ info, deckView, onDeckAction, workUrl }) {
   const skim = deckView?.skim ?? null
 
   const choose = (type) => {
@@ -77,7 +77,17 @@ export function SkimOverlay({ info, deckView, onDeckAction }) {
       <div className="grid-picker-head">
         <h2>SKIM</h2>
       </div>
-      <div className="skim-stage">{stage}</div>
+      {/* The work beside the choice — keep or bury is a question about
+          what the piece needs next. */}
+      <div className="skim-body">
+        {workUrl && (
+          <figure className="work-glance">
+            <img src={workUrl} alt="The work as it stands" />
+            <figcaption className="hint">the work, as it stands</figcaption>
+          </figure>
+        )}
+        <div className="skim-stage">{stage}</div>
+      </div>
     </div>
   )
 }
@@ -85,7 +95,7 @@ export function SkimOverlay({ info, deckView, onDeckAction }) {
 export function SkimTools({ ready }) {
   return (
     <span className="hint">
-      {ready ? 'End the round.' : 'The top of the deck is on the canvas. Leave it or bury it.'}
+      {ready ? 'End the round.' : 'On the canvas: turn the top card, then leave it or bury it.'}
     </span>
   )
 }

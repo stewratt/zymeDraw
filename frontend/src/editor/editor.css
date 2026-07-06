@@ -253,9 +253,39 @@
   gap: 12px;
 }
 
+/* The work, glanced at while choosing (Cull, Skim): the deck-facing cards
+   cover the canvas, so the piece stands beside the decision instead.
+   Width-driven: the figure takes a fixed share of the row and the image
+   follows at 4:5 (the max-height is a short-window backstop). */
+.work-glance {
+  margin: 0;
+  flex: none;
+  width: min(300px, 32%);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+}
+.work-glance img {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  max-height: calc(100vh - 320px);
+  object-fit: cover;
+  border: 1px solid var(--border-strong);
+}
+.work-glance .hint {
+  text-align: center;
+}
+
 /* Cull (the tutor): the remains laid out face up in the canvas area. Card
    faces are known quantities, so tile scale is enough (v4 notes §11.1);
    the chosen one takes the pick green, same signal as the opening grid. */
+.cull-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 24px;
+}
 .cull-row {
   flex: 1;
   align-content: start;
@@ -269,7 +299,13 @@
   border-color: #7da869;
 }
 
-/* Skim (the scry): one card, center stage, one choice. */
+/* Skim (the scry): one card, center stage, one choice — the work beside. */
+.skim-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 24px;
+}
 .skim-stage {
   flex: 1;
   min-height: 0;

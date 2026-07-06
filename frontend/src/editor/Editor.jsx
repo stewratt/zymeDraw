@@ -277,7 +277,11 @@ function Editor({ config, onBackToSetup }) {
     const canvas = canvasStageRef.current?.getCanvas()
     if (!canvas) return
 
-    const defaults = randomizeColors(entry.defaultControls || {})
+    // Fresh defaults per deal: the color invariant first, then the card's
+    // own randomize hook if it declares one (Bruise opens on a small
+    // random hue shift).
+    let defaults = randomizeColors(entry.defaultControls || {})
+    if (entry.randomize) defaults = entry.randomize(defaults)
     setCardControls(defaults)
     setCardInfo({})
     setCardReady(false)
@@ -703,6 +707,7 @@ function Editor({ config, onBackToSetup }) {
               onControlChange={handleControlChange}
               deckView={deckView}
               onDeckAction={handleDeckAction}
+              workUrl={states.at(-1)?.url}
             />
           )}
           {/* Finished: the piece floats as a 3d panel over the (still
