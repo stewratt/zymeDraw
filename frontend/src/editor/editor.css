@@ -140,22 +140,14 @@
   margin: 0;
   line-height: 1.5;
 }
-.grid-thumbs {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 8px;
-  align-content: start;
-  padding: 2px;
-}
-/* The opening's fixed 6×4 deal fills the canvas area — every image visible,
-   never a scrollbar, and every cell a true square at any window size. The
-   wrapper is a size container; each cell is the largest square where 6
-   columns fit the width AND 4 rows fit the height (gaps subtracted), and
-   the grid centers in whatever space is left over.
-   Card grids (Ghost, Stamp) keep the square auto-fill layout above. */
+/* Every image grid fills the canvas area — the images ARE the decision, so
+   they get all the space there is: every image visible, never a scrollbar,
+   every cell a true square at any window size. The wrapper is a size
+   container; each cell is the largest square where --cols columns fit the
+   width AND --rows rows fit the height (gaps subtracted), and the grid
+   centers in whatever space is left over. Consumers set --cols/--rows
+   inline: the opening is a fixed 6×4; card grids compute a shape from
+   their image count (GridPicker.jsx, gridShape). */
 .grid-thumbs-fit {
   flex: 1;
   min-height: 0;
@@ -165,13 +157,16 @@
   align-items: center;
   justify-content: center;
 }
-.grid-thumbs.opening {
-  --cell: min((100cqw - 5 * 8px) / 6, (100cqh - 3 * 8px) / 4);
-  flex: none;
+.grid-thumbs {
+  --cell: min(
+    (100cqw - (var(--cols) - 1) * 8px) / var(--cols),
+    (100cqh - (var(--rows) - 1) * 8px) / var(--rows)
+  );
+  display: grid;
+  gap: 8px;
   overflow: hidden;
-  padding: 0;
-  grid-template-columns: repeat(6, var(--cell));
-  grid-template-rows: repeat(4, var(--cell));
+  grid-template-columns: repeat(var(--cols), var(--cell));
+  grid-template-rows: repeat(var(--rows), var(--cell));
 }
 .grid-thumb {
   position: relative;

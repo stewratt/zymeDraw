@@ -67,7 +67,7 @@ function GridPicker({ grid, onConfirm }) {
         <p className="hint">Dealing images…</p>
       ) : (
         <div className="grid-thumbs-fit">
-          <div className="grid-thumbs opening">
+          <div className="grid-thumbs" style={{ '--cols': 6, '--rows': 4 }}>
             {grid.map((f) => (
               <button
                 key={f}
@@ -101,11 +101,22 @@ function GridPicker({ grid, onConfirm }) {
   )
 }
 
+// Rows/columns for a card grid of n images. The images are the entire
+// decision, so the shape aims for the biggest cells the canvas area allows
+// (it's wider than tall): 6 → 3×2, 8 → 4×2, 12 → 4×3. The opening keeps
+// its own fixed 6×4 and doesn't use this.
+function gridShape(n) {
+  if (n <= 3) return { cols: Math.max(n, 1), rows: 1 }
+  if (n <= 8) return { cols: Math.ceil(n / 2), rows: 2 }
+  return { cols: Math.ceil(n / 3), rows: 3 }
+}
+
 // Single-pick variant for cards that deal their own grid (Ghost, Stamp).
 // No stash: click an image to take it (click again to put it back), then
 // confirm.
 export function CardGridPicker({ title, hint, files, confirmLabel, onConfirm }) {
   const [chosen, setChosen] = useState(null)
+  const shape = gridShape(files.length)
 
   // Enter confirms once an image is taken — a card grid is a smaller
   // decision than the opening, which keeps its no-Enter rule (hotkeys.md
@@ -133,18 +144,20 @@ export function CardGridPicker({ title, hint, files, confirmLabel, onConfirm }) 
       {files.length === 0 ? (
         <p className="hint">Dealing images…</p>
       ) : (
-        <div className="grid-thumbs">
-          {files.map((f) => (
-            <button
-              key={f}
-              type="button"
-              className={`grid-thumb ${chosen === f ? 'place' : ''}`}
-              onClick={() => setChosen((c) => (c === f ? null : f))}
-            >
-              <img src={`/api/images/${encodeURIComponent(f)}`} alt={f} loading="lazy" />
-              {chosen === f && <span className="thumb-badge">TAKE</span>}
-            </button>
-          ))}
+        <div className="grid-thumbs-fit">
+          <div className="grid-thumbs" style={{ '--cols': shape.cols, '--rows': shape.rows }}>
+            {files.map((f) => (
+              <button
+                key={f}
+                type="button"
+                className={`grid-thumb ${chosen === f ? 'place' : ''}`}
+                onClick={() => setChosen((c) => (c === f ? null : f))}
+              >
+                <img src={`/api/images/${encodeURIComponent(f)}`} alt={f} loading="lazy" />
+                {chosen === f && <span className="thumb-badge">TAKE</span>}
+              </button>
+            ))}
+          </div>
         </div>
       )}
       <div className="grid-picker-foot">

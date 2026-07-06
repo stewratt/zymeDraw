@@ -690,7 +690,7 @@ design stays healthy as long as each mechanic lives on exactly one.**
 Small items from Stew — not mechanics, but recorded here so they don't get
 lost between waves.
 
-### 11.1 Card-grid picks need scale *(QOL — do soon, anytime)*
+### 11.1 Card-grid picks need scale *(QOL — built 2026-07-06, awaiting browser verification)*
 
 When a card deals its own image grid (Ghost/Stain's grid of 8, Stamp's
 grid of 6 — any `CardGridPicker` consumer), the images are the *entire
