@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useReducer, useRef, useState } from 'react'
 import CanvasStage, { CANVAS_WIDTH, CANVAS_HEIGHT } from './CanvasStage.jsx'
 import DeckPanel from './DeckPanel.jsx'
 import GridPicker from './GridPicker.jsx'
@@ -18,6 +18,10 @@ import {
   showMaster
 } from './masterRaster.js'
 import './editor.css'
+
+// The finished-piece viewer (three.js) — lazy so its weight only downloads
+// when a piece is actually finished, never during a working session.
+const Plinth = lazy(() => import('./Plinth.jsx'))
 
 // Any control named `color` starts on a fresh random hue each time the card
 // is dealt — a color card should never open on the same swatch twice (its
@@ -663,6 +667,14 @@ function Editor({ config, onBackToSetup }) {
               ready={cardReady}
               onControlChange={handleControlChange}
             />
+          )}
+          {/* Finished: the piece floats as a 3d panel over the (still
+              mounted) working canvas. Until three.js loads, the flat
+              canvas simply stays visible — no spinner needed. */}
+          {state.phase === 'COMPLETE' && masterRef.current && (
+            <Suspense fallback={null}>
+              <Plinth master={masterRef.current} />
+            </Suspense>
           )}
         </section>
         <aside className="side-stack">

@@ -82,6 +82,21 @@
   background: transparent;
 }
 
+/* ---------- the plinth (finished-piece viewer, canvas-area overlay) ---------- */
+
+.plinth {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  cursor: grab;
+}
+.plinth:active {
+  cursor: grabbing;
+}
+.plinth canvas {
+  display: block;
+}
+
 /* ---------- deck panel ---------- */
 
 .deck-panel {

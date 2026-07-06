@@ -715,7 +715,16 @@ deck or card changes.
 tile scale since card faces are known quantities, but *image* picks are
 always judged-by-eye and deserve maximum area.)
 
-### 11.2 The plinth — a three.js viewer for the finished piece *(future, just for fun)*
+### 11.2 The plinth — a three.js viewer for the finished piece
+
+> **Status: built (2026-07-06, on `v4`), awaiting browser verification.**
+> Went straight to three.js (skipped the CSS-3D spike — real orbit/zoom
+> was the point). `editor/Plinth.jsx`, lazy-loaded so three's ~530 kB is
+> its own chunk that only downloads at the Coda. It renders automatically
+> over the canvas area during COMPLETE (no button needed — the flat canvas
+> is beneath it anyway): unlit artwork face at full master resolution,
+> lit `#2e2e2e` edges, drag-orbit / scroll-zoom / right-drag-pan. Edge
+> wrap and the proof-sheet-on-the-back idea remain future notes below.
 
 Stew's concept: when the piece is complete, offer a viewer where the final
 composition sits on a **floating panel with slight physical depth** — a
