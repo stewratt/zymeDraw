@@ -674,8 +674,73 @@ to *not* ship the later waves if the deck starts feeling like a menu.
    remain on the bench; Riffle (§5.7) inherits a slot only if Cull or Skim
    flops.
 
+5. **Anytime, small:** the card-grid scale fix (§11.1) — pure QOL, no
+   design risk, fits in any gap between waves.
+
 The through-line of all three conversations in this document: **the deck
 stays sovereign over *what arrives*; the player gains sovereignty over
 *depth* (descents), *knowledge* (the overlay, Skim), and *memory* (the
 states). Arrival, depth, knowledge, memory — four separate axes, and the
 design stays healthy as long as each mechanic lives on exactly one.**
+
+---
+
+## 11. QOL notes & future concepts (2026-07-06)
+
+Small items from Stew — not mechanics, but recorded here so they don't get
+lost between waves.
+
+### 11.1 Card-grid picks need scale *(QOL — do soon, anytime)*
+
+When a card deals its own image grid (Ghost/Stain's grid of 8, Stamp's
+grid of 6 — any `CardGridPicker` consumer), the images are the *entire
+decision* — and right now they're too small to judge. The cause is in the
+CSS: `.grid-thumbs` uses `repeat(auto-fill, minmax(150px, 1fr))` with
+`align-content: start`, so a handful of ~150px thumbs huddle at the top of
+the canvas area and the rest of the space sits empty. The opening grid
+already solved this problem for itself (`.grid-thumbs.opening` computes a
+`--cell` size from the container via container queries so 6×4 always fills
+the area); the card grids never got the same treatment.
+
+**Fix:** give `CardGridPicker` the opening's fit-to-area approach,
+generalized for small N — pick a column count by image count (8 → 4×2,
+6 → 3×2), compute the cell size from container width *and* height like the
+opening does, and let the images be as large as the area allows. A choice
+among eight images should feel like laying prints on a table, not
+squinting at contact frames. Purely `GridPicker.jsx` + `editor.css`; no
+deck or card changes.
+
+(While in there: the same scale check applies to any future grid consumer
+— Cull's §5.1 card-pick grid reuses the overlay's tile grid and is fine at
+tile scale since card faces are known quantities, but *image* picks are
+always judged-by-eye and deserve maximum area.)
+
+### 11.2 The plinth — a three.js viewer for the finished piece *(future, just for fun)*
+
+Stew's concept: when the piece is complete, offer a viewer where the final
+composition sits on a **floating panel with slight physical depth** — a
+stretched-canvas / mounted-board look — in a three.js scene. You grab it
+and orbit; you zoom in close. Not a mechanic, not part of the session: a
+way to *behold* the thing you made, the way you'd pick up a finished print
+and tilt it in the light.
+
+Notes for when this gets built:
+
+- **Tone-safe by nature** — galleries, plinths, and racking a canvas to
+  the light are pure studio register. Keep materials matte and the scene
+  dark/neutral (the existing UI palette); no gloss, no skybox, no
+  showroom floor.
+- **The master is the texture** — 2400×3000 is a perfectly reasonable
+  texture size; the zoomed-in inspection is genuinely full-res. Slight
+  edge wrap (the image continuing around the panel's ~2–3% depth, like a
+  gallery wrap) would sell the object-ness cheaply.
+- **Where it lives:** the COMPLETE phase, next to the export — a `view
+  the piece` button opening a full-canvas-area viewer (or the whole
+  window). Orbit + zoom only; no editing affordances whatsoever.
+- **Dependency note:** this adds `three` to a codebase that deliberately
+  has few dependencies — worth it only when the feature is actually
+  wanted. A cheaper spike exists (CSS 3D transform on a div with the
+  export image + drag-to-tilt), which would prove the *feel* before
+  committing to a real renderer. If the states cache (§9) exists by
+  then, a stretch idea: flip the panel over to find the proof sheet
+  printed on the back.
