@@ -11,6 +11,10 @@
 
 import { useEffect, useState } from 'react'
 import Card from '../Card.jsx'
+import { CARD_TEXT } from '../cardText.js'
+import { UI } from '../../copy/uiText.js'
+
+const H = UI.cardHints.cull
 
 // The Ghost pattern: begin awaits the user, so End stays disabled while
 // the remains are open. Normally the pick swaps the current card and this
@@ -53,11 +57,9 @@ export function CullOverlay({ info, deckView, onDeckAction, workUrl }) {
   return (
     <div className="grid-picker cull-picker">
       <div className="grid-picker-head">
-        <h2>CULL</h2>
+        <h2>{H.title}</h2>
         <p className="hint">
-          {empty
-            ? 'The deck has nothing left to offer.'
-            : 'The remains, face up. Take one — it becomes this round.'}
+          {empty ? H.emptyDeck : CARD_TEXT.cull.description}
         </p>
       </div>
       {!empty && (
@@ -68,7 +70,7 @@ export function CullOverlay({ info, deckView, onDeckAction, workUrl }) {
             {workUrl && (
               <figure className="work-glance">
                 <img src={workUrl} alt="The work as it stands" />
-                <figcaption className="hint">the work, as it stands</figcaption>
+                <figcaption className="hint">{UI.shared.workGlance}</figcaption>
               </figure>
             )}
             <div className="deck-row cull-row">
@@ -88,7 +90,7 @@ export function CullOverlay({ info, deckView, onDeckAction, workUrl }) {
             </div>
           </div>
           <div className="grid-picker-foot">
-            <span className="hint">{chosen ? 'take it — or click again to put it back' : 'take one'}</span>
+            <span className="hint">{chosen ? H.footChosen : H.footTakeOne}</span>
             <button
               type="button"
               className="primary"
@@ -96,7 +98,7 @@ export function CullOverlay({ info, deckView, onDeckAction, workUrl }) {
               disabled={!chosen}
               onClick={() => onDeckAction({ type: 'PICK_FROM_DECK', cardId: chosen })}
             >
-              Continue — this is the round
+              {H.confirm}
             </button>
           </div>
         </>
@@ -108,9 +110,7 @@ export function CullOverlay({ info, deckView, onDeckAction, workUrl }) {
 export function CullTools({ ready }) {
   return (
     <span className="hint">
-      {ready
-        ? 'The deck had nothing left to offer — a round with no modification. End it.'
-        : 'The remains are open on the canvas. Take the card the piece needs.'}
+      {ready ? H.toolReady : H.toolWaiting}
     </span>
   )
 }

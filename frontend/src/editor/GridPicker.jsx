@@ -11,6 +11,10 @@
 
 import { useEffect, useState } from 'react'
 import { isFormTarget } from './keymap.js'
+import { UI, fmt } from '../copy/uiText.js'
+import { rich } from '../copy/rich.jsx'
+
+const T = UI.opening
 
 function GridPicker({ grid, onConfirm }) {
   // filename → 'place' | 'stash'. The first pick is a place (click again
@@ -59,14 +63,11 @@ function GridPicker({ grid, onConfirm }) {
   return (
     <div className="grid-picker">
       <div className="grid-picker-head">
-        <h2>THE OPENING</h2>
-        <p className="hint">
-          Take two: one to <em>place now</em>, one to <em>stash for later</em> — or click the
-          stashed one again to <em>place both</em>, holding nothing back.
-        </p>
+        <h2>{T.title}</h2>
+        <p className="hint">{rich(T.hint)}</p>
       </div>
       {grid.length === 0 ? (
-        <p className="hint">Dealing images…</p>
+        <p className="hint">{T.dealing}</p>
       ) : (
         <div className="grid-thumbs-fit">
           <div className="grid-thumbs" style={{ '--cols': 6, '--rows': 4 }}>
@@ -79,7 +80,7 @@ function GridPicker({ grid, onConfirm }) {
               >
                 <img src={`/api/images/${encodeURIComponent(f)}`} alt={f} loading="lazy" />
                 {selection[f] && (
-                  <span className="thumb-badge">{selection[f] === 'place' ? 'PLACE' : 'STASH'}</span>
+                  <span className="thumb-badge">{selection[f] === 'place' ? T.badgePlace : T.badgeStash}</span>
                 )}
               </button>
             ))}
@@ -88,8 +89,8 @@ function GridPicker({ grid, onConfirm }) {
       )}
       <div className="grid-picker-foot">
         <span className="hint">
-          {placed.length ? `${placed.length} to place` : 'place —'} ·{' '}
-          {stashed.length ? '1 stashed' : placed.length === 2 ? 'no stash' : 'stash —'}
+          {placed.length ? fmt(T.footPlaceCount, { count: placed.length }) : T.footPlaceNone} ·{' '}
+          {stashed.length ? T.footStashed : placed.length === 2 ? T.footNoStash : T.footStashNone}
         </span>
         <button
           type="button"
@@ -97,7 +98,7 @@ function GridPicker({ grid, onConfirm }) {
           disabled={!ready}
           onClick={() => onConfirm(placed, stashed)}
         >
-          Continue — begin placement
+          {T.confirm}
         </button>
       </div>
     </div>
@@ -154,7 +155,7 @@ export function CardGridPicker({
         <p className="hint">{hint}</p>
       </div>
       {files.length === 0 ? (
-        <p className="hint">Dealing images…</p>
+        <p className="hint">{T.dealing}</p>
       ) : (
         <div className="grid-thumbs-fit">
           <div className="grid-thumbs" style={{ '--cols': shape.cols, '--rows': shape.rows }}>
@@ -166,14 +167,14 @@ export function CardGridPicker({
                 onClick={() => setChosen((c) => (c === f ? null : f))}
               >
                 <img src={fileUrl(f)} alt={f} loading="lazy" />
-                {chosen === f && <span className="thumb-badge">TAKE</span>}
+                {chosen === f && <span className="thumb-badge">{T.badgeTake}</span>}
               </button>
             ))}
           </div>
         </div>
       )}
       <div className="grid-picker-foot">
-        <span className="hint">{chosen ? '1 taken' : 'take one'}</span>
+        <span className="hint">{chosen ? T.footTaken : T.footTakeOne}</span>
         <button type="button" className="primary" title="Enter" disabled={!chosen} onClick={() => onConfirm(chosen)}>
           {confirmLabel}
         </button>

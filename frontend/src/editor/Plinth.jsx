@@ -13,6 +13,7 @@
 // actually finished, never during a working session.
 
 import { useEffect, useRef, useState } from 'react'
+import { UI, fmt } from '../copy/uiText.js'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 
@@ -159,8 +160,8 @@ export default function Plinth({ master, states = [] }) {
       {states.length > 1 && (
         <div className="plinth-caption">
           {view === null
-            ? 'C — leaf through the states'
-            : `state ${view + 1} of ${states.length} — ${states[view].label}`}
+            ? UI.plinth.leafHint
+            : fmt(UI.plinth.stateCaption, { n: view + 1, total: states.length, label: states[view].label })}
         </div>
       )}
     </div>

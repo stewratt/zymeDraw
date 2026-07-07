@@ -14,6 +14,7 @@
 // with Stew, 2026-07-05) — E is its key and its name.
 
 import { BRUSH_SIZE_MAX, BRUSH_SIZE_MIN } from '../brushCore.js'
+import { UI, fmt } from '../../copy/uiText.js'
 
 export const MASK_OP_LABELS = { conceal: 'Erase', restore: 'Restore', soften: 'Soften' }
 
@@ -63,14 +64,16 @@ const MODE_ICONS = {
 }
 
 // One hint sentence per brush op, so every consumer says it the same way.
-export function maskHint(mode, subject = 'the image') {
+// The sentences live in the copy file (UI.brush); {subject} is the card's
+// noun ("the ghost", "the stamp").
+export function maskHint(mode, subject = UI.brush.defaultSubject) {
   switch (mode) {
     case 'conceal':
-      return `Paint over ${subject} to erase it.`
+      return fmt(UI.brush.erase, { subject })
     case 'restore':
-      return `Paint to bring erased areas of ${subject} back.`
+      return fmt(UI.brush.restore, { subject })
     case 'soften':
-      return 'Paint along an erased edge to feather it.'
+      return fmt(UI.brush.soften, { subject })
     default:
       return null
   }

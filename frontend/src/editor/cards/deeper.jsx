@@ -22,6 +22,8 @@
 // /api/ml/upscale (fixed x4), and the result is drawn back at master size.
 
 import * as fabric from 'fabric'
+import { CARD_TEXT } from '../cardText.js'
+import { UI } from '../../copy/uiText.js'
 import { showMaster } from '../masterRaster.js'
 
 export function beginDeeper(ctx) {
@@ -141,14 +143,11 @@ async function restoreDetail(reframed, zoom) {
 }
 
 export function DeeperTools({ ready }) {
-  if (!ready) return <span className="hint">Preparing…</span>
+  if (!ready) return <span className="hint">{UI.shared.preparing}</span>
   return (
     <div className="card-tools">
       <p className="hint">
-        The frame is the piece&apos;s next edge. Move it, scale it from the corners,
-        rotate it — whatever it holds becomes the whole canvas. End commits the
-        re-frame and restores detail into the enlargement; that takes a few
-        seconds.
+        {CARD_TEXT.deeper.description} {UI.cardHints.deeper.commitNote}
       </p>
     </div>
   )

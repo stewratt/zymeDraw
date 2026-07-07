@@ -12,6 +12,7 @@ import { createMaskSession } from './brushCore.js'
 import { dispatchKey } from './keymap.js'
 import { arrangeBindings, brushBindings } from './sessionBindings.js'
 import { randomHexColor, randomizeColors } from './colorSeed.js'
+import { UI, fmt } from '../copy/uiText.js'
 import {
   bake,
   createMaster,
@@ -246,7 +247,7 @@ function Editor({ config, onBackToSetup }) {
         if (data.ok) {
           setExportState({ status: 'done', savedPath: data.savedPath, error: null, thumbDataUrl })
         } else {
-          setExportState({ status: 'error', savedPath: null, error: data.error || 'Unknown error.', thumbDataUrl: null })
+          setExportState({ status: 'error', savedPath: null, error: data.error || UI.editor.exportUnknownError, thumbDataUrl: null })
         }
       } catch (err) {
         if (cancelled) return
@@ -378,7 +379,7 @@ function Editor({ config, onBackToSetup }) {
         // skip the bake and the state capture — nothing changed.
         if (!entry?.skipBake) {
           masterRef.current = bake(canvas)
-          captureState(masterRef.current, `after ${state.currentCard.label}`)
+          captureState(masterRef.current, fmt(UI.editor.stateAfterCard, { card: state.currentCard.label }))
         }
       }
     } finally {
@@ -417,7 +418,7 @@ function Editor({ config, onBackToSetup }) {
       masterRef.current = bake(canvas)
       captureState(
         masterRef.current,
-        state.phase === 'STASH_RETURN' ? 'the stash return' : 'the opening'
+        state.phase === 'STASH_RETURN' ? UI.editor.stateStashReturn : UI.editor.stateOpening
       )
     }
     dispatch({ type: 'END_PLACEMENT' })
@@ -592,15 +593,15 @@ function Editor({ config, onBackToSetup }) {
     <div className="editor">
       <header className="editor-header">
         <button type="button" className="link" onClick={onBackToSetup}>
-          ← setup
+          {UI.editor.backToSetup}
         </button>
-        <h1>DECK</h1>
+        <h1>{UI.editor.title}</h1>
         <div className="header-actions">
           <button type="button" className="link keys-button" onClick={() => setHistoryOpen(true)}>
-            deck
+            {UI.editor.deckButton}
           </button>
           <button type="button" className="link keys-button" onClick={() => setKeysOpen(true)}>
-            keys
+            {UI.editor.keysButton}
           </button>
         </div>
       </header>

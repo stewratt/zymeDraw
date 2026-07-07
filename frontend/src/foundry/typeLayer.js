@@ -11,7 +11,9 @@
 // stays movable.
 
 import * as fabric from 'fabric'
+import { CARD_TEXT } from '../editor/cardText.js'
 import { ensureFontLoaded } from './fonts.js'
+import { makeRarityMark } from './rarity.js'
 
 const INK = '#141414'
 
@@ -41,7 +43,11 @@ export async function mountTypeLayer(canvas, commission, fonts) {
     top: 56,
     fontSize: 24
   })
-  const description = new fabric.Textbox('Double-click to set the description.', {
+  // The description mirrors what Deck's card panel says (cardText.js is
+  // the single source for both apps); still fully editable on the face.
+  const descriptionText =
+    CARD_TEXT[commission.id]?.description ?? 'Double-click to set the description.'
+  const description = new fabric.Textbox(descriptionText, {
     left: 50,
     top: 660,
     width: 645,
@@ -52,19 +58,30 @@ export async function mountTypeLayer(canvas, commission, fonts) {
     textAlign: 'left'
   })
 
-  canvas.add(name, typeLine, description)
+  // The rarity mark (rarity.js): the fourth slot, stamped at casting time.
+  const rarity = makeRarityMark(commission)
+
+  canvas.add(name, typeLine, description, rarity)
   canvas.requestRenderAll()
-  return { name, typeLine, description }
+  return { name, typeLine, description, rarity }
+}
+
+// Ink a slot (Stew, 2026-07-07: dark plates need light type, and slots are
+// colored independently). The common ring carries its color in stroke, not
+// fill — everything else is a fill.
+export function inkSlot(obj, color) {
+  if (obj.stroke && !obj.fill) obj.set('stroke', color)
+  else obj.set('fill', color)
 }
 
 // The re-deal (N): swap faces on the living objects — positions, sizes,
-// and entered text all survive the roll.
+// and entered text all survive the roll. The rarity mark carries no type.
 export async function applyTypeFonts(canvas, slots, fonts) {
   await Promise.all([ensureFontLoaded(fonts.title), ensureFontLoaded(fonts.body)])
   slots.name.set('fontFamily', fonts.title.name)
   slots.typeLine.set('fontFamily', fonts.title.name)
   slots.description.set('fontFamily', fonts.body.name)
-  for (const obj of Object.values(slots)) {
+  for (const obj of [slots.name, slots.typeLine, slots.description]) {
     obj.initDimensions()
     obj.setCoords()
   }

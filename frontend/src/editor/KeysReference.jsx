@@ -6,51 +6,15 @@
 // click anywhere closes it.
 
 import { useEffect } from 'react'
+import { UI } from '../copy/uiText.js'
 
-const SECTIONS = [
-  {
-    title: 'Always',
-    rows: [
-      ['Enter', 'The primary action — End, Deal, begin again. Never confirms the opening pick.'],
-      ['Space', 'Deal.'],
-      ['Shift+R', 'Restart. It destroys the piece, so it takes two keys.'],
-      ['Esc', 'Back out: deselect, put a grid pick back, close this.']
-    ]
-  },
-  {
-    title: 'Brush in hand',
-    rows: [
-      ['[ ]', 'Brush size, steps of 5 — 10 with Shift. Shift+drag on the canvas also resizes.'],
-      ['W', 'Arrange — where there is something to arrange.'],
-      ['E', 'Erase.'],
-      ['R', 'Restore.'],
-      ['S', 'Soften.'],
-      ['X', 'Swap Erase ↔ Restore.'],
-      ['H', 'Soft / hard.'],
-      ['Cmd/Ctrl+Z', 'Undo a stroke — add Shift to redo. Never crosses an End.']
-    ]
-  },
-  {
-    title: 'Arranging',
-    rows: [
-      ['Arrows', 'Nudge 1px — 10 with Shift.'],
-      [', .', 'Rotate 1° — 15° with Shift.'],
-      ['- =', 'Scale 2% — 10% with Shift.']
-    ]
-  },
-  {
-    title: 'On certain cards',
-    rows: [
-      ['Enter', 'Confirm a grid pick. Etch: zoom in.'],
-      ['[ ]', 'Etch: pixel size.'],
-      ['N', 'A new hue on any color control.']
-    ]
-  },
-  {
-    title: 'At the Coda',
-    rows: [['C', 'Leaf through the states — the piece as it stood after every End.']]
-  }
-]
+// The section text lives in the copy file (UI.keys): each section object is
+// a "title" plus key → description entries, in display order. Only the
+// wording lives there — which keys exist is decided here and in keymap.js.
+const SECTIONS = ['always', 'brush', 'arranging', 'certainCards', 'atTheCoda'].map((id) => {
+  const { title, ...rows } = UI.keys[id]
+  return { title, rows: Object.entries(rows) }
+})
 
 export default function KeysReference({ onClose }) {
   useEffect(() => {
@@ -65,7 +29,7 @@ export default function KeysReference({ onClose }) {
   return (
     <div className="keys-overlay" onClick={onClose}>
       <div className="keys-panel" role="dialog" aria-label="Keys">
-        <h2>KEYS</h2>
+        <h2>{UI.keys.title}</h2>
         {SECTIONS.map((section) => (
           <section key={section.title} className="keys-section">
             <h3>{section.title}</h3>
@@ -77,7 +41,7 @@ export default function KeysReference({ onClose }) {
             ))}
           </section>
         ))}
-        <p className="hint">Click anywhere or press Esc to close.</p>
+        <p className="hint">{UI.keys.close}</p>
       </div>
     </div>
   )

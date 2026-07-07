@@ -17,6 +17,9 @@
 //
 // "Death card" is the design term; on screen the card is called Coda.
 
+import { CARD_TEXT } from './cardText.js'
+import { UI, fmt } from '../copy/uiText.js'
+
 // Every pacing number lives here.
 export const TUNING = {
   openingGrid: 24, // images dealt into the opening grid (6×4)
@@ -27,40 +30,42 @@ export const TUNING = {
 
 // The mod deck: one entry per card design, expanded by copy count and
 // shuffled at session start. Rebalancing the deck = editing this array
-// (target ratios in version_3_design.md §8–9).
+// (target ratios in version_3_design.md §8–9). Names and descriptions
+// live in cardText.js — labels are derived from it below, so a rename
+// happens there, never here.
 export const MOD_CARDS = [
-  { id: 'ghost', label: 'Ghost', copies: 2 }, // Graft × Rise
-  { id: 'stain', label: 'Stain', copies: 2 }, // Graft × Sink
-  { id: 'stamp', label: 'Stamp', copies: 2 }, // Graft (cutout)
-  { id: 'rails', label: 'Rails', copies: 1 }, // Stencil × solid
-  { id: 'char', label: 'Char', copies: 1 }, // Stencil × Sink
-  { id: 'deeper', label: 'Deeper', copies: 2 }, // Re-frame, inward
+  { id: 'ghost', copies: 2 }, // Graft × Rise
+  { id: 'stain', copies: 2 }, // Graft × Sink
+  { id: 'stamp', copies: 2 }, // Graft (cutout)
+  { id: 'rails', copies: 1 }, // Stencil × solid
+  { id: 'char', copies: 1 }, // Stencil × Sink
+  { id: 'deeper', copies: 2 }, // Re-frame, inward
   // Rack retired (2026-07-05): flipping a piece you've worked several
   // rounds never felt worth doing. Card + registry entry stay in place;
   // re-add this line to deal it again.
-  // { id: 'rack', label: 'Rack', copies: 1 }, // Re-frame, neutral
-  { id: 'silt', label: 'Silt', copies: 2 }, // Reveal × deposit
-  { id: 'bruise', label: 'Bruise', copies: 1 }, // Reveal × Bruise
-  { id: 'dissolve', label: 'Dissolve', copies: 1 }, // Reveal × blur — provisional (§6.3)
-  { id: 'steep', label: 'Steep', copies: 1 }, // Wash × Sink
-  { id: 'turn', label: 'Turn', copies: 1 }, // Wash (hue)
-  { id: 'cure', label: 'Cure', copies: 1 }, // Wash × Cure
-  { id: 'etch', label: 'Subliminal Etch', copies: 1 }, // Pixel glyph, hidden at the grain
+  // { id: 'rack', copies: 1 }, // Re-frame, neutral
+  { id: 'silt', copies: 2 }, // Reveal × deposit
+  { id: 'bruise', copies: 1 }, // Reveal × Bruise
+  { id: 'dissolve', copies: 1 }, // Reveal × blur — provisional (§6.3)
+  { id: 'steep', copies: 1 }, // Wash × Sink
+  { id: 'turn', copies: 1 }, // Wash (hue)
+  { id: 'cure', copies: 1 }, // Wash × Cure
+  { id: 'etch', copies: 1 }, // Pixel glyph, hidden at the grain
   // The deck itself (v4 notes §5.1–5.2, §5.9): deck modifications, dealt
   // by chance. `family: 'deck'` color-codes their faces apart from the
   // image cards (cardFamily below).
-  { id: 'cull', label: 'Cull', copies: 1, family: 'deck' }, // Tutor: the remains open, take one
-  { id: 'skim', label: 'Skim', copies: 1, family: 'deck' }, // Scry: see the top, keep or bury
-  { id: 'delay', label: 'Delay', copies: 1, family: 'deck' } // The right to set the first Coda aside
+  { id: 'cull', copies: 1, family: 'deck' }, // Tutor: the remains open, take one
+  { id: 'skim', copies: 1, family: 'deck' }, // Scry: see the top, keep or bury
+  { id: 'delay', copies: 1, family: 'deck' } // The right to set the first Coda aside
   // Stashed until Stew trains his own style model — the demo ONNX styles
   // don't look good enough to ship. Card files, registry entries, and the
   // /style sidecar endpoint all stay in place; re-add these lines to deal
   // them again. See CLAUDE.md §0 (style-transfer experiment).
-  // { id: 'transfer', label: 'Transfer', copies: 2 },
-  // { id: 'shatteredTransfer', label: 'Shattered Transfer', copies: 2 }
-]
+  // { id: 'transfer', copies: 2 },
+  // { id: 'shatteredTransfer', copies: 2 }
+].map((card) => ({ label: CARD_TEXT[card.id]?.name ?? card.id, ...card }))
 
-export const DEATH_CARD = { id: 'coda', label: 'Coda' }
+export const DEATH_CARD = { id: 'coda', label: CARD_TEXT.coda.name }
 
 // Fisher–Yates on a copy.
 function shuffle(cards) {
@@ -402,10 +407,10 @@ export function remainingCounts(state) {
 // Short human label for where the session stands. Derived, never stored.
 export function progressLabel(state) {
   if (state.phase !== 'WORKING') return null
-  if (state.deathShuffled) return 'late — the Coda is in the deck'
+  if (state.deathShuffled) return UI.progress.late
   const { actOneRounds, actTwoRounds } = TUNING
   if (state.roundsDealt < actOneRounds) {
-    return `Act I · round ${state.roundsDealt + 1} of ${actOneRounds}`
+    return fmt(UI.progress.actOne, { round: state.roundsDealt + 1, total: actOneRounds })
   }
-  return `Act II · round ${state.roundsDealt - actOneRounds + 1} of ${actTwoRounds}`
+  return fmt(UI.progress.actTwo, { round: state.roundsDealt - actOneRounds + 1, total: actTwoRounds })
 }

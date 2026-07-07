@@ -10,11 +10,19 @@
 // consumers use it to open CardZoom; propagation stops here so a tile
 // click never falls through to a close-on-click overlay behind it.
 
-import { getCardArt } from './cardArt.js'
+import { useEffect, useState } from 'react'
+import { cardArtSources, useActiveCardSet } from './cardArt.js'
 import { cardFamily } from './deck.js'
 
 function Card({ id, label, kind = 'mod', size = 'panel', count, dimmed, flip, onClick, title }) {
-  const art = getCardArt(id)
+  const activeSet = useActiveCardSet()
+  const sources = cardArtSources(id, activeSet)
+  // Walk the sources (active set → bundled) on image error; when exhausted,
+  // `art` is undefined and the text face shows. Reset when the card or set
+  // changes so a re-deal starts from the top.
+  const [attempt, setAttempt] = useState(0)
+  useEffect(() => setAttempt(0), [id, activeSet])
+  const art = sources[attempt]
   // Mod cards split into two color-coded families (image vs deck) until
   // the designed faces carry the distinction; the Coda stays its own thing.
   const family = kind === 'mod' ? cardFamily(id) : null
@@ -43,7 +51,13 @@ function Card({ id, label, kind = 'mod', size = 'panel', count, dimmed, flip, on
       }
     >
       {art ? (
-        <img className="card-art" src={art} alt={label} draggable={false} />
+        <img
+          className="card-art"
+          src={art}
+          alt={label}
+          draggable={false}
+          onError={() => setAttempt((a) => a + 1)}
+        />
       ) : (
         <div className="card-text-face">
           <span className="card-kind">

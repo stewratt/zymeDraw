@@ -1,0 +1,415 @@
+{
+  "cards": {
+    "ghost": {
+      "name": "Ghost",
+      "description": "Add screen blend mode image onto canvas. Only the light survives. "
+    },
+    "stain": {
+      "name": "Stain",
+      "description": "Add an image overlay with a multiply blend mode onto the canvas. Darkness multiplies."
+    },
+    "stamp": {
+      "name": "Stamp",
+      "description": "Cut out an image and stamp it onto the canvas."
+    },
+    "rails": {
+      "name": "Rails",
+      "description": "Adds a fractured monochromatic shard onto the canvas."
+    },
+    "char": {
+      "name": "Char",
+      "description": "The fragments scorch what is beneath — arrange them, set the depth of the burn."
+    },
+    "deeper": {
+      "name": "Deeper",
+      "description": "The frame is the piece’s next edge. Move it, scale it from the corners, rotate it — whatever it holds becomes the whole canvas."
+    },
+    "rack": {
+      "name": "Rack",
+      "description": "The piece is racked to a new vessel: drag, scale, rotate. What leaves the frame is gone; what the frame exposes stays white."
+    },
+    "silt": {
+      "name": "Dust",
+      "description": "Paint where the dust should settle. Nothing changes until you paint."
+    },
+    "bruise": {
+      "name": "Bruise",
+      "description": "Set the discoloration, then paint where the image should bruise."
+    },
+    "dissolve": {
+      "name": "Blur",
+      "description": "use a brush to blur the surface of the canvas."
+    },
+    "steep": {
+      "name": "Steep",
+      "description": "The piece steeps in a dye bath. Influence is steeping time."
+    },
+    "turn": {
+      "name": "Hue",
+      "description": "Apply HSV modification to the entire canvas."
+    },
+    "cure": {
+      "name": "Cure",
+      "description": "The piece cures in its own bath — mids deepen, tone richens. Influence is how far the cure has gone."
+    },
+    "etch": {
+      "name": "Subliminal Etch",
+      "description": "Etch a small glyph at the grain. At full size it will be almost nothing."
+    },
+    "cull": {
+      "name": "Searcher",
+      "description": "Pick a card from the deck, this becomes your next turn."
+    },
+    "skim": {
+      "name": "Skim",
+      "description": "Reveal the next card, choose to play it or re-shuffle it into the deck."
+    },
+    "delay": {
+      "name": "Delay",
+      "description": "The first Coda card can be skipped. The Coda card is shuffled back into the deck when skipped. It may appear again next turn anyway."
+    },
+    "transfer": {
+      "name": "Transfer",
+      "description": "The whole piece has been redrawn. Erase to cut the original back through; influence sets how strongly the redraw sits."
+    },
+    "shatteredTransfer": {
+      "name": "Shattered Transfer",
+      "description": "The piece’s redraw shows through another image’s most shattered form."
+    },
+    "coda": {
+      "name": "Coda",
+      "description": "The piece is finished. The session ends here."
+    }
+  },
+  "app": {
+    "loading": "Loading…"
+  },
+  "shared": {
+    "preparing": "Preparing…",
+    "takeOne": "Take one image from the grid.",
+    "shattering": "Reading the image for its most shattered form…",
+    "shatteredIntro": "This image {reading}.",
+    "workGlance": "Image Status"
+  },
+  "brush": {
+    "erase": "Paint over {subject} to erase it.",
+    "restore": "Paint to bring erased areas of {subject} back.",
+    "soften": "Paint along an erased edge to feather it.",
+    "defaultSubject": "the image",
+    "placementSubject": "an image"
+  },
+  "cardHints": {
+    "ghost": {
+      "pickTitle": "GHOST",
+      "pickHint": "Eight images. Take one — it joins the piece as a second exposure: only its light survives.",
+      "confirm": "Continue",
+      "subject": "the ghost"
+    },
+    "stain": {
+      "pickTitle": "STAIN",
+      "pickHint": "Eight images. Take one — it soaks into the piece: only its dark survives.",
+      "confirm": "Continue",
+      "subject": "the stain"
+    },
+    "stamp": {
+      "pickTitle": "STAMP",
+      "pickHint": "Six images. Take one — its subject is cut out and stamped onto the piece.",
+      "confirm": "Continue — cut it out",
+      "cutting": "Cutting out the subject… on a machine's first cutout this downloads the model and can take a minute.",
+      "degraded": "The cutout service is unavailable, so the whole image was placed — the erase brush is your scissors.",
+      "subject": "the stamp"
+    },
+    "silt": {
+      "preparing": "Preparing the dust…"
+    },
+    "etch": {
+      "frameHint": "Drag the small frame to where the mark should hide. Its size is fixed — about a hundred pixels of the piece.",
+      "zoomIn": "Zoom in",
+      "grainHint": "You are at the grain — every square is one pixel of the piece. Etch a small glyph. At full size it will be almost nothing."
+    },
+    "skim": {
+      "title": "SKIM",
+      "turnTop": "Turn the top card",
+      "emptyDeck": "The deck is empty — there is nothing on top.",
+      "choiceHint": "Leave it or bury it — you won't see what replaces it.",
+      "keep": "Leave it — the next deal",
+      "bury": "Bury it — somewhere back in the deck",
+      "kept": "It waits on top. End the round.",
+      "buried": "Gone — somewhere back in the deck. The next deal is unknown. End the round.",
+      "toolWaiting": "On the canvas: turn the top card, then leave it or bury it.",
+      "toolReady": "End the round."
+    },
+    "cull": {
+      "title": "Searcher",
+      "emptyDeck": "The deck has nothing left to offer.",
+      "footChosen": "take it — or click again to put it back",
+      "footTakeOne": "take one",
+      "confirm": "Continue with chosen card",
+      "toolWaiting": "Take the card the piece needs.",
+      "toolReady": "The deck had nothing left to offer — a round with no modification. End it."
+    },
+    "delay": {
+      "toolSuffix": "The card waits at the deal panel. End the round."
+    },
+    "deeper": {
+      "commitNote": "End commits the re-frame and restores detail into the enlargement; that takes a few seconds."
+    },
+    "char": {
+      "subject": "the char"
+    },
+    "transfer": {
+      "working": "The piece is being redrawn in another hand… a few seconds.",
+      "degraded": "The transfer service is unavailable — the piece stands as it is. End to move on."
+    },
+    "shatteredTransfer": {
+      "pickTitle": "SHATTERED TRANSFER",
+      "pickHint": "Six images. Take one — it won't be placed; it will be read as a stencil, and the piece's redraw shows through its shattered form.",
+      "confirm": "Continue — read it as a stencil",
+      "arrangeWaiting": "This image {reading} — place the stencil where the style should break through. The redraw is still arriving; the window opens when it lands.",
+      "degraded": "The transfer service is unavailable — the stencil is withdrawn and the piece stands as it is. End to move on.",
+      "windowOpen": "The window is open{readingClause}. Drag, scale, rotate the stencil; the redraw shows through wherever it sits.",
+      "readingClause": " — this image {reading}",
+      "subject": "the styled fragments"
+    }
+  },
+  "foundry": {
+    "app": {
+      "noOutputPre": "No output folder configured — open",
+      "noOutputLink": "Deck",
+      "noOutputPost": "once and set your folders in Setup, then reload Foundry."
+    },
+    "header": {
+      "backToDeck": "← deck",
+      "title": "FOUNDRY",
+      "casting": "casting",
+      "impressionNote": "· impression {i} of {n}"
+    },
+    "commission": {
+      "title": "THE COMMISSION",
+      "panelHint": "A cast is one session for one face. Pick the card from the grid — its name and type line will follow it onto the plate.",
+      "pickHint": "Every cast opens on a commission — the card this face is for. Choose one, or let the deck decide. The ×count is the card's presence in a deck: a ×2 design runs two impressions from one base.",
+      "dealButton": "Deal me a commission"
+    },
+    "plate": {
+      "title": "THE PLATE",
+      "panelHint": "Casting **{label}**. Take one of the dealt plates from the table.",
+      "readingFolder": "Reading the plates folder…",
+      "chooseFolder": "Choose plates folder",
+      "setHint": "The full set of {count} plate{plural} — choose the one this face calls for. Its frame is the card's convention layer; the white window is the punched image panel, waiting for art."
+    },
+    "panel": {
+      "title": "THE PANEL",
+      "pickPanelHint": "Take an image from the grid. Or continue with the window empty — the white shows, and the graffiti decides what it becomes.",
+      "redealImages": "Re-deal the images",
+      "artFromPrefix": "Panel art from",
+      "artFromFallback": "Panel art from the input + export folders — point it at a dedicated folder to curate the card imagery apart from the main pool.",
+      "chooseArtFolder": "Choose panel art folder…",
+      "arrangeHint": "Arrange the art under the window — the plate's edge crops whatever crosses it.",
+      "liveUntilPress": "Everything stays live until the Press.",
+      "repick": "Put it back — re-pick",
+      "subject": "the art",
+      "mounting": "Mounting the plate…",
+      "placingArt": "Placing the art…",
+      "continueType": "Continue — to the type",
+      "continueEmpty": "Continue — window empty",
+      "gridHint": "Take an image for the window — your finished pieces and raw inputs, dealt together. It lands under the plate; the window crops it.",
+      "gridConfirm": "Take — place under the window"
+    },
+    "type": {
+      "title": "THE TYPE",
+      "hint": "The type is set — name upper-left, type line upper-right, the description in its box. **Double-click** a slot to edit its text; drag to nudge, handles to size. The description box resizes to fit the plate's text region.",
+      "dealtStyle": "Dealt style:",
+      "titleFontLine": "title · {name}",
+      "bodyFontLine": "body · {name}",
+      "redealFonts": "Re-deal the fonts",
+      "pressNote": "The Press seals the whole foundation — art, plate, and type flatten to pixels for good. After it, the graffiti deck works the sealed face.",
+      "pressButton": "Press — seal the foundation",
+      "settingType": "Setting the type…"
+    },
+    "plateTint": {
+      "hint": "The plate — re-color the frame itself. The art under the window keeps its own color.",
+      "asPrinted": "As printed"
+    },
+    "ink": {
+      "prefix": "Ink — applies to",
+      "allSlots": "all slots",
+      "selectNote": "(select a slot on the card to ink it alone)",
+      "slotName": "the name",
+      "slotTypeLine": "the type line",
+      "slotDescription": "the description",
+      "slotRarity": "the mark",
+      "ink": "ink",
+      "bone": "bone"
+    },
+    "working": {
+      "title": "THE WORKING DECK",
+      "placeholder": "(placeholder — scribble on the face; this card's real tool arrives in Phase 5)"
+    },
+    "proof": {
+      "title": "THE PROOF",
+      "titleRun": "THE PROOF · {i} OF {n}",
+      "cardLabel": "Proof",
+      "impressionCast": "Impression {i} of **{label}** is cast{tail}",
+      "tailNext": " — the base waits for the next.",
+      "tailComplete": ". The run is complete.",
+      "faceCast": "The face of **{label}** is cast.",
+      "exporting": "Writing the cast to your casts folder…",
+      "dropIn": "Drop-in ready: to put it in play, copy it to `assets/cards/{id}.png` and reload Deck. The full-res master sits alongside.",
+      "nextImpression": "Next impression — return to the base",
+      "castAnother": "Cast another"
+    },
+    "progress": {
+      "late": "late — the Proofs are in the deck",
+      "round": "round {round} of {total}"
+    }
+  },
+  "setup": {
+    "title": "ZYME",
+    "subtitle": "Choose your folders",
+    "inputLabel": "Input folder",
+    "inputHint": "Where the source images live (read-only).",
+    "inputPlaceholder": "e.g. {home}/Pictures/deck-input",
+    "inputPlaceholderNoHome": "absolute path to your input folder",
+    "outputLabel": "Output folder",
+    "outputHint": "Where finished compositions will be saved.",
+    "outputPlaceholder": "e.g. {home}/Pictures/deck-output",
+    "outputPlaceholderNoHome": "absolute path to your output folder",
+    "browse": "Browse…",
+    "browseOpening": "Opening…",
+    "continue": "Continue",
+    "continueChecking": "Checking…",
+    "pickerFailed": "Could not open a folder picker.",
+    "pickerFailedDetail": "Could not open a folder picker: {message}",
+    "networkError": "Network error: {message}",
+    "footnote": "Paths support a leading `~` for your home directory. Folders must exist before continuing.",
+    "cardSetsLabel": "Card faces (optional)",
+    "cardSetsHint": "A folder of alternate deck designs — one subfolder per set, each holding PNGs named by card id. Leave empty for the built-in faces.",
+    "cardSetsPlaceholder": "absolute path to your card faces folder",
+    "cardSetsSetLabel": "Active set",
+    "cardSetsBuiltin": "Built-in faces",
+    "cardSetsEmpty": "No sets in that folder yet — add a subfolder of card PNGs."
+  },
+  "editor": {
+    "backToSetup": "← setup",
+    "title": "ZYME",
+    "deckButton": "deck",
+    "keysButton": "keys",
+    "stateAfterCard": "after {card}",
+    "stateStashReturn": "the stash return",
+    "stateOpening": "the opening",
+    "exportUnknownError": "Unknown error."
+  },
+  "deckPanel": {
+    "openingTitle": "THE OPENING",
+    "openingLoading": "Loading input folder…",
+    "openingHint": "Take **two** from the grid: one placed now, one stashed — it comes back after Act I.",
+    "inputErrorTitle": "INPUT FOLDER ERROR",
+    "inputErrorHint": "Go back to setup to pick a different folder.",
+    "noImagesTitle": "NO IMAGES FOUND",
+    "noImagesHint": "Add some `.png` / `.jpg` / `.jpeg` / `.webp` files to your input folder, then reload.",
+    "placementTitle": "PLACEMENT",
+    "placementHint": "Arrange your image.",
+    "stashReturnTitle": "STASHED IMAGE RETURN",
+    "stashReturnHint": "Your stashed image comes back — arrange it like the opening.",
+    "arrangeHint": "Drag to move, corner handles to scale, top handle to rotate.",
+    "endBakes": "End bakes everything in for good.",
+    "reorderHint": "Drag to reorder the stack.",
+    "endCommit": "End — commit",
+    "loadingImages": "Loading images…",
+    "deckTitle": "THE DECK",
+    "cardsRemain": "{count} card{plural} remain",
+    "stashedSuffix": "· {count} stashed",
+    "viewDeck": "View the deck",
+    "delayHeld": "held — the first Coda can be set aside",
+    "deal": "Deal",
+    "codaTitle": "THE CODA",
+    "codaHint": "The deck says the piece is finished. You still hold Delay — accept the ending, or set the Coda aside. It slips back into the deck and the next deal is blind: it can come straight back, and the right is spent.",
+    "codaSetAside": "Not yet — set it aside",
+    "codaAccept": "Accept — the piece is finished",
+    "roundTitle": "THIS ROUND",
+    "toolsPlaceholder": "(placeholder — this card's tools arrive in a later phase)",
+    "committing": "Committing…",
+    "settingUp": "Setting up…",
+    "finishedTitle": "FINISHED",
+    "complete": "The piece is complete.",
+    "exporting": "Writing PNG to your output folder…",
+    "savedTo": "Saved to:",
+    "openOutput": "Open output folder",
+    "exportFailed": "Export failed: {error}",
+    "restart": "Start a new composition"
+  },
+  "opening": {
+    "title": "THE OPENING",
+    "hint": "Take two: one to *place now*, one to *stash for later* — or click the stashed one again to *place both*, holding nothing back.",
+    "dealing": "Dealing images…",
+    "badgePlace": "PLACE",
+    "badgeStash": "STASH",
+    "badgeTake": "TAKE",
+    "footPlaceCount": "{count} to place",
+    "footPlaceNone": "place —",
+    "footStashed": "1 stashed",
+    "footNoStash": "no stash",
+    "footStashNone": "stash —",
+    "footTakeOne": "take one",
+    "footTaken": "1 taken",
+    "confirm": "Continue — begin placement"
+  },
+  "deckOverlay": {
+    "title": "THE DECK",
+    "spentTitle": "Spent — in sequence",
+    "spentEmpty": "Nothing yet — the sequence begins with the first committed card.",
+    "remainsTitle": "Remains — in no order",
+    "onlyCoda": "Only the Coda remains.",
+    "modsSpent": "The modifications are spent.",
+    "codaSomewhere": "…and the Coda is somewhere in here.",
+    "inHand": "in hand",
+    "close": "Click anywhere or press Esc to close."
+  },
+  "keys": {
+    "title": "KEYS",
+    "close": "Click anywhere or press Esc to close.",
+    "always": {
+      "title": "Always",
+      "Enter": "The primary action — End, Deal, begin again. Never confirms the opening pick.",
+      "Space": "Deal.",
+      "Shift+R": "Restart. It destroys the piece, so it takes two keys.",
+      "Esc": "Back out: deselect, put a grid pick back, close this."
+    },
+    "brush": {
+      "title": "Brush in hand",
+      "[ ]": "Brush size, steps of 5 — 10 with Shift. Shift+drag on the canvas also resizes.",
+      "W": "Arrange — where there is something to arrange.",
+      "E": "Erase.",
+      "R": "Restore.",
+      "S": "Soften.",
+      "X": "Swap Erase ↔ Restore.",
+      "H": "Soft / hard.",
+      "Cmd/Ctrl+Z": "Undo a stroke — add Shift to redo. Never crosses an End."
+    },
+    "arranging": {
+      "title": "Arranging",
+      "Arrows": "Nudge 1px — 10 with Shift.",
+      ", .": "Rotate 1° — 15° with Shift.",
+      "- =": "Scale 2% — 10% with Shift."
+    },
+    "certainCards": {
+      "title": "On certain cards",
+      "Enter": "Confirm a grid pick. Etch: zoom in.",
+      "[ ]": "Etch: pixel size.",
+      "N": "A new hue on any color control."
+    },
+    "atTheCoda": {
+      "title": "At the Coda",
+      "C": "Cycle through previous states of the composition"
+    }
+  },
+  "progress": {
+    "late": "late — the Coda is in the deck",
+    "actOne": "Act I · round {round} of {total}",
+    "actTwo": "Act II · round {round} of {total}"
+  },
+  "plinth": {
+    "leafHint": "C — leaf through the states",
+    "stateCaption": "state {n} of {total} — {label}"
+  }
+}

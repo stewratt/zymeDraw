@@ -4,16 +4,20 @@ import CanvasStage from '../editor/CanvasStage.jsx'
 import Card from '../editor/Card.jsx'
 import { CardGridPicker } from '../editor/GridPicker.jsx'
 import FoundryPanel from './FoundryPanel.jsx'
-import { foundryReducer, initialFoundryState, COMMISSIONS, FOUNDRY_TUNING } from './foundryDeck.js'
+import { foundryReducer, initialFoundryState, COMMISSIONS, FOUNDRY_TUNING, runSize } from './foundryDeck.js'
 import { foundryRegistry } from './foundryRegistry.jsx'
-import { dealPlateOffer, fetchPlateList, mountPlate, plateUrl } from './plates.js'
+import { fetchPlateList, mountPlate, plateEntries, plateUrl, tintPlate } from './plates.js'
 import { dealPanelGrid, fetchArtSources, mountPanelArt, panelArtUrl } from './panelArt.js'
 import { dealTypeFonts, fetchFontCatalog } from './fonts.js'
-import { applyTypeFonts, mountTypeLayer } from './typeLayer.js'
+import { roundCorners, roundedCopy } from './cardCorners.js'
+import { applyTypeFonts, inkSlot, mountTypeLayer } from './typeLayer.js'
 import { createMaskSession } from '../editor/brushCore.js'
 import { dispatchKey } from '../editor/keymap.js'
 import { arrangeBindings, brushBindings } from '../editor/sessionBindings.js'
 import { randomHexColor, randomizeColors } from '../editor/colorSeed.js'
+import { UI, fmt } from '../copy/uiText.js'
+
+const F = UI.foundry
 import {
   bake,
   createMaster,
@@ -43,6 +47,10 @@ function FoundryEditor() {
   const canvasStageRef = useRef(null)
   const cardSessionRef = useRef(null) // opaque per-card data the registry owns
   const masterRef = useRef(null) // the full-resolution truth (masterRaster.js)
+  // The sealed base — the master exactly as the Press left it. Safe to keep
+  // by reference: bake() never mutates a master element, it replaces it.
+  // Every impression of the run restarts from a clone of this.
+  const baseMasterRef = useRef(null)
 
   const [cardControls, setCardControls] = useState({})
   const [cardInfo, setCardInfo] = useState({})
@@ -58,9 +66,14 @@ function FoundryEditor() {
   // The mounted plate matte (a Fabric object) — consumed by the Press.
   const plateObjRef = useRef(null)
   const [plateReady, setPlateReady] = useState(false)
+  // The plate's untinted pixel source, kept from mount time — every tint
+  // draws from THIS, so hue/sat moves never compound (plates.tintPlate).
+  const plateSourceRef = useRef(null)
+  const [plateTint, setPlateTint] = useState({ h: 0, s: 100 })
 
-  // Panel-art sources: inputs + exports, tagged (panelArt.js).
-  const [artSources, setArtSources] = useState({ status: 'loading', files: [], error: null })
+  // Panel-art sources (panelArt.js): the tagged panel pool + the raw input
+  // list the stencil cards sample.
+  const [artSources, setArtSources] = useState({ status: 'loading', files: [], inputs: [], panelFolder: null, error: null })
 
   // The font catalog (fonts.js): committed OFL set + this machine's local
   // overlay. Loaded once; the deal draws from it at TYPE_SETTING.
@@ -68,6 +81,9 @@ function FoundryEditor() {
   // The live type slots (typeLayer.js) — consumed by the Press.
   const typeSlotsRef = useRef(null)
   const [typeReady, setTypeReady] = useState(false)
+  // Which type slot is selected on the canvas (for the ink control): a slot
+  // key, or null — null means the ink applies to every slot at once.
+  const [inkTarget, setInkTarget] = useState(null)
   // The mounted panel art (under the matte) — consumed by the Press.
   const panelImgRef = useRef(null)
   const [artReady, setArtReady] = useState(true) // false only while art is in flight
@@ -111,14 +127,14 @@ function FoundryEditor() {
   }, [])
 
   // The reducer never touches the filesystem: when the plate offer is
-  // needed, deal it from the folder listing and report back (SET_GRID's
-  // pattern, deck.js).
+  // needed, put the WHOLE folder on the table and report back (SET_GRID's
+  // pattern, deck.js). The plate is chosen, never dealt.
   useEffect(() => {
     if (state.phase !== 'PLATE_DEAL' || state.plateOffer.length > 0) return
     if (plateList.status !== 'ready') return
     dispatch({
       type: 'SET_PLATE_OFFER',
-      plates: dealPlateOffer(plateList.filenames, FOUNDRY_TUNING.plateDeal)
+      plates: plateEntries(plateList.filenames)
     })
   }, [state.phase, state.plateOffer.length, plateList])
 
@@ -211,6 +227,30 @@ function FoundryEditor() {
     }
   }, [state.typeFonts])
 
+  // Track which type slot is selected while the type is live, so the ink
+  // control can color one slot or all of them (typeLayer.inkSlot).
+  useEffect(() => {
+    if (state.phase !== 'TYPE_SETTING' || !typeReady) return
+    const canvas = canvasStageRef.current?.getCanvas()
+    if (!canvas) return
+    const update = () => {
+      const obj = canvas.getActiveObject()
+      const slots = typeSlotsRef.current
+      const hit = slots && Object.entries(slots).find(([, o]) => o === obj)
+      setInkTarget(hit ? hit[0] : null)
+    }
+    canvas.on('selection:created', update)
+    canvas.on('selection:updated', update)
+    canvas.on('selection:cleared', update)
+    update()
+    return () => {
+      canvas.off('selection:created', update)
+      canvas.off('selection:updated', update)
+      canvas.off('selection:cleared', update)
+      setInkTarget(null)
+    }
+  }, [state.phase, typeReady])
+
   // The taken plate mounts as the matte on top (card_maker.md §3.5) and
   // stays live until the Press seals it. Fires exactly when `plate` is
   // taken (and cleans up if a restart lands while the PNG is in flight).
@@ -220,6 +260,7 @@ function FoundryEditor() {
     if (!canvas) return
     let cancelled = false
     setPlateReady(false)
+    setPlateTint({ h: 0, s: 100 })
     mountPlate(canvas, state.plate.file)
       .then((obj) => {
         if (cancelled) {
@@ -227,15 +268,29 @@ function FoundryEditor() {
           return
         }
         plateObjRef.current = obj
+        plateSourceRef.current = obj.getElement()
         setPlateReady(true)
       })
       .catch((err) => console.warn('Plate failed to load:', err))
     return () => {
       cancelled = true
       plateObjRef.current = null
+      plateSourceRef.current = null
       setPlateReady(false)
     }
   }, [state.plate])
+
+  // Live plate tint (Stew, 2026-07-07: the plate's hue/sat is adjustable on
+  // every cast, all the way to the Press — foundation liveness). Draws from
+  // the kept untinted source; the bake picks the tinted element up for free.
+  useEffect(() => {
+    const canvas = canvasStageRef.current?.getCanvas()
+    const img = plateObjRef.current
+    const source = plateSourceRef.current
+    if (!canvas || !img || !source) return
+    tintPlate(img, source, plateTint)
+    canvas.requestRenderAll()
+  }, [plateTint, plateReady])
 
   // BEGIN hook: a new working card appears. Registry entries get the same
   // lifecycle as Deck's Editor; cards WITHOUT an entry are placeholders —
@@ -281,10 +336,9 @@ function FoundryEditor() {
         master: masterRef.current,
         controls: defaults,
         // The stencil cards sample their own source image; raw input-folder
-        // filenames, exactly what Deck's Editor hands them.
-        imageList: artSources.files
-          .filter((f) => f.startsWith('in:'))
-          .map((f) => f.slice(3)),
+        // filenames, exactly what Deck's Editor hands them — always the
+        // main input pool, whatever the panel pick draws from.
+        imageList: artSources.inputs,
         canvasWidth: FACE_WIDTH,
         canvasHeight: FACE_HEIGHT,
         report: (patch) => setCardInfo((prev) => ({ ...prev, ...patch })),
@@ -319,9 +373,9 @@ function FoundryEditor() {
     })
   }, [cardControls, state.currentCard, cardReady])
 
-  // COMPLETE: a Proof surfaced — write the master out through the existing
-  // export route. Phase 1 ships the plain full-res PNG to the output
-  // folder; the casts-folder route with the 745×1040 face lands in Phase 6.
+  // COMPLETE: a Proof surfaced — the cast lands in the casts folder
+  // (card_maker.md §1.1): the exact 745×1040 face, drop-in ready for
+  // assets/cards/<id>.png, plus the full-res master alongside.
   useEffect(() => {
     if (state.phase !== 'COMPLETE') return
     const master = masterRef.current
@@ -330,19 +384,34 @@ function FoundryEditor() {
     setExportState({ status: 'exporting', savedPath: null, error: null, thumbDataUrl: null })
     ;(async () => {
       try {
-        const pngBase64 = masterToPngDataUrl(master)
-        const thumbDataUrl = masterThumbDataUrl(master)
-        const res = await fetch('/api/export', {
+        const faceEl = document.createElement('canvas')
+        faceEl.width = FACE_WIDTH
+        faceEl.height = FACE_HEIGHT
+        faceEl.getContext('2d').drawImage(master, 0, 0, FACE_WIDTH, FACE_HEIGHT)
+        // The corner cut (cardCorners.js): graffiti may have painted the
+        // corners opaque again — the cast always ships rounded.
+        roundCorners(faceEl)
+        const roundedMaster = roundedCopy(master)
+        const facePngBase64 = faceEl.toDataURL('image/png')
+        const masterPngBase64 = masterToPngDataUrl(roundedMaster)
+        const thumbDataUrl = masterThumbDataUrl(roundedMaster)
+        const res = await fetch('/api/foundry/export', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pngBase64 })
+          body: JSON.stringify({
+            id: state.commission.id,
+            impression: state.copyIndex,
+            impressions: state.copiesTotal,
+            facePngBase64,
+            masterPngBase64
+          })
         })
         const data = await res.json()
         if (cancelled) return
         if (data.ok) {
           setExportState({ status: 'done', savedPath: data.savedPath, error: null, thumbDataUrl })
         } else {
-          setExportState({ status: 'error', savedPath: null, error: data.error || 'Unknown error.', thumbDataUrl: null })
+          setExportState({ status: 'error', savedPath: null, error: data.error || UI.editor.exportUnknownError, thumbDataUrl: null })
         }
       } catch (err) {
         if (cancelled) return
@@ -390,21 +459,55 @@ function FoundryEditor() {
     dispatch({ type: 'COMMIT' })
   }
 
+  // Ink the type (typeLayer.inkSlot): the selected slot, or — with nothing
+  // selected — every slot at once. Dark plates get light type this way.
+  function handleInk(color) {
+    const canvas = canvasStageRef.current?.getCanvas()
+    const slots = typeSlotsRef.current
+    if (!canvas || !slots) return
+    const targets = inkTarget ? [slots[inkTarget]] : Object.values(slots)
+    for (const obj of targets) inkSlot(obj, color)
+    canvas.requestRenderAll()
+  }
+
   // The Press: seal the whole foundation — art + plate + type — into the
   // master in one commit (card_maker.md §3.5). The bake consumes the live
   // objects; the refs and the mask session die with them (a brush left in
-  // Erase must not survive into the graffiti rounds).
+  // Erase must not survive into the graffiti rounds). The sealed master is
+  // kept as THE BASE: every impression of the run degrades a clone of it.
   function handlePress() {
     const canvas = canvasStageRef.current?.getCanvas()
     maskSessionRef.current?.dispose()
     maskSessionRef.current = null
     setMaskControls((prev) => ({ ...prev, mode: 'arrange' }))
-    if (canvas) masterRef.current = bake(canvas)
+    if (canvas) {
+      masterRef.current = bake(canvas)
+      baseMasterRef.current = masterRef.current
+    }
     plateObjRef.current = null
     panelImgRef.current = null
     typeSlotsRef.current = null
     setTypeReady(false)
     dispatch({ type: 'PRESS' })
+  }
+
+  // Return to the base for the next impression: the canvas restarts from a
+  // CLONE of the sealed base (clone, so no card can ever reach back and
+  // stain the base itself), with a fresh working deck from the reducer.
+  function handleNextImpression() {
+    const canvas = canvasStageRef.current?.getCanvas()
+    const base = baseMasterRef.current
+    if (canvas && base) {
+      const clone = document.createElement('canvas')
+      clone.width = base.width
+      clone.height = base.height
+      clone.getContext('2d').drawImage(base, 0, 0)
+      masterRef.current = clone
+      canvas.remove(...canvas.getObjects())
+      showMaster(canvas, clone)
+    }
+    setExportState({ status: 'idle', savedPath: null, error: null, thumbDataUrl: null })
+    dispatch({ type: 'NEXT_IMPRESSION' })
   }
 
   function handleRestart() {
@@ -425,8 +528,11 @@ function FoundryEditor() {
     }
     cardSessionRef.current = null
     plateObjRef.current = null
+    plateSourceRef.current = null
     panelImgRef.current = null
     typeSlotsRef.current = null
+    baseMasterRef.current = null
+    setPlateTint({ h: 0, s: 100 })
     setTypeReady(false)
     setMaskControls({ mode: 'arrange', size: 40, hardness: 'soft', softness: 0.5, strength: 1 })
     setMaskHistory({ canUndo: false, canRedo: false })
@@ -460,6 +566,42 @@ function FoundryEditor() {
     } catch (err) {
       setPlateList((prev) => ({ ...prev, status: 'error', error: err.message }))
     }
+  }
+
+  // Point the panel pick at a dedicated art folder (native picker → persist
+  // → refetch → fresh grid). Falls back to inputs + exports while unset.
+  async function handleChoosePanelFolder() {
+    try {
+      const picked = await fetch('/api/pick-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'read', current: artSources.panelFolder })
+      }).then((r) => r.json())
+      if (!picked.ok || !picked.path) return
+      const saved = await fetch('/api/panel-art-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: picked.path })
+      }).then((r) => r.json())
+      if (!saved.ok) {
+        setArtSources((prev) => ({ ...prev, status: 'error', error: saved.error }))
+        return
+      }
+      const sources = await fetchArtSources()
+      setArtSources(sources)
+      if (sources.status === 'ready') {
+        dispatch({ type: 'SET_PANEL_GRID', files: dealPanelGrid(sources.files, FOUNDRY_TUNING.panelGrid) })
+      }
+    } catch (err) {
+      setArtSources((prev) => ({ ...prev, status: 'error', error: err.message }))
+    }
+  }
+
+  // A fresh hand from the same pool (Stew, 2026-07-07: the image choice is
+  // re-shuffleable). N does the same while the grid is open.
+  function handleRedealGrid() {
+    if (artSources.status !== 'ready') return
+    dispatch({ type: 'SET_PANEL_GRID', files: dealPanelGrid(artSources.files, FOUNDRY_TUNING.panelGrid) })
   }
 
   async function handleOpenOutput() {
@@ -565,6 +707,11 @@ function FoundryEditor() {
     })
   }
 
+  // N while the panel grid is open: a fresh hand from the same pool.
+  if (state.phase === 'PANEL_PICK' && !state.panelArt) {
+    bindings.push({ key: 'n', run: handleRedealGrid })
+  }
+
   if (state.phase === 'WORKING' && !state.currentCard) {
     bindings.push(
       { code: 'Space', run: () => dispatch({ type: 'DEAL' }) },
@@ -577,7 +724,11 @@ function FoundryEditor() {
     // listener confirms the taken image); artless Continue stays click-only.
     bindings.push({ key: 'Enter', run: () => dispatch({ type: 'END_PANEL' }) })
   } else if (state.phase === 'COMPLETE') {
-    bindings.push({ key: 'Enter', run: handleRestart })
+    // Enter continues the run while impressions remain, then restarts.
+    bindings.push({
+      key: 'Enter',
+      run: state.copyIndex < state.copiesTotal ? handleNextImpression : handleRestart
+    })
   }
   // The Press is deliberately click-only — sealing the foundation should
   // never be a double-press accident (the CodaChoice rule).
@@ -596,16 +747,18 @@ function FoundryEditor() {
   bindingsRef.current = bindings
 
   return (
-    <div className="editor">
+    <div className="editor foundry">
       <header className="editor-header">
         <a className="link" href="/">
-          ← deck
+          {F.header.backToDeck}
         </a>
-        <h1>FOUNDRY</h1>
+        <h1>{F.header.title}</h1>
         <div className="header-actions">
           {state.commission && (
             <span className="foundry-commission-note">
-              casting <strong>{state.commission.label}</strong>
+              {F.header.casting} <strong>{state.commission.label}</strong>
+              {state.copiesTotal > 1 &&
+                ` ${fmt(F.header.impressionNote, { i: state.copyIndex, n: state.copiesTotal })}`}
             </span>
           )}
         </div>
@@ -628,13 +781,24 @@ function FoundryEditor() {
               onChooseFolder={handleChoosePlatesFolder}
             />
           )}
+          {/* A working card's own canvas-area overlay (Stamp's grid pick),
+              rendered generically — same rule as Deck's Editor. Foundry has
+              no deck-facing cards, so deckView/onDeckAction stay out. */}
+          {state.phase === 'WORKING' && currentEntry?.Overlay && (
+            <currentEntry.Overlay
+              controls={cardControls}
+              info={cardInfo}
+              ready={cardReady}
+              onControlChange={handleControlChange}
+            />
+          )}
           {state.phase === 'PANEL_PICK' && !state.panelArt && (
             <CardGridPicker
-              title="THE PANEL"
-              hint="Take an image for the window — your finished pieces and raw inputs, dealt together. It lands under the plate; the window crops it."
+              title={F.panel.title}
+              hint={F.panel.gridHint}
               files={state.panelGrid}
               fileUrl={panelArtUrl}
-              confirmLabel="Take — place under the window"
+              confirmLabel={F.panel.gridConfirm}
               onConfirm={(file) => dispatch({ type: 'PICK_PANEL', file })}
             />
           )}
@@ -648,11 +812,19 @@ function FoundryEditor() {
             ready={cardReady}
             committing={committing}
             plateReady={plateReady}
+            plateTint={plateTint}
+            onPlateTint={(patch) => setPlateTint((prev) => ({ ...prev, ...patch }))}
             artReady={artReady}
+            artSources={artSources}
+            onRedealGrid={handleRedealGrid}
+            onChoosePanelFolder={handleChoosePanelFolder}
             typeReady={typeReady}
+            inkTarget={inkTarget}
+            onInk={handleInk}
             onRerollFonts={() =>
               fontCatalog && dispatch({ type: 'SET_TYPE_FONTS', fonts: dealTypeFonts(fontCatalog) })
             }
+            onNextImpression={handleNextImpression}
             maskControls={maskControls}
             maskHistory={maskHistory}
             onMaskControlsChange={(patch) => setMaskControls((prev) => ({ ...prev, ...patch }))}
@@ -676,16 +848,15 @@ function FoundryEditor() {
 
 // ---- arc overlays (session structure, not card behavior) ----
 
-// The commission grid: every real Deck design as a card tile. Rendered over
-// the canvas area like the opening pick — the faces ARE the decision.
+// The commission grid: every real Deck design as a card tile, each showing
+// its run size (its copy count in a real deck) — ×2 means this design gets
+// a second impression to deviate. Rendered over the canvas area like the
+// opening pick — the faces ARE the decision.
 function CommissionPick({ onChoose, onDeal }) {
   return (
     <div className="grid-picker">
-      <h2>THE COMMISSION</h2>
-      <p className="hint">
-        Every cast opens on a commission — the card this face is for. Choose
-        one, or let the deck decide.
-      </p>
+      <h2>{F.commission.title}</h2>
+      <p className="hint">{F.commission.pickHint}</p>
       <div className="foundry-commission-scroll">
         <div className="deck-row">
           {COMMISSIONS.map((c) => (
@@ -698,35 +869,38 @@ function CommissionPick({ onChoose, onDeal }) {
                 onClick={() => onChoose(c.id)}
                 title={`Cast ${c.label}`}
               />
-              <span className="deck-cell-name">{c.label}</span>
+              <span className="deck-cell-name">
+                {c.label} <span className="foundry-run-count">×{runSize(c)}</span>
+              </span>
             </div>
           ))}
         </div>
       </div>
       <div className="grid-picker-foot">
         <button type="button" className="primary" onClick={onDeal}>
-          Deal me a commission
+          {F.commission.dealButton}
         </button>
       </div>
     </div>
   )
 }
 
-// The plate deal: real plates from the plates folder, dealt face up. The
-// transparent window renders over white here — exactly what the empty
-// master will show through it.
+// The plate pick: EVERY plate in the folder, face up — chosen, never dealt
+// (Stew, 2026-07-07: certain plates for certain cards). The transparent
+// window renders over white here — exactly what the empty master will show
+// through it.
 function PlateDeal({ plates, plateList, onTake, onChooseFolder }) {
   return (
     <div className="grid-picker">
-      <h2>THE PLATE</h2>
-      {plateList.status === 'loading' && <p className="hint">Reading the plates folder…</p>}
+      <h2>{F.plate.title}</h2>
+      {plateList.status === 'loading' && <p className="hint">{F.plate.readingFolder}</p>}
       {plateList.status === 'error' && (
         <>
           <p className="error">{plateList.error}</p>
           {plateList.folder && <p className="hint mono">{plateList.folder}</p>}
           <div>
             <button type="button" className="secondary" onClick={onChooseFolder}>
-              Choose plates folder
+              {F.plate.chooseFolder}
             </button>
           </div>
         </>
@@ -734,9 +908,7 @@ function PlateDeal({ plates, plateList, onTake, onChooseFolder }) {
       {plateList.status === 'ready' && (
         <>
           <p className="hint">
-            {plates.length} plate{plates.length === 1 ? '' : 's'} dealt — take
-            one. Its frame is the card&apos;s convention layer; the white
-            window is the punched image panel, waiting for art.
+            {fmt(F.plate.setHint, { count: plates.length, plural: plates.length === 1 ? '' : 's' })}
           </p>
           <div className="foundry-plate-row">
             {plates.map((p) => (

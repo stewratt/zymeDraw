@@ -8,6 +8,8 @@
 // time — on screen and in the bake alike. No pixels touched until End.
 
 import * as fabric from 'fabric'
+import { CARD_TEXT } from '../cardText.js'
+import { UI } from '../../copy/uiText.js'
 
 const BLENDS = ['multiply', 'screen', 'overlay', 'color']
 
@@ -45,10 +47,10 @@ export function cleanupSteep(ctx) {
 }
 
 export function SteepTools({ controls, ready, onControlChange }) {
-  if (!ready) return <span className="hint">Preparing…</span>
+  if (!ready) return <span className="hint">{UI.shared.preparing}</span>
   return (
     <div className="brush-tools card-tools">
-      <p className="hint">The piece steeps in a dye bath. Influence is steeping time.</p>
+      <p className="hint">{CARD_TEXT.steep.description}</p>
       <label className="ctrl" title="N — new hue">
         <span className="ctrl-label">Dye</span>
         <input

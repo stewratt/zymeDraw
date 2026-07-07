@@ -187,6 +187,59 @@ app.get('/api/outputs/:filename', async (req, res) => {
   })
 })
 
+// ---- Foundry: the dedicated panel-art folder ----
+// Stew curates card imagery separately from the main app's input pool
+// (2026-07-07). `panelArtFolder` in ~/.deck-config.json is optional: when
+// set, the panel pick draws from it alone; when absent, the pick falls
+// back to the inputs + exports mix. Same shape and safety as /api/plates.
+app.get('/api/panel-art', async (req, res) => {
+  const { panelArtFolder } = await loadConfig()
+  if (!panelArtFolder) {
+    return res.json({ ok: false, folder: null, error: 'No panel art folder configured.' })
+  }
+  const folder = path.resolve(expandTilde(panelArtFolder))
+  try {
+    const entries = await fs.readdir(folder, { withFileTypes: true })
+    const filenames = entries
+      .filter((e) => e.isFile() && IMAGE_EXTENSIONS.has(path.extname(e.name).toLowerCase()))
+      .map((e) => e.name)
+      .sort()
+    res.json({ ok: true, filenames, folder })
+  } catch (err) {
+    res.status(400).json({ ok: false, folder, error: `Cannot read panel art folder: ${err.message}` })
+  }
+})
+
+app.get('/api/panel-art/:filename', async (req, res) => {
+  const { panelArtFolder } = await loadConfig()
+  if (!panelArtFolder) return res.status(400).send('Panel art folder is not configured.')
+
+  const safeName = path.basename(req.params.filename)
+  const folderRoot = path.resolve(expandTilde(panelArtFolder))
+  const resolved = path.resolve(folderRoot, safeName)
+  if (!resolved.startsWith(folderRoot + path.sep)) {
+    return res.status(400).send('Invalid filename.')
+  }
+  if (!IMAGE_EXTENSIONS.has(path.extname(resolved).toLowerCase())) {
+    return res.status(400).send('Not an image.')
+  }
+  res.sendFile(resolved, (err) => {
+    if (err && !res.headersSent) {
+      res.status(err.code === 'ENOENT' ? 404 : 500).send('Failed to send file.')
+    }
+  })
+})
+
+// Point panelArtFolder somewhere (persisted per machine; saveConfig merges).
+app.post('/api/panel-art-folder', async (req, res) => {
+  const validated = await validateFolder(req.body?.path, 'read')
+  if (!validated.ok) {
+    return res.status(400).json({ ok: false, error: validated.error })
+  }
+  await saveConfig({ panelArtFolder: validated.resolved })
+  res.json({ ok: true, panelArtFolder: validated.resolved })
+})
+
 // ---- Foundry: the plates (card_maker.md §1.1, Phase 2) ----
 // Blank card frames with the image window punched as alpha. Local-only
 // materials, never committed; the folder defaults to the repo's
@@ -231,6 +284,73 @@ app.get('/api/plates/:filename', async (req, res) => {
       res.status(err.code === 'ENOENT' ? 404 : 500).send('Failed to send file.')
     }
   })
+})
+
+// ---- Card face sets (the designed deck art) ----
+// The card faces the deck draws — one PNG per card id (745×1040), keyed by
+// id (`ghost.png`), never by display name. `cardsetsFolder` in
+// ~/.deck-config.json is a per-machine folder holding one SUBFOLDER per
+// SET, so whole alternate deck designs drop in side by side:
+//   <cardsetsFolder>/charcoal/ghost.png, stain.png, ...
+//   <cardsetsFolder>/neon/ghost.png, ...
+// Unset = no external sets; the frontend falls back to the committed
+// assets/cards/ (the built-in default set). Same safety as /api/plates.
+app.get('/api/cards', async (req, res) => {
+  const { cardsetsFolder } = await loadConfig()
+  if (!cardsetsFolder) {
+    return res.json({ ok: false, folder: null, sets: [], error: 'No card sets folder configured.' })
+  }
+  const folder = path.resolve(expandTilde(cardsetsFolder))
+  try {
+    const dirs = await fs.readdir(folder, { withFileTypes: true })
+    const sets = []
+    for (const d of dirs) {
+      if (!d.isDirectory()) continue
+      const files = await fs.readdir(path.join(folder, d.name), { withFileTypes: true })
+      const ids = files
+        .filter((f) => f.isFile() && path.extname(f.name).toLowerCase() === '.png')
+        .map((f) => path.basename(f.name, path.extname(f.name)))
+        .sort()
+      sets.push({ name: d.name, ids })
+    }
+    sets.sort((a, b) => a.name.localeCompare(b.name))
+    res.json({ ok: true, folder, sets })
+  } catch (err) {
+    res.status(400).json({ ok: false, folder, sets: [], error: `Cannot read card sets folder: ${err.message}` })
+  }
+})
+
+// One face: <cardsetsFolder>/<set>/<id>.png. Both segments are basename'd
+// and confined to the folder — no traversal out via set or filename.
+app.get('/api/cards/:set/:filename', async (req, res) => {
+  const { cardsetsFolder } = await loadConfig()
+  if (!cardsetsFolder) return res.status(400).send('Card sets folder is not configured.')
+
+  const folderRoot = path.resolve(expandTilde(cardsetsFolder))
+  const safeSet = path.basename(req.params.set)
+  const safeName = path.basename(req.params.filename)
+  const resolved = path.resolve(folderRoot, safeSet, safeName)
+  if (!resolved.startsWith(folderRoot + path.sep)) {
+    return res.status(400).send('Invalid path.')
+  }
+  if (path.extname(resolved).toLowerCase() !== '.png') {
+    return res.status(400).send('Not a card face.')
+  }
+  res.sendFile(resolved, (err) => {
+    if (err && !res.headersSent) {
+      res.status(err.code === 'ENOENT' ? 404 : 500).send('Failed to send file.')
+    }
+  })
+})
+
+// Point cardsetsFolder somewhere (persisted per machine; saveConfig merges).
+app.post('/api/cardsets-folder', async (req, res) => {
+  const validated = await validateFolder(req.body?.path, 'read')
+  if (!validated.ok) {
+    return res.status(400).json({ ok: false, error: validated.error })
+  }
+  await saveConfig({ cardsetsFolder: validated.resolved })
+  res.json({ ok: true, cardsetsFolder: validated.resolved })
 })
 
 // ---- Foundry: the local font overlay (card_maker.md §1.1, Phase 4) ----
@@ -342,6 +462,60 @@ app.post('/api/export', async (req, res) => {
   }
 
   res.json({ ok: true, savedPath })
+})
+
+// ---- Foundry: the Proof's export (card_maker.md §1.1, Phase 6) ----
+// Two files per cast into the CASTS folder — the 745×1040 face (drop-in
+// ready for assets/cards/<id>.png) and the full-res master. The casts
+// folder is `castsFolder` in ~/.deck-config.json, defaulting to
+// <outputFolder>/foundry/; filenames carry the commission id + a timestamp
+// so iterations never overwrite. Never writes into the repo (§1.1).
+function decodePngBase64(pngBase64) {
+  if (typeof pngBase64 !== 'string' || !pngBase64) return null
+  const raw = pngBase64.startsWith('data:')
+    ? pngBase64.replace(/^data:image\/[a-zA-Z0-9.+-]+;base64,/, '')
+    : pngBase64
+  try {
+    const buffer = Buffer.from(raw, 'base64')
+    return buffer.length > 0 ? buffer : null
+  } catch {
+    return null
+  }
+}
+
+app.post('/api/foundry/export', async (req, res) => {
+  const { castsFolder, outputFolder } = await loadConfig()
+  if (!castsFolder && !outputFolder) {
+    return res.status(400).json({ ok: false, error: 'No casts or output folder configured.' })
+  }
+  const base = castsFolder
+    ? path.resolve(expandTilde(castsFolder))
+    : path.join(path.resolve(expandTilde(outputFolder)), 'foundry')
+
+  const { id, impression, impressions, facePngBase64, masterPngBase64 } = req.body ?? {}
+  const safeId = typeof id === 'string' && /^[a-z0-9-]+$/i.test(id) ? id : 'card'
+  const face = decodePngBase64(facePngBase64)
+  const master = decodePngBase64(masterPngBase64)
+  if (!face || !master) {
+    return res.status(400).json({ ok: false, error: 'Missing or undecodable PNG payloads.' })
+  }
+
+  // Runs of more than one impression mark which this is: stain_i1_..., i2...
+  const mark =
+    Number.isInteger(impressions) && impressions > 1 && Number.isInteger(impression)
+      ? `_i${impression}`
+      : ''
+  const slug = `${safeId}${mark}_${timestampSlug()}`
+  const savedPath = path.join(base, `${slug}.png`)
+  const masterPath = path.join(base, `${slug}_master.png`)
+  try {
+    await fs.mkdir(base, { recursive: true })
+    await fs.writeFile(savedPath, face)
+    await fs.writeFile(masterPath, master)
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: `Could not write cast: ${err.message}` })
+  }
+  res.json({ ok: true, savedPath, masterPath })
 })
 
 // v2 Phase 7: the ML sidecar proxy. Express stays "hands" — it forwards
@@ -510,6 +684,56 @@ function timestampSlug() {
     `${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`
   )
 }
+
+// ---- The copy editor (dev tool) -------------------------------------------
+// All user-facing copy lives in frontend/src/copy/uiText.json; the page at
+// /copy-editor edits it through these two routes. The file path is fixed
+// server-side — no user-supplied paths. Saving rewrites the file, and Vite
+// hot-reloads the running app, so wording changes show up live.
+
+const COPY_FILE = fileURLToPath(new URL('../frontend/src/copy/uiText.json', import.meta.url))
+const COPY_EDITOR_PAGE = fileURLToPath(new URL('../tools/copy-editor.html', import.meta.url))
+
+app.get('/copy-editor', (req, res) => {
+  res.sendFile(COPY_EDITOR_PAGE)
+})
+
+app.get('/api/dev/copy', async (req, res) => {
+  try {
+    const text = await fs.readFile(COPY_FILE, 'utf8')
+    res.json({ ok: true, copy: JSON.parse(text) })
+  } catch (err) {
+    res.status(500).json({ ok: false, error: `Could not read the copy file: ${err.message}` })
+  }
+})
+
+// The incoming body must mirror the current file: same keys, string leaves.
+// We walk the CURRENT structure and pull values from the submission — so a
+// buggy client can change wording but never add, drop, or reorder keys.
+function mergeCopy(current, incoming) {
+  const merged = {}
+  for (const [key, value] of Object.entries(current)) {
+    const sent = incoming?.[key]
+    if (typeof value === 'string') {
+      if (typeof sent !== 'string') throw new Error(`"${key}" must be a string.`)
+      merged[key] = sent
+    } else {
+      merged[key] = mergeCopy(value, sent)
+    }
+  }
+  return merged
+}
+
+app.post('/api/dev/copy', async (req, res) => {
+  try {
+    const current = JSON.parse(await fs.readFile(COPY_FILE, 'utf8'))
+    const merged = mergeCopy(current, req.body?.copy)
+    await fs.writeFile(COPY_FILE, JSON.stringify(merged, null, 2) + '\n', 'utf8')
+    res.json({ ok: true, copy: merged })
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message })
+  }
+})
 
 app.listen(PORT, () => {
   console.log(`Deck backend listening on http://localhost:${PORT}`)

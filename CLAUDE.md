@@ -51,6 +51,57 @@ cards declare their own `deckActions` in the registry (Editor's fence is
 built from them — the last per-card list left Editor.jsx), and the
 registry dev-warns if a `MOD_CARDS` id has no entry.
 
+**Card copy centralized (2026-07-07): `editor/cardText.js` is the ONLY
+place card names + descriptions are written** (Stew edits them often).
+`deck.js`/`foundryDeck.js` derive their labels from it, the card panels
+import their description lines from it, and Foundry pre-fills a cast's
+description box from it — home #0 in `card_anatomy.md`'s list.
+
+**Copy overhaul + the copy editor (2026-07-07, Phase 1 built, awaiting
+browser verification).** Stew is relaxing the universal zyme register
+for nav copy — descriptions and navigation get more literal language
+(card *names* keep the register). Infrastructure: user-facing copy is
+migrating into `frontend/src/copy/uiText.json` (single source of
+truth; `cardText.js` is now a shim re-exporting its `cards` section,
+so every importer is untouched), edited live through
+`tools/copy-editor.html`, served at `http://localhost:5174/copy-editor`
+via `GET/POST /api/dev/copy` in `server.js` (POST walks the current
+file's structure and takes only string leaves — a client can change
+wording, never add/drop/reorder keys). Card names are pure copy —
+renaming a card touches nothing in code; the id (`char`, …) is the
+permanent key for files/registry/deck/art. So the tool's `CARD_GLOSS`
+map (in the HTML, outside the editable copy) anchors each card group
+with its id + a literal gloss of what the card does — renames never
+orphan the fields. A gloss line is a per-card home now
+(`card_anatomy.md` §5 item 0). Saving rewrites the JSON and
+Vite hot-reloads the app; the reload destroys an in-progress session,
+so copy edits happen between sessions. Phase 1 = the cards section,
+end to end (round-trip verified via curl). Phase 2 (built, same
+verification pass) = Deck nav copy migrated: DeckPanel, GridPicker,
+HistoryOverlay, KeysReference (SECTIONS now derives from `UI.keys`),
+Setup, Editor header/state captions, deck.js `progressLabel`, Plinth
+captions, App loading — all through `UI`/`fmt` in `copy/uiText.js`
+(pure; `{token}` templates) and `rich()` in `copy/rich.jsx`
+(**strong**/*em*/`code` emphasis inside copy strings, so hints keep
+markup without HTML in the JSON). Vite build verified. Phase 3 (built,
+same pass) = the in-card hint strings: new sections `shared`
+(Preparing…/take-one/shattering/work-glance), `brush` (the maskHint
+sentences, `{subject}` per card), `cardHints` (per-card stage copy —
+grid-pick titles/hints/confirms, Stamp's cutting/degraded, Etch's
+frame/grain, Skim's beats + buttons, Cull's prompts, Delay's suffix,
+Deeper's commit note, the Transfer pair). Rack's inline hint now reads
+`CARD_TEXT.rack.description` like every other card. Phase 4 (built,
+same pass) = Foundry nav copy: the `foundry` section (app/header/
+commission/plate/panel/type/plateTint/ink/working/proof/progress)
+feeds FoundryPanel, FoundryEditor's arc overlays, FoundryApp, and
+foundryDeck (`PROOF_CARD` label + progress). The shared studio verbs
+(End — commit, Deal, THIS ROUND, Committing…, Saved to:, Open output
+folder) deliberately reuse `deckPanel` keys — one edit rewords both
+apps. ALL FOUR PHASES BUILT; the whole migration awaits Stew's browser
+verification (Phase 1–2 partially exercised: he already reworded card
+descriptions through the tool). Slider labels (Hue/Size/Influence…)
+and tooltips deliberately out of scope.
+
 **Policy locked (notes §2): set-knowledge is free; order-knowledge and
 order-control are never ambient** — the deal stays blind, the remains
 stay unordered. Exceptions only as dealt/spent mechanics (Skim, Cull).
@@ -76,12 +127,22 @@ foundryRegistry — commission chosen-with-deal-option), the plates
 (`/api/plates`, matte-on-top mount), the panel (`/api/outputs`, art
 under the window via `panelArt.js`, mask brush; the brush/arrange key
 grammars now live in shared `editor/sessionBindings.js` — Editor.jsx
-imports them). **Phase 4 built, awaiting browser verification:**
-`fonts.js` (catalog + style deal + FontFace discipline),
-`typeLayer.js` (name/type/description slots above the plate, N
-re-deals fonts on living objects), the Press seals the full stack.
-Next: Phase 5 (graffiti wave 1 — registry entries over shared card
-files), Phase 6 (rarity mark + casts-folder export).
+imports them). Phase 4 (fonts + type layer:
+`fonts.js` catalog/style-deal/FontFace discipline, `typeLayer.js`
+slots above the plate, N re-deals on living objects) and Phase 5
+(graffiti wave 1: foundryRegistry points the 8 brush-core ids straight
+at Deck's registry entries; `editor/colorSeed.js` extracted) are
+verified. **Phase 6 built, awaiting browser verification:** `rarity.js`
+(tier from commission copies; diamond/blot/ring mark as a fourth
+nudgeable slot) + `POST /api/foundry/export` (745×1040 face + master
+into `castsFolder`, default `<output>/foundry/`). **Control wave built
+2026-07-07 (its §1.1: the base is controlled, only the graffiti is
+chance), same verification pass:** plate chosen from the whole folder;
+standing plate hue/sat tint until the Press (`plates.tintPlate`);
+panel grid re-deals (N); dedicated `panelArtFolder` config key with
+inputs+exports fallback (`/api/panel-art`); commission tiles show run
+size ×N; Stamp ×3. After that: the Phase-7 backlog (graft wave,
+procedural plates, direct-to-Deck…).
 
 **Next actions (the notes' §10):** 1) Stew verifies Wave 2 in the
 browser. 2) Playtest question (§7.2): does the splash-over tension

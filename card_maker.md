@@ -91,6 +91,37 @@ cast, commission*. All Foundry copy obeys the zyme register.
 
 ### 1.1 Adjustments (Stew, 2026-07-07) — these override §1 where they conflict
 
+- **The print run — impressions deviate from the sealed base.** A
+  commission's copy count is a *run size*: a 2-copy card is cast as
+  **2 impressions of one base**. Phase 1 (plate + panel art + type) is
+  built once and the Press seals it; each impression then takes that
+  same base through its own graffiti rounds (fresh working deck per
+  impression) and exports separately — same core components, different
+  degradation. After each Proof: "Next impression — return to the
+  base" restores a clone of the sealed base master (safe because bake
+  replaces masters, never mutates them). Filenames mark the run:
+  `<id>_i1_<ts>.png`, `_i2_`. The Coda stays a single impression.
+- **Type ink.** Slots are colored independently (dark plates need
+  light type): at TYPE_SETTING an ink control colors the selected slot
+  — or all slots when nothing is selected — with quick ink/bone
+  presets (`typeLayer.inkSlot`; the common ring inks its stroke).
+- **Stamp joined the working deck early** (with the first Overlay
+  rendered generically in FoundryEditor); Stamp deals at ×3, Char and
+  Rails at ×2 — the stamps and stencils are the important degradations,
+  Stamp most of all. Ghost/Stain/Deeper remain backlog.
+- **The base is controlled; only the graffiti is chance (Stew,
+  2026-07-07).** Randomness pulls back from the foundation phases:
+  the **plate is chosen from the whole folder** (never dealt — certain
+  plates for certain cards); the plate carries a standing **hue/
+  saturation tint**, live from mount to Press (`plates.tintPlate`, the
+  ctx-filter pattern — the art under the window keeps its own color);
+  the **panel grid re-deals** on demand (button + N); panel art can
+  draw from a **dedicated `panelArtFolder`** (config key; falls back
+  to the inputs+exports mix while unset — the stencil cards always
+  sample the main input pool regardless); and every commission tile
+  shows its **run size** (×1/×2) so you know which design gets a
+  second impression before you start.
+
 - **Export — casts folder, not direct-to-Deck (amends #4).** Foundry is
   a generative space: many casts, then a curated set. The Proof writes
   the 745×1040 face + full-res master to a per-machine **casts folder**
@@ -118,13 +149,16 @@ cast, commission*. All Foundry copy obeys the zyme register.
   deck. Re-roll (N) re-deals the style. At Phase 4 the zips are
   unzipped into `frontend/src/assets/fonts/<style>/` and committed
   (no OS install — the browser loads `.ttf` via `FontFace`).
-  **Proprietary faces (added 2026-07-07):** Beleren + MPlantin (the
-  real MTG fonts, Wizards-proprietary) sit as loose `.ttf`s in the mtg
-  folders. They are **never committed** — `card_template/` is
-  gitignored wholesale — so `fonts.js` treats them as a *local
-  overlay*: served per-machine by the backend alongside the committed
-  OFL set, dealt when present, absent without error on machines that
-  lack them (the card-art-placeholder pattern).
+  **Proprietary faces (added, then retired, 2026-07-07):** Beleren +
+  MPlantin were tried as a *local overlay* (loose `.ttf`s under
+  `card_template/fonts/`, served per-machine by `/api/fonts`, never
+  committed). The files turned out to be legacy conversions (ALLTYPE /
+  FontForge) that load but lag/hang canvas text measurement — they now
+  sit in `card_template/fonts/retired/`, out of the scanned folders.
+  The overlay machinery stays: any well-formed local font dropped into
+  `fonts/<role>/<style>/` joins the deal, and `ensureFontLoaded` now
+  times out + falls back to serif so a bad file can never wedge a
+  session again.
 
 ---
 
@@ -481,8 +515,10 @@ one is verified). Every phase ends with explicit test steps.
   as plates at all? (evilbiscuit says: very. But the plate is the
   convention layer — maybe the plates stay straight and the session
   supplies the chaos.)
-- **Rarity tier names** — zyme-register words for common/scarce/
-  singular, settled when the mark is designed.
+- ~~Rarity tier names~~ **Resolved (Phase 6):** the tiers never became
+  UI copy — the mark is the only rendering (singular = a diamond punch,
+  scarce = a filled blot, common = the open ring; `rarity.js`).
+  common/scarce/singular stay code vocabulary only.
 
 ---
 

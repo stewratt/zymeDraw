@@ -15,6 +15,16 @@
   color: #ffffff;
 }
 
+/* The workspace reads as a CARD: round the canvas container to the same
+   corner law the export cuts (cardCorners.js, R = 5% of width). Purely
+   visual — the buffers stay square; the true cut happens at export. The
+   slash syntax keeps the arcs circular on the non-square face: 5% of the
+   745 width equals 3.582% of the 1040 height (5 x 745/1040). */
+.foundry .canvas-wrap .canvas-container {
+  border-radius: 5% / 3.582%;
+  overflow: hidden;
+}
+
 .foundry-commission-note {
   color: var(--text-dim);
   font-size: 0.8125rem;
@@ -39,6 +49,36 @@
   letter-spacing: 0.1em;
 }
 
+/* The ink control at TYPE_SETTING. */
+.foundry-ink {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.foundry-ink-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.foundry-ink input[type='color'] {
+  width: 44px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  cursor: pointer;
+}
+
+/* The run size on a commission tile: the card's deck presence (×1 / ×2 —
+   how many impressions its cast will run). */
+.foundry-run-count {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+}
+
 /* The commission grid: more tiles than fit the overlay, so unlike the image
    grids (which shrink to always fit) this one scrolls — card tiles have a
    minimum legible size. */
@@ -49,27 +89,24 @@
   padding: 4px 2px;
 }
 
-/* The plate deal: a few large takes side by side, card-proportioned. The
-   row is a size container (the .grid-thumbs trick): each plate is the
-   largest 745:1040 box where three fit the width AND one fits the height,
-   so the proportions hold at any window shape. */
+/* The plate pick: the WHOLE folder face up, chosen not dealt. A wrapping
+   grid that scrolls when the set outgrows the window; every tile keeps
+   card proportions via aspect-ratio. */
 .foundry-plate-row {
   flex: 1;
   min-height: 0;
   min-width: 0;
-  container-type: size;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+  align-content: start;
   padding: 12px;
 }
 .foundry-plate {
-  width: min(
-    (100cqw - 2 * 24px - 2 * 12px) / 3,
-    100cqh * 745 / 1040,
-    360px
-  );
+  width: 100%;
+  max-width: 260px;
+  justify-self: center;
   aspect-ratio: 745 / 1040;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import FoundryEditor from './FoundryEditor.jsx'
+import { UI } from '../copy/uiText.js'
 
 // Foundry's top level. No Setup screen of its own — folders are configured
 // in Deck's Setup and persisted to ~/.deck-config.json; Foundry only checks
@@ -14,13 +15,13 @@ function FoundryApp() {
       .catch(() => setConfig({}))
   }, [])
 
-  if (!config) return <div className="loading">Loading…</div>
+  if (!config) return <div className="loading">{UI.app.loading}</div>
 
   if (!config.outputFolder) {
     return (
       <div className="loading">
-        No output folder configured — open <a href="/">Deck</a> once and set
-        your folders in Setup, then reload Foundry.
+        {UI.foundry.app.noOutputPre} <a href="/">{UI.foundry.app.noOutputLink}</a>{' '}
+        {UI.foundry.app.noOutputPost}
       </div>
     )
   }

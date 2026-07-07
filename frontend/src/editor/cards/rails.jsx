@@ -7,9 +7,11 @@
 
 import * as fabric from 'fabric'
 import { createMaskSession } from '../brushCore.js'
+import { CARD_TEXT } from '../cardText.js'
 import { sampleImages } from '../sampling.js'
 import { READING_LABEL, computeLum, maskFor, maskToCanvas, pickMostShattered } from '../shatter.js'
 import { ArrangeMaskControls } from './maskControls.jsx'
+import { UI, fmt } from '../../copy/uiText.js'
 
 function tint(tinted, maskCanvas, color) {
   const g = tinted.getContext('2d')
@@ -101,13 +103,12 @@ export function cleanupRails(ctx) {
 
 export function RailsTools({ controls, info, ready, onControlChange }) {
   if (info.stage === 'shattering' || !ready) {
-    return <span className="hint">Reading the image for its most shattered form…</span>
+    return <span className="hint">{UI.shared.shattering}</span>
   }
   return (
     <div className="brush-tools card-tools">
       <p className="hint">
-        This image {info.reading ?? 'shattered'}. Arrange the fragments, tint them,
-        fade them, work into them with the brush.
+        {fmt(UI.shared.shatteredIntro, { reading: info.reading ?? 'shattered' })} {CARD_TEXT.rails.description}
       </p>
       <ArrangeMaskControls controls={controls} info={info} onControlChange={onControlChange} />
       <label className="ctrl" title="N — new hue">

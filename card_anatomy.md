@@ -74,15 +74,25 @@ list is proposing a framework extension — say so explicitly.
 
 ## 5. The four homes of a card
 
-A card lives in exactly four places. Nothing else in the codebase may
+A card lives in exactly five places. Nothing else in the codebase may
 know it exists — **never add per-card branches to `Editor.jsx` or
 `DeckPanel.jsx`**.
 
-1. **A `MOD_CARDS` line** (`editor/deck.js`) — identity and deck
-   presence: `{ id, label, copies }`, plus `family: 'deck'` for deck
-   cards, plus a comment naming its anatomy (`// Reveal × deposit`).
-   Removing a card from play = commenting this line out; the other three
-   homes stay (Rack and the transfers are the precedent).
+0. **A `CARD_TEXT` entry** (`editor/cardText.js`) — the card's NAME and
+   DESCRIPTION, the single place either is ever written. `deck.js`
+   derives its labels from it, the card panel copy imports it, and
+   Foundry pre-fills a cast's description box from it — renaming or
+   rewording a card is one edit here, nowhere else.
+   Alongside it: **a `CARD_GLOSS` line** (`tools/copy-editor.html`) — a
+   literal, plain-language note of what the card *does*, keyed by id.
+   The id never changes; the name is free to. The gloss is how the copy
+   editor stays legible after a card has been renamed away from its id.
+1. **A `MOD_CARDS` line** (`editor/deck.js`) — deck presence:
+   `{ id, copies }` (the label is derived from `CARD_TEXT`), plus
+   `family: 'deck'` for deck cards, plus a comment naming its anatomy
+   (`// Reveal × deposit`). Removing a card from play = commenting this
+   line out; the other homes stay (Rack and the transfers are the
+   precedent).
 2. **A registry entry** (`editor/cards/registry.jsx`) — behavior wiring:
    controls, defaults, hooks, and any optional capabilities (§6). A dev
    check at the bottom of the registry warns if a dealt id has no entry.

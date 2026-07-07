@@ -11,6 +11,10 @@
 
 import { useEffect } from 'react'
 import Card from '../Card.jsx'
+import { CARD_TEXT } from '../cardText.js'
+import { UI } from '../../copy/uiText.js'
+
+const H = UI.cardHints.skim
 
 // The Ghost pattern: begin awaits the user so End stays disabled until
 // the choice is made (or there is nothing to see). The overlay resolves
@@ -39,43 +43,37 @@ export function SkimOverlay({ info, deckView, onDeckAction, workUrl }) {
   if (!skim) {
     stage = (
       <>
-        <p className="hint">The top of the deck, seen once. Turn it.</p>
+        <p className="hint">{CARD_TEXT.skim.description}</p>
         <button type="button" className="primary" onClick={() => onDeckAction({ type: 'SKIM' })}>
-          Turn the top card
+          {H.turnTop}
         </button>
       </>
     )
   } else if (!skim.card) {
-    stage = <p className="hint">The deck is empty — there is nothing on top.</p>
+    stage = <p className="hint">{H.emptyDeck}</p>
   } else if (!skim.choice) {
     stage = (
       <>
         <Card id={skim.card.id} label={skim.card.label} kind={skim.card.kind} size="reveal" flip />
-        <p className="hint">Leave it or bury it — you won&apos;t see what replaces it.</p>
+        <p className="hint">{H.choiceHint}</p>
         <div className="skim-choices">
           <button type="button" className="primary" onClick={() => choose('SKIM_KEEP')}>
-            Leave it — the next deal
+            {H.keep}
           </button>
           <button type="button" className="primary" onClick={() => choose('SKIM_BURY')}>
-            Bury it — somewhere back in the deck
+            {H.bury}
           </button>
         </div>
       </>
     )
   } else {
-    stage = (
-      <p className="hint">
-        {skim.choice === 'kept'
-          ? 'It waits on top. End the round.'
-          : 'Gone — somewhere back in the deck. The next deal is unknown. End the round.'}
-      </p>
-    )
+    stage = <p className="hint">{skim.choice === 'kept' ? H.kept : H.buried}</p>
   }
 
   return (
     <div className="grid-picker skim-picker">
       <div className="grid-picker-head">
-        <h2>SKIM</h2>
+        <h2>{H.title}</h2>
       </div>
       {/* The work beside the choice — keep or bury is a question about
           what the piece needs next. */}
@@ -83,7 +81,7 @@ export function SkimOverlay({ info, deckView, onDeckAction, workUrl }) {
         {workUrl && (
           <figure className="work-glance">
             <img src={workUrl} alt="The work as it stands" />
-            <figcaption className="hint">the work, as it stands</figcaption>
+            <figcaption className="hint">{UI.shared.workGlance}</figcaption>
           </figure>
         )}
         <div className="skim-stage">{stage}</div>
@@ -95,7 +93,7 @@ export function SkimOverlay({ info, deckView, onDeckAction, workUrl }) {
 export function SkimTools({ ready }) {
   return (
     <span className="hint">
-      {ready ? 'End the round.' : 'On the canvas: turn the top card, then leave it or bury it.'}
+      {ready ? H.toolReady : H.toolWaiting}
     </span>
   )
 }

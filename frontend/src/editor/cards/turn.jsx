@@ -7,6 +7,8 @@
 // the judgment here.
 
 import * as fabric from 'fabric'
+import { CARD_TEXT } from '../cardText.js'
+import { UI } from '../../copy/uiText.js'
 import { HsvSliders, applyHsvShift } from './bruise.jsx'
 
 export function beginTurn(ctx) {
@@ -46,10 +48,10 @@ export function cleanupTurn(ctx) {
 }
 
 export function TurnTools({ controls, ready, onControlChange }) {
-  if (!ready) return <span className="hint">Preparing…</span>
+  if (!ready) return <span className="hint">{UI.shared.preparing}</span>
   return (
     <div className="brush-tools card-tools">
-      <p className="hint">The whole batch turns. Influence decides how far.</p>
+      <p className="hint">{CARD_TEXT.turn.description}</p>
       <HsvSliders controls={controls} onControlChange={onControlChange} />
       <label className="ctrl">
         <span className="ctrl-label">Influence</span>

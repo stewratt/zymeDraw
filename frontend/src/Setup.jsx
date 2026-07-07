@@ -1,4 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { UI, fmt } from './copy/uiText.js'
+import { rich } from './copy/rich.jsx'
+import { loadCardSets, setActiveCardSet, useActiveCardSet, useCardSets } from './editor/cardArt.js'
+
+const T = UI.setup
 
 function Setup({ initial, onContinue }) {
   const [inputFolder, setInputFolder] = useState(initial.inputFolder || '')
@@ -7,8 +12,19 @@ function Setup({ initial, onContinue }) {
   const [submitting, setSubmitting] = useState(false)
   // Which field's native folder dialog is currently open (disables both Browse
   // buttons meanwhile), plus a per-field note if the picker isn't available.
-  const [picking, setPicking] = useState(null) // 'input' | 'output' | null
+  const [picking, setPicking] = useState(null) // 'input' | 'output' | 'cards' | null
   const [pickNote, setPickNote] = useState({ inputFolder: null, outputFolder: null })
+
+  // Card faces (optional): the folder + the chosen set live in the shared
+  // card-art store, so switching updates every dealt card live. The path is
+  // editable (hand-typed paths work where the OS picker is absent — Linux);
+  // it commits to the backend on blur or after Browse.
+  const { sets, folder: cardsFolder } = useCardSets()
+  const activeSet = useActiveCardSet()
+  const [cardsPath, setCardsPath] = useState('')
+  useEffect(() => {
+    if (cardsFolder) setCardsPath(cardsFolder)
+  }, [cardsFolder])
 
   // Ask the backend to open the OS folder picker and drop the chosen absolute
   // path into the field. Cancel = leave the field alone; no picker = a note
@@ -31,18 +47,55 @@ function Setup({ initial, onContinue }) {
         if (which === 'input') setInputFolder(data.path)
         else setOutputFolder(data.path)
       } else if (!data.ok) {
-        setPickNote((n) => ({ ...n, [key]: data.error || 'Could not open a folder picker.' }))
+        setPickNote((n) => ({ ...n, [key]: data.error || T.pickerFailed }))
       }
     } catch (err) {
-      setPickNote((n) => ({ ...n, [key]: `Could not open a folder picker: ${err.message}` }))
+      setPickNote((n) => ({ ...n, [key]: fmt(T.pickerFailedDetail, { message: err.message }) }))
+    } finally {
+      setPicking(null)
+    }
+  }
+
+  // Persist a card-faces folder to the backend, then re-list its sets. An
+  // empty/invalid path is left to the backend to reject; the built-in faces
+  // stay in place either way.
+  async function commitCardsFolder(path) {
+    if (!path.trim()) return
+    try {
+      await fetch('/api/cardsets-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path })
+      })
+      await loadCardSets()
+    } catch {
+      // No backend = built-in faces only. Never blocks setup.
+    }
+  }
+
+  // Open the OS folder picker, or fall through to the hand-typed path.
+  async function browseCards() {
+    setPicking('cards')
+    try {
+      const picked = await fetch('/api/pick-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'read', current: cardsPath || '' })
+      }).then((r) => r.json())
+      if (picked.ok && picked.path) {
+        setCardsPath(picked.path)
+        await commitCardsFolder(picked.path)
+      }
+    } catch {
+      // A missing picker leaves the field for hand-typing.
     } finally {
       setPicking(null)
     }
   }
 
   const homedir = initial.homedir || ''
-  const inputHint = homedir ? `e.g. ${homedir}/Pictures/deck-input` : 'absolute path to your input folder'
-  const outputHint = homedir ? `e.g. ${homedir}/Pictures/deck-output` : 'absolute path to your output folder'
+  const inputHint = homedir ? fmt(T.inputPlaceholder, { home: homedir }) : T.inputPlaceholderNoHome
+  const outputHint = homedir ? fmt(T.outputPlaceholder, { home: homedir }) : T.outputPlaceholderNoHome
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -68,7 +121,7 @@ function Setup({ initial, onContinue }) {
       })
     } catch (err) {
       setErrors({
-        inputFolder: `Network error: ${err.message}`,
+        inputFolder: fmt(T.networkError, { message: err.message }),
         outputFolder: null
       })
     } finally {
@@ -80,11 +133,11 @@ function Setup({ initial, onContinue }) {
 
   return (
     <form className="setup" onSubmit={handleSubmit}>
-      <h1>DECK</h1>
-      <p className="muted">Choose your folders</p>
+      <h1>{T.title}</h1>
+      <p className="muted">{T.subtitle}</p>
 
       <label className="field">
-        <span className="field-label">Input folder</span>
+        <span className="field-label">{T.inputLabel}</span>
         <div className="field-row">
           <input
             type="text"
@@ -101,16 +154,16 @@ function Setup({ initial, onContinue }) {
             onClick={() => browse('input')}
             disabled={picking !== null}
           >
-            {picking === 'input' ? 'Opening…' : 'Browse…'}
+            {picking === 'input' ? T.browseOpening : T.browse}
           </button>
         </div>
-        <small className="hint">Where the source images live (read-only).</small>
+        <small className="hint">{T.inputHint}</small>
         {pickNote.inputFolder && <small className="hint">{pickNote.inputFolder}</small>}
         {errors.inputFolder && <small className="error">{errors.inputFolder}</small>}
       </label>
 
       <label className="field">
-        <span className="field-label">Output folder</span>
+        <span className="field-label">{T.outputLabel}</span>
         <div className="field-row">
           <input
             type="text"
@@ -126,21 +179,56 @@ function Setup({ initial, onContinue }) {
             onClick={() => browse('output')}
             disabled={picking !== null}
           >
-            {picking === 'output' ? 'Opening…' : 'Browse…'}
+            {picking === 'output' ? T.browseOpening : T.browse}
           </button>
         </div>
-        <small className="hint">Where finished compositions will be saved.</small>
+        <small className="hint">{T.outputHint}</small>
         {pickNote.outputFolder && <small className="hint">{pickNote.outputFolder}</small>}
         {errors.outputFolder && <small className="error">{errors.outputFolder}</small>}
       </label>
 
+      <label className="field">
+        <span className="field-label">{T.cardSetsLabel}</span>
+        <div className="field-row">
+          <input
+            type="text"
+            value={cardsPath}
+            onChange={(e) => setCardsPath(e.target.value)}
+            onBlur={() => cardsPath.trim() && cardsPath !== cardsFolder && commitCardsFolder(cardsPath)}
+            placeholder={T.cardSetsPlaceholder}
+            spellCheck={false}
+          />
+          <button
+            type="button"
+            className="browse"
+            onClick={browseCards}
+            disabled={picking !== null}
+          >
+            {picking === 'cards' ? T.browseOpening : T.browse}
+          </button>
+        </div>
+        <small className="hint">{T.cardSetsHint}</small>
+        {cardsFolder && sets.length === 0 && <small className="hint">{T.cardSetsEmpty}</small>}
+        {sets.length > 0 && (
+          <div className="field-row">
+            <span className="field-label">{T.cardSetsSetLabel}</span>
+            <select value={activeSet || ''} onChange={(e) => setActiveCardSet(e.target.value)}>
+              <option value="">{T.cardSetsBuiltin}</option>
+              {sets.map((s) => (
+                <option key={s.name} value={s.name}>
+                  {s.name} ({s.ids.length})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </label>
+
       <button type="submit" disabled={!canSubmit}>
-        {submitting ? 'Checking…' : 'Continue'}
+        {submitting ? T.continueChecking : T.continue}
       </button>
 
-      <p className="footnote">
-        Paths support a leading <code>~</code> for your home directory. Folders must exist before continuing.
-      </p>
+      <p className="footnote">{rich(T.footnote)}</p>
     </form>
   )
 }

@@ -18,32 +18,38 @@
 // working deck deals placeholder cards (their real behaviors arrive in
 // Phase 5 through foundryRegistry).
 
+import { CARD_TEXT } from '../editor/cardText.js'
+import { UI, fmt } from '../copy/uiText.js'
 import { DEATH_CARD, MOD_CARDS } from '../editor/deck.js'
 
-// Every Foundry pacing number lives here.
+// Every Foundry pacing number lives here. (The plate offer has no number:
+// every plate in the folder is on the table — chosen, never dealt. Stew,
+// 2026-07-07: the base is where control comes back.)
 export const FOUNDRY_TUNING = {
-  plateDeal: 3, // plates offered at PLATE_DEAL
-  panelGrid: 12, // images dealt into the panel pick (inputs + exports mixed)
+  panelGrid: 12, // images dealt into the panel pick (re-dealable with N)
   workingRounds: 3, // graffiti rounds before Proofs shuffle in
   proofCount: 2 // Proofs shuffled into whatever deck remains
 }
 
 // The working deck: one entry per graffiti card, expanded by copy count and
-// shuffled at session start. Wave 1 (card_maker.md §1.8): the brush-core
-// roster, one copy each, riding on the shared behavior files through
-// foundryRegistry. Graft cards + Deeper come with a later wave.
+// shuffled fresh for every impression. Stamp leads at three, Char and Rails
+// at two (Stew, 2026-07-07: the stamps and stencils are the important
+// degradations, Stamp most of all); the rest deal at one. Ghost/Stain/
+// Deeper still wait on a later wave. Labels come from cardText.js, same as
+// the main deck.
 export const FOUNDRY_CARDS = [
-  { id: 'silt', label: 'Silt', copies: 1 }, // Reveal × deposit
-  { id: 'bruise', label: 'Bruise', copies: 1 }, // Reveal × Bruise
-  { id: 'dissolve', label: 'Dissolve', copies: 1 }, // Reveal × blur
-  { id: 'steep', label: 'Steep', copies: 1 }, // Wash × Sink
-  { id: 'turn', label: 'Turn', copies: 1 }, // Wash (hue)
-  { id: 'cure', label: 'Cure', copies: 1 }, // Wash × Cure
-  { id: 'char', label: 'Char', copies: 1 }, // Stencil × Sink
-  { id: 'rails', label: 'Rails', copies: 1 } // Stencil × solid
-]
+  { id: 'stamp', copies: 3 }, // Graft (cutout)
+  { id: 'char', copies: 2 }, // Stencil × Sink
+  { id: 'rails', copies: 2 }, // Stencil × solid
+  { id: 'silt', copies: 1 }, // Reveal × deposit
+  { id: 'bruise', copies: 1 }, // Reveal × Bruise
+  { id: 'dissolve', copies: 1 }, // Reveal × blur
+  { id: 'steep', copies: 1 }, // Wash × Sink
+  { id: 'turn', copies: 1 }, // Wash (hue)
+  { id: 'cure', copies: 1 } // Wash × Cure
+].map((card) => ({ label: CARD_TEXT[card.id]?.name ?? card.id, ...card }))
 
-export const PROOF_CARD = { id: 'proof', label: 'Proof' }
+export const PROOF_CARD = { id: 'proof', label: UI.foundry.proof.cardLabel }
 
 // What may be commissioned: every real card design in the Deck, the Coda
 // included — it has a face to cast like any other. `copies` rides along for
@@ -57,6 +63,14 @@ export const COMMISSIONS = [
   })),
   { ...DEATH_CARD, copies: 0, family: 'coda' }
 ]
+
+// How many impressions a commission runs: its real deck presence. The Coda
+// is singular by definition. Exported so the commission grid can show the
+// run size on every tile (×1 / ×2 — which design gets a second iteration).
+export function runSize(commission) {
+  if (commission.family === 'coda') return 1
+  return Math.max(1, commission.copies ?? 1)
+}
 
 // Fisher–Yates on a copy.
 function shuffle(cards) {
@@ -87,10 +101,10 @@ export function initialFoundryState() {
   return {
     phase: 'COMMISSION',
     commission: null, // { id, label, copies, family } — the card being cast
-    plateOffer: [], // the plates on the table at PLATE_DEAL — FoundryEditor
-    //                deals them from the plates folder and reports back via
-    //                SET_PLATE_OFFER (folder listing is not deck logic; the
-    //                SET_GRID pattern)
+    plateOffer: [], // the plates on the table at PLATE_DEAL — the WHOLE
+    //                folder, face up (chosen, not dealt); FoundryEditor
+    //                lists the folder and reports back via SET_PLATE_OFFER
+    //                (folder listing is not deck logic; the SET_GRID pattern)
     plate: null, // the plate taken: { id, file }
     panelGrid: [], // the panel pick's dealt images — tagged filenames
     //               (`in:`/`out:`, panelArt.js), reported via SET_PANEL_GRID
@@ -99,6 +113,12 @@ export function initialFoundryState() {
     //                 font descriptors (ids + urls), dealt by FoundryEditor
     //                 from fonts.js and reported via SET_TYPE_FONTS
     deck: buildFoundryDeck(), // the literal shuffled working deck
+    // The print run (Stew, 2026-07-07): a commission with 2 copies in the
+    // Deck yields 2 impressions — the SAME sealed base, degraded twice,
+    // deviating only after the Press. copiesTotal is fixed at commission;
+    // copyIndex advances via NEXT_IMPRESSION.
+    copiesTotal: 1,
+    copyIndex: 1,
     roundsDone: 0,
     proofsShuffled: false,
     currentCard: null,
@@ -118,6 +138,7 @@ export function foundryReducer(state, action) {
         ...state,
         phase: 'PLATE_DEAL',
         commission,
+        copiesTotal: runSize(commission),
         history: [
           ...state.history,
           { event: 'commission', cardId: commission.id, ts: Date.now() }
@@ -134,6 +155,7 @@ export function foundryReducer(state, action) {
         ...state,
         phase: 'PLATE_DEAL',
         commission,
+        copiesTotal: runSize(commission),
         history: [
           ...state.history,
           { event: 'commission', cardId: commission.id, dealt: true, ts: Date.now() }
@@ -263,6 +285,28 @@ export function foundryReducer(state, action) {
       return next
     }
 
+    // The run continues: the next impression re-enters WORKING from the
+    // sealed base with a FRESH working deck — the impressions share every
+    // core component and deviate only in their degradation. Restoring the
+    // base master is FoundryEditor's impure job on this same action.
+    case 'NEXT_IMPRESSION': {
+      if (state.phase !== 'COMPLETE') return state
+      if (state.copyIndex >= state.copiesTotal) return state
+      return {
+        ...state,
+        phase: 'WORKING',
+        deck: buildFoundryDeck(),
+        copyIndex: state.copyIndex + 1,
+        roundsDone: 0,
+        proofsShuffled: false,
+        currentCard: null,
+        history: [
+          ...state.history,
+          { event: 'impression', index: state.copyIndex + 1, ts: Date.now() }
+        ]
+      }
+    }
+
     case 'RESTART':
       return initialFoundryState()
 
@@ -274,6 +318,9 @@ export function foundryReducer(state, action) {
 // Short human label for where the working phase stands. Derived, never stored.
 export function foundryProgressLabel(state) {
   if (state.phase !== 'WORKING') return null
-  if (state.proofsShuffled) return 'late — the Proofs are in the deck'
-  return `round ${state.roundsDone + 1} of ${FOUNDRY_TUNING.workingRounds}`
+  if (state.proofsShuffled) return UI.foundry.progress.late
+  return fmt(UI.foundry.progress.round, {
+    round: state.roundsDone + 1,
+    total: FOUNDRY_TUNING.workingRounds
+  })
 }

@@ -1,3 +1,13 @@
+/* Border-box everywhere: "width: 100%" means the whole box, borders and
+   padding included. Without this, any full-width element with a border
+   overflows its container by the border width — which is exactly what put
+   a horizontal scrollbar on the finished-piece panels (.export-thumb). */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 /* Greyscale design tokens — the whole palette lives here so tuning the look
    is a single edit. Loaded globally (main.jsx imports App.css); editor.css
    reads the same variables. Fully monochrome, hard-edged (--radius: 0). */

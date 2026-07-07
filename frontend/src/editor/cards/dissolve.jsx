@@ -9,6 +9,8 @@
 // changing the radius is quick. Radius is felt in display pixels and scaled
 // up for the master-resolution copy. Note: ctx.filter needs Safari 18+.
 
+import { CARD_TEXT } from '../cardText.js'
+import { UI } from '../../copy/uiText.js'
 import { MASTER_SCALE } from '../masterRaster.js'
 import { BrushControls, makeEffectCardHooks } from './effectCardFactory.jsx'
 
@@ -24,10 +26,10 @@ function applyDissolve(effected, master, controls) {
 export const dissolveHooks = makeEffectCardHooks(applyDissolve)
 
 export function DissolveTools({ controls, info, ready, onControlChange }) {
-  if (!ready) return <span className="hint">Preparing…</span>
+  if (!ready) return <span className="hint">{UI.shared.preparing}</span>
   return (
     <div className="brush-tools card-tools">
-      <p className="hint">Paint where the image should dissolve.</p>
+      <p className="hint">{CARD_TEXT.dissolve.description}</p>
       <label className="ctrl">
         <span className="ctrl-label">Radius</span>
         <input

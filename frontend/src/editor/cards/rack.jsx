@@ -9,6 +9,8 @@
 // whatever transform you chose.
 
 import * as fabric from 'fabric'
+import { CARD_TEXT } from '../cardText.js'
+import { UI } from '../../copy/uiText.js'
 import { showMaster } from '../masterRaster.js'
 
 // Keyboard accents (hotkeys.md §5.4), dispatched generically via the
@@ -48,13 +50,10 @@ export function cleanupRack(ctx) {
 }
 
 export function RackTools({ controls, ready, onControlChange }) {
-  if (!ready) return <span className="hint">Preparing…</span>
+  if (!ready) return <span className="hint">{UI.shared.preparing}</span>
   return (
     <div className="brush-tools card-tools">
-      <p className="hint">
-        The piece is racked to a new vessel: drag, scale, rotate. What leaves
-        the frame is gone; what the frame exposes stays white.
-      </p>
+      <p className="hint">{CARD_TEXT.rack.description}</p>
       <div className="mode-toggle small">
         <button
           type="button"

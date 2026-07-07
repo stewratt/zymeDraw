@@ -18,15 +18,18 @@
 //
 // Never add per-card branches to FoundryEditor.jsx or FoundryPanel.jsx.
 //
-// Not yet carried over: `Overlay` cards (the graft family's grid picks) and
-// `deckActions` — they arrive with the graft wave (card_maker.md Phase 7).
+// Not yet carried over: `deckActions` (no deck-facing cards in Foundry) and
+// the rest of the graft family (Ghost, Stain) + Deeper — a later wave.
 
 import { cardRegistry } from '../editor/cards/registry.jsx'
 
-// Graffiti wave 1 (card_maker.md §1.8): everything that needs only the
-// raster + the brush engine.
-const WAVE_1 = ['silt', 'bruise', 'dissolve', 'steep', 'turn', 'cure', 'char', 'rails']
+// Graffiti wave 1 (card_maker.md §1.8) plus Stamp (Stew, 2026-07-07: the
+// cutout is an important degradation — it deals at double weight in
+// FOUNDRY_CARDS). Stamp brings the first `Overlay` (its grid pick) and
+// degrades gracefully when the ML sidecar is down: the whole image places
+// and the erase brush takes over.
+const ROSTER = ['stamp', 'silt', 'bruise', 'dissolve', 'steep', 'turn', 'cure', 'char', 'rails']
 
 export const foundryRegistry = Object.fromEntries(
-  WAVE_1.map((id) => [id, cardRegistry[id]])
+  ROSTER.map((id) => [id, cardRegistry[id]])
 )

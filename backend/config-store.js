@@ -6,7 +6,7 @@ import os from 'os'
 // Each machine (Linux, Mac, Windows) has its own — paths differ per OS.
 const CONFIG_PATH = path.join(os.homedir(), '.deck-config.json')
 
-const EMPTY = { inputFolder: '', outputFolder: '', platesFolder: '' }
+const EMPTY = { inputFolder: '', outputFolder: '', platesFolder: '', panelArtFolder: '', cardsetsFolder: '' }
 
 export async function loadConfig() {
   try {

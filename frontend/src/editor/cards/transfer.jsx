@@ -13,6 +13,8 @@ import * as fabric from 'fabric'
 import { createMaskSession } from '../brushCore.js'
 import { fetchStyledCanvas } from '../styleTransfer.js'
 import { MaskBrushControls } from './maskControls.jsx'
+import { CARD_TEXT } from '../cardText.js'
+import { UI } from '../../copy/uiText.js'
 
 export async function beginTransfer(ctx) {
   ctx.report({ stage: 'transferring' })
@@ -85,26 +87,14 @@ export function cleanupTransfer(ctx) {
 
 export function TransferTools({ controls, info, ready, onControlChange }) {
   if (info.stage === 'transferring' || !ready) {
-    return (
-      <span className="hint">
-        The piece is being redrawn in another hand… a few seconds.
-      </span>
-    )
+    return <span className="hint">{UI.cardHints.transfer.working}</span>
   }
   if (info.degraded) {
-    return (
-      <span className="hint">
-        The transfer service is unavailable — the piece stands as it is. End to
-        move on.
-      </span>
-    )
+    return <span className="hint">{UI.cardHints.transfer.degraded}</span>
   }
   return (
     <div className="brush-tools card-tools">
-      <p className="hint">
-        The whole piece has been redrawn. Erase to cut the original back
-        through; influence sets how strongly the redraw sits.
-      </p>
+      <p className="hint">{CARD_TEXT.transfer.description}</p>
       <label className="ctrl">
         <span className="ctrl-label">Influence</span>
         <input

@@ -14,6 +14,8 @@
 
 import * as fabric from 'fabric'
 import { createMaskSession } from '../brushCore.js'
+import { CARD_TEXT } from '../cardText.js'
+import { UI } from '../../copy/uiText.js'
 import { CardGridPicker } from '../GridPicker.jsx'
 import { sampleImages } from '../sampling.js'
 import { ArrangeMaskControls, maskHint } from './maskControls.jsx'
@@ -121,35 +123,30 @@ export function StampOverlay({ info }) {
   if (info.stage !== 'pick' || !info.gridFiles) return null
   return (
     <CardGridPicker
-      title="STAMP"
-      hint="Six images. Take one — its subject is cut out and stamped onto the piece."
+      title={UI.cardHints.stamp.pickTitle}
+      hint={UI.cardHints.stamp.pickHint}
       files={info.gridFiles}
-      confirmLabel="Continue — cut it out"
+      confirmLabel={UI.cardHints.stamp.confirm}
       onConfirm={(f) => info.pick?.(f)}
     />
   )
 }
 
 export function StampTools({ controls, info, ready, onControlChange }) {
-  if (info.stage === 'pick') return <span className="hint">Take one image from the grid.</span>
+  if (info.stage === 'pick') return <span className="hint">{UI.shared.takeOne}</span>
   if (info.stage === 'cutting') {
-    return (
-      <span className="hint">
-        Cutting out the subject… on a machine&apos;s first cutout this downloads the
-        model and can take a minute.
-      </span>
-    )
+    return <span className="hint">{UI.cardHints.stamp.cutting}</span>
   }
-  if (!ready) return <span className="hint">Preparing…</span>
+  if (!ready) return <span className="hint">{UI.shared.preparing}</span>
   const brushing = controls.mode !== 'arrange'
   return (
     <div className="brush-tools card-tools">
       <p className="hint">
         {info.degraded
-          ? 'The cutout service is unavailable, so the whole image was placed — the erase brush is your scissors.'
+          ? UI.cardHints.stamp.degraded
           : brushing
-            ? maskHint(controls.mode, 'the stamp')
-            : 'Drag, scale, rotate the stamp into place.'}
+            ? maskHint(controls.mode, UI.cardHints.stamp.subject)
+            : CARD_TEXT.stamp.description}
       </p>
       <ArrangeMaskControls controls={controls} info={info} onControlChange={onControlChange} />
       <label className="ctrl">

@@ -9,6 +9,8 @@
 // overlay's source never changes, only its opacity.
 
 import * as fabric from 'fabric'
+import { CARD_TEXT } from '../cardText.js'
+import { UI } from '../../copy/uiText.js'
 
 export function beginCure(ctx) {
   const overlay = new fabric.FabricImage(ctx.master, {
@@ -41,13 +43,10 @@ export function cleanupCure(ctx) {
 }
 
 export function CureTools({ controls, ready, onControlChange }) {
-  if (!ready) return <span className="hint">Preparing…</span>
+  if (!ready) return <span className="hint">{UI.shared.preparing}</span>
   return (
     <div className="brush-tools card-tools">
-      <p className="hint">
-        The piece cures in its own bath — mids deepen, tone richens. Influence
-        is how far the cure has gone.
-      </p>
+      <p className="hint">{CARD_TEXT.cure.description}</p>
       <label className="ctrl">
         <span className="ctrl-label">Influence</span>
         <input

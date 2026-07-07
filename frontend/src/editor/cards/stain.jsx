@@ -4,14 +4,16 @@
 // stain through. Same freedoms as Ghost: free transform, opacity,
 // brightness/contrast, the standing mask brush.
 
+import { CARD_TEXT } from '../cardText.js'
+import { UI } from '../../copy/uiText.js'
 import { makeGraftCard } from './graftCardFactory.jsx'
 
 export const stainCard = makeGraftCard({
-  title: 'STAIN',
-  subject: 'the stain',
+  title: UI.cardHints.stain.pickTitle,
+  subject: UI.cardHints.stain.subject,
   gridSize: 8,
   blend: 'multiply',
-  pickHint: 'Eight images. Take one — it soaks into the piece: only its dark survives.',
-  confirmLabel: 'Continue — set the stain',
-  arrangeHint: 'Drag, scale, rotate the stain into place. It soaks into what is beneath.'
+  pickHint: UI.cardHints.stain.pickHint,
+  confirmLabel: UI.cardHints.stain.confirm,
+  arrangeHint: CARD_TEXT.stain.description
 })

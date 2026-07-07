@@ -20,6 +20,7 @@ import { createMaskSession } from '../brushCore.js'
 import { CardGridPicker } from '../GridPicker.jsx'
 import { sampleImages } from '../sampling.js'
 import { ArrangeMaskControls, maskHint } from './maskControls.jsx'
+import { UI } from '../../copy/uiText.js'
 
 function drawFiltered(filtered, original, controls) {
   const ctx = filtered.getContext('2d')
@@ -127,8 +128,8 @@ export function makeGraftCard(config) {
   }
 
   function Tools({ controls, info, ready, onControlChange }) {
-    if (info.stage === 'pick') return <span className="hint">Take one image from the grid.</span>
-    if (!ready) return <span className="hint">Preparing…</span>
+    if (info.stage === 'pick') return <span className="hint">{UI.shared.takeOne}</span>
+    if (!ready) return <span className="hint">{UI.shared.preparing}</span>
     const brushing = controls.mode !== 'arrange'
     return (
       <div className="brush-tools card-tools">

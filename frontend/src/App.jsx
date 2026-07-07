@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import Setup from './Setup.jsx'
 import Editor from './editor/Editor.jsx'
+import { UI } from './copy/uiText.js'
+import { loadCardSets } from './editor/cardArt.js'
 
 // Top-level router. Phase 2: setup → editor.
 // (The Phase 1 "Ready" screen has been removed; it was only ever a temporary
@@ -10,6 +12,7 @@ function App() {
   const [config, setConfig] = useState({ inputFolder: '', outputFolder: '', homedir: '' })
 
   useEffect(() => {
+    loadCardSets() // populate the card-set store; faces resolve before Setup
     fetch('/api/config')
       .then((r) => r.json())
       .then((data) => {
@@ -20,7 +23,7 @@ function App() {
   }, [])
 
   if (stage === 'loading') {
-    return <div className="loading">Loading…</div>
+    return <div className="loading">{UI.app.loading}</div>
   }
 
   if (stage === 'setup') {

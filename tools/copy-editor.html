@@ -45,6 +45,8 @@
     margin-bottom: 10px;
   }
   .group-title { font-size: 12px; color: var(--dim); letter-spacing: 0.1em; margin-bottom: 8px; }
+  .group-id { color: var(--ink); font-weight: 600; text-transform: uppercase; }
+  .group-gloss { letter-spacing: 0; }
   .field { margin-bottom: 10px; }
   .field:last-child { margin-bottom: 0; }
   .field label {
@@ -107,6 +109,34 @@ let copy = null      // the live, edited structure
 let baseline = null  // what the file held at load / last save
 
 const SECTION_LABELS = { cards: 'CARDS' }
+
+// The permanent anchor for each card: its internal id (which never changes,
+// no matter how the card is renamed) plus a literal gloss of what the card
+// DOES. This map is deliberately outside the editable copy — it is how a
+// future reader knows what "char" was after Char has become something else.
+// Adding a card = add one line here; a missing id just shows the bare key.
+const CARD_GLOSS = {
+  ghost:             'graft — place an image in screen blend; only its light shows',
+  stain:             'graft — place an image that soaks into what is beneath',
+  stamp:             'graft — auto-cutout (ML) of an image, stamped onto the canvas',
+  rails:             'shatter — a fractured monochrome shard of an image, placed on',
+  char:              'shatter — fragments arranged, then burned into what is beneath',
+  deeper:            're-frame — crop deeper in; the frame becomes the whole canvas (ML detail restore)',
+  rack:              're-frame — the piece moves to a new vessel; off-frame is lost (retired from deck)',
+  silt:              'reveal brush — paint monochrome film grain where it settles',
+  dissolve:          'reveal brush — paint blur where the image dissolves',
+  bruise:            'reveal brush — paint a hue discoloration',
+  steep:             'wash — whole-canvas dye tint, influence slider',
+  turn:              'wash — whole-canvas hue rotation, influence slider',
+  cure:              'wash — whole-canvas tone/contrast deepen, influence slider',
+  cull:              'deck card — the remains face up, take one; no canvas change',
+  skim:              'deck card — turn the top card of the deck, keep it or bury it',
+  delay:             'deck card — a held beat: the first Coda can be set aside, once',
+  etch:              'pixel glyph drawn at the master’s grain — invisible at full size',
+  transfer:          'style transfer (ML redraw of the piece) — stashed until real models',
+  shatteredTransfer: 'style transfer through shattered fragments — stashed until real models',
+  coda:              'the death card — ends the session; the piece is finished',
+}
 
 function getAt(obj, path) { return path.reduce((o, k) => o[k], obj) }
 function setAt(obj, path, value) {
@@ -182,7 +212,18 @@ function render() {
       group.className = 'group'
       const gt = document.createElement('div')
       gt.className = 'group-title'
-      gt.textContent = key
+      const gloss = section === 'cards' ? CARD_GLOSS[key] : null
+      if (gloss) {
+        const id = document.createElement('span')
+        id.className = 'group-id'
+        id.textContent = key
+        const g = document.createElement('span')
+        g.className = 'group-gloss'
+        g.textContent = ' — ' + gloss
+        gt.append(id, g)
+      } else {
+        gt.textContent = key
+      }
       group.appendChild(gt)
       for (const [leaf, text] of Object.entries(value)) {
         group.appendChild(makeField([section, key, leaf], text))

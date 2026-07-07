@@ -11,12 +11,15 @@
 // panel until spent (deck.js `delayHeld`; the choice beat is the
 // CODA_CHOICE phase).
 
+import { CARD_TEXT } from '../cardText.js'
+import { UI } from '../../copy/uiText.js'
+
 export function DelayTools({ ready }) {
   return (
     <span className="hint">
       {ready
-        ? 'From this round on, the first Coda can be set aside — once. The right waits at the deal panel. End the round.'
-        : 'Setting up…'}
+        ? `${CARD_TEXT.delay.description} ${UI.cardHints.delay.toolSuffix}`
+        : UI.deckPanel.settingUp}
     </span>
   )
 }

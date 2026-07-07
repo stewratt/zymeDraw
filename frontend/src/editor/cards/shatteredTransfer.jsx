@@ -29,6 +29,9 @@ import { sampleImages } from '../sampling.js'
 import { READING_LABEL, computeLum, maskFor, maskToCanvas, pickMostShattered } from '../shatter.js'
 import { fetchStyledCanvas } from '../styleTransfer.js'
 import { ArrangeMaskControls, maskHint } from './maskControls.jsx'
+import { UI, fmt } from '../../copy/uiText.js'
+
+const H = UI.cardHints.shatteredTransfer
 
 const GRID_SIZE = 6
 
@@ -244,45 +247,38 @@ export function ShatteredTransferOverlay({ info }) {
   if (info.stage !== 'pick' || !info.gridFiles) return null
   return (
     <CardGridPicker
-      title="SHATTERED TRANSFER"
-      hint="Six images. Take one — it won't be placed; it will be read as a stencil, and the piece's redraw shows through its shattered form."
+      title={H.pickTitle}
+      hint={H.pickHint}
       files={info.gridFiles}
-      confirmLabel="Continue — read it as a stencil"
+      confirmLabel={H.confirm}
       onConfirm={(f) => info.pick?.(f)}
     />
   )
 }
 
 export function ShatteredTransferTools({ controls, info, ready, onControlChange }) {
-  if (info.stage === 'pick') return <span className="hint">Take one image from the grid.</span>
+  if (info.stage === 'pick') return <span className="hint">{UI.shared.takeOne}</span>
   if (info.stage === 'shattering') {
-    return <span className="hint">Reading the image for its most shattered form…</span>
+    return <span className="hint">{UI.shared.shattering}</span>
   }
   if (info.stage === 'arrange' && !ready) {
     return (
-      <span className="hint">
-        This image {info.reading ?? 'shattered'} — place the stencil where the
-        style should break through. The redraw is still arriving; the window
-        opens when it lands.
-      </span>
+      <span className="hint">{fmt(H.arrangeWaiting, { reading: info.reading ?? 'shattered' })}</span>
     )
   }
   if (info.degraded) {
-    return (
-      <span className="hint">
-        The transfer service is unavailable — the stencil is withdrawn and the
-        piece stands as it is. End to move on.
-      </span>
-    )
+    return <span className="hint">{H.degraded}</span>
   }
-  if (!ready) return <span className="hint">Preparing…</span>
+  if (!ready) return <span className="hint">{UI.shared.preparing}</span>
   const brushing = controls.mode !== 'arrange'
   return (
     <div className="brush-tools card-tools">
       <p className="hint">
         {brushing
-          ? maskHint(controls.mode, 'the styled fragments')
-          : `The window is open${info.reading ? ` — this image ${info.reading}` : ''}. Drag, scale, rotate the stencil; the redraw shows through wherever it sits.`}
+          ? maskHint(controls.mode, H.subject)
+          : fmt(H.windowOpen, {
+              readingClause: info.reading ? fmt(H.readingClause, { reading: info.reading }) : ''
+            })}
       </p>
       <label className="ctrl">
         <span className="ctrl-label">Influence</span>

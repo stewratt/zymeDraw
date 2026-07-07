@@ -4,6 +4,8 @@
 // sliders re-renders the shifted copy at interactive speed. Note:
 // ctx.filter needs a modern browser (Safari 18+).
 
+import { CARD_TEXT } from '../cardText.js'
+import { UI } from '../../copy/uiText.js'
 import { BrushControls, makeEffectCardHooks } from './effectCardFactory.jsx'
 
 export function hsvFilterString(controls) {
@@ -63,10 +65,10 @@ export function HsvSliders({ controls, onControlChange }) {
 }
 
 export function BruiseTools({ controls, info, ready, onControlChange }) {
-  if (!ready) return <span className="hint">Preparing…</span>
+  if (!ready) return <span className="hint">{UI.shared.preparing}</span>
   return (
     <div className="brush-tools card-tools">
-      <p className="hint">Set the discoloration, then paint where the image should bruise.</p>
+      <p className="hint">{CARD_TEXT.bruise.description}</p>
       <HsvSliders controls={controls} onControlChange={onControlChange} />
       <BrushControls controls={controls} info={info} onControlChange={onControlChange} />
     </div>

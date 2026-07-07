@@ -4,6 +4,8 @@
 // canonical deposit card: a later Deeper texturizes the settled grain into
 // real sediment.)
 
+import { CARD_TEXT } from '../cardText.js'
+import { UI } from '../../copy/uiText.js'
 import { BrushControls, makeEffectCardHooks } from './effectCardFactory.jsx'
 
 // Monochrome grain at full strength: ±STRENGTH per pixel, same offset for
@@ -28,10 +30,10 @@ function applySilt(effected, master) {
 export const siltHooks = makeEffectCardHooks(applySilt)
 
 export function SiltTools({ controls, info, ready, onControlChange }) {
-  if (!ready) return <span className="hint">Preparing the silt…</span>
+  if (!ready) return <span className="hint">{UI.cardHints.silt.preparing}</span>
   return (
     <div className="brush-tools card-tools">
-      <p className="hint">Paint where the silt should settle. Nothing changes until you paint.</p>
+      <p className="hint">{CARD_TEXT.silt.description}</p>
       <BrushControls controls={controls} info={info} onControlChange={onControlChange} />
     </div>
   )

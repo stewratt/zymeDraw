@@ -132,6 +132,10 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  /* Panel content only ever scrolls vertically. Stated explicitly because
+     overflow-y: auto silently makes overflow-x compute to auto as well, so
+     any 1px-wide overflow would summon a horizontal scrollbar. */
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 16px;

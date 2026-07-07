@@ -29,15 +29,30 @@ export function plateUrl(file) {
   return `/api/plates/${encodeURIComponent(file)}`
 }
 
-// n distinct plates from the folder listing, as deck entries the reducer
-// can hold (ids and filenames only — the deck.js law).
-export function dealPlateOffer(filenames, n) {
-  const pool = [...filenames]
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[pool[i], pool[j]] = [pool[j], pool[i]]
+// The whole folder as the offer, in listing order — the plate is CHOSEN,
+// never dealt (Stew, 2026-07-07: certain plates for certain cards). Entries
+// stay ids and filenames only, the deck.js law.
+export function plateEntries(filenames) {
+  return filenames.map((file) => ({ id: file, file }))
+}
+
+// Re-color the mounted plate: hue-rotate + saturate drawn through the 2d
+// canvas filter (the Bruise/Turn pattern — GPU-fast, alpha preserved, so
+// the punched window survives). Always draws from the UNTINTED source the
+// caller kept from mount time — tints never compound. The tinted element
+// carries the plate's native resolution, so the 3× bake loses nothing.
+export function tintPlate(img, source, { h, s }) {
+  if (h === 0 && s === 100) {
+    img.setElement(source)
+    return
   }
-  return pool.slice(0, Math.min(n, pool.length)).map((file) => ({ id: file, file }))
+  const el = document.createElement('canvas')
+  el.width = source.width
+  el.height = source.height
+  const ctx = el.getContext('2d')
+  ctx.filter = `hue-rotate(${h}deg) saturate(${s}%)`
+  ctx.drawImage(source, 0, 0)
+  img.setElement(el)
 }
 
 // Mount the taken plate over the whole face: exact fit, non-interactive

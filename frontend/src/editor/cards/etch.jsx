@@ -17,6 +17,7 @@
 
 import * as fabric from 'fabric'
 import { MASTER_SCALE, MASTER_WIDTH, MASTER_HEIGHT } from '../masterRaster.js'
+import { UI } from '../../copy/uiText.js'
 
 const GLYPH_W = 96 // master px — display 32, zoom ≈ 25×
 const GLYPH_H = 120
@@ -256,23 +257,17 @@ export function EtchTools({ controls, info, ready, onControlChange }) {
   if (info.stage === 'frame') {
     return (
       <div className="card-tools">
-        <p className="hint">
-          Drag the small frame to where the mark should hide. Its size is
-          fixed — about a hundred pixels of the piece.
-        </p>
+        <p className="hint">{UI.cardHints.etch.frameHint}</p>
         <button type="button" className="primary" title="Enter" onClick={() => info.confirm?.()}>
-          Zoom in
+          {UI.cardHints.etch.zoomIn}
         </button>
       </div>
     )
   }
-  if (!ready) return <span className="hint">Preparing…</span>
+  if (!ready) return <span className="hint">{UI.shared.preparing}</span>
   return (
     <div className="brush-tools card-tools">
-      <p className="hint">
-        You are at the grain — every square is one pixel of the piece. Etch a
-        small glyph. At full size it will be almost nothing.
-      </p>
+      <p className="hint">{UI.cardHints.etch.grainHint}</p>
       <label className="ctrl" title="N — new hue">
         <span className="ctrl-label">Color</span>
         <input

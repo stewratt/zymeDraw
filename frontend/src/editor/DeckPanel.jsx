@@ -15,6 +15,10 @@ import Card from './Card.jsx'
 import CardZoom from './CardZoom.jsx'
 import PlacementLayers from './PlacementLayers.jsx'
 import { ArrangeMaskControls, maskHint } from './cards/maskControls.jsx'
+import { UI, fmt } from '../copy/uiText.js'
+import { rich } from '../copy/rich.jsx'
+
+const T = UI.deckPanel
 
 function DeckPanel({
   state,
@@ -101,38 +105,32 @@ function OpeningPickPanel({ imageList }) {
   if (imageList.status === 'loading') {
     return (
       <aside className="deck-panel">
-        <h2>THE OPENING</h2>
-        <p className="hint">Loading input folder…</p>
+        <h2>{T.openingTitle}</h2>
+        <p className="hint">{T.openingLoading}</p>
       </aside>
     )
   }
   if (imageList.status === 'error') {
     return (
       <aside className="deck-panel">
-        <h2>INPUT FOLDER ERROR</h2>
+        <h2>{T.inputErrorTitle}</h2>
         <p className="error">{imageList.error}</p>
-        <p className="hint">Go back to setup to pick a different folder.</p>
+        <p className="hint">{T.inputErrorHint}</p>
       </aside>
     )
   }
   if (imageList.filenames.length === 0) {
     return (
       <aside className="deck-panel">
-        <h2>NO IMAGES FOUND</h2>
-        <p className="hint">
-          Add some <code>.png</code> / <code>.jpg</code> / <code>.jpeg</code> /{' '}
-          <code>.webp</code> files to your input folder, then reload.
-        </p>
+        <h2>{T.noImagesTitle}</h2>
+        <p className="hint">{rich(T.noImagesHint)}</p>
       </aside>
     )
   }
   return (
     <aside className="deck-panel">
-      <h2>THE OPENING</h2>
-      <p className="hint">
-        Take <strong>two</strong> from the grid: one placed now, one stashed —
-        it comes back after Act I.
-      </p>
+      <h2>{T.openingTitle}</h2>
+      <p className="hint">{rich(T.openingHint)}</p>
     </aside>
   )
 }
@@ -156,15 +154,11 @@ function Placement({
   return (
     <aside className="deck-panel">
       <div className="panel-scroll">
-        <h2>{returning ? 'STASH RETURN' : 'PLACEMENT'}</h2>
+        <h2>{returning ? T.stashReturnTitle : T.placementTitle}</h2>
         <p className="hint">
-          {returning
-            ? 'Your stashed image comes back — arrange it like the opening.'
-            : 'Arrange your image.'}{' '}
-          {brushing
-            ? maskHint(maskControls.mode, 'an image')
-            : 'Drag to move, corner handles to scale, top handle to rotate.'}{' '}
-          End bakes everything in for good.
+          {returning ? T.stashReturnHint : T.placementHint}{' '}
+          {brushing ? maskHint(maskControls.mode, UI.brush.placementSubject) : T.arrangeHint}{' '}
+          {T.endBakes}
         </p>
 
         <div className="brush-tools">
@@ -209,7 +203,7 @@ function Placement({
         {placedLayers.length > 0 ? (
           <>
             {placedLayers.length >= 2 && (
-              <p className="hint layers-hint">Drag to reorder the stack.</p>
+              <p className="hint layers-hint">{T.reorderHint}</p>
             )}
             <PlacementLayers layers={placedLayers} onReorder={onReorderLayer} />
           </>
@@ -228,7 +222,7 @@ function Placement({
         disabled={!placementReady}
         onClick={onEndPlacement}
       >
-        {placementReady ? 'End — commit' : 'Loading images…'}
+        {placementReady ? T.endCommit : T.loadingImages}
       </button>
     </aside>
   )
@@ -238,27 +232,27 @@ function AwaitingDeal({ state, onDeal, onOpenHistory }) {
   return (
     <aside className="deck-panel">
       <div className="panel-scroll">
-        <h2>THE DECK</h2>
+        <h2>{T.deckTitle}</h2>
         <p className="hint">
-          {state.deck.length} card{state.deck.length === 1 ? '' : 's'} remain
-          {state.stash.length > 0 ? ` · ${state.stash.length} stashed` : ''}
+          {fmt(T.cardsRemain, { count: state.deck.length, plural: state.deck.length === 1 ? '' : 's' })}
+          {state.stash.length > 0 ? ` ${fmt(T.stashedSuffix, { count: state.stash.length })}` : ''}
         </p>
         <p className="hint">{progressLabel(state)}</p>
         {/* The moment you're deciding is the moment to consult the deck. */}
         <button type="button" className="secondary" onClick={onOpenHistory}>
-          View the deck
+          {T.viewDeck}
         </button>
         {/* Deck state, not card behavior: the right Delay granted, visible
             where it matters — at the moment of the deal. */}
         {state.delayHeld && (
           <div className="delay-held">
-            <Card id="delay" label="Delay" size="tile" />
-            <span className="hint">held — the first Coda can be set aside</span>
+            <Card id="delay" label={UI.cards.delay.name} size="tile" />
+            <span className="hint">{T.delayHeld}</span>
           </div>
         )}
       </div>
       <button type="button" className="primary" title="Space" onClick={onDeal}>
-        Deal
+        {T.deal}
       </button>
     </aside>
   )
@@ -278,21 +272,16 @@ function CodaChoice({ state, onAcceptCoda, onDelayCoda }) {
         <CardZoom id={card.id} label={card.label} kind="death" onClose={() => setZoomed(false)} />
       )}
       <div className="panel-scroll">
-        <h2>THE CODA</h2>
+        <h2>{T.codaTitle}</h2>
         <Card id={card.id} label={card.label} kind="death" size="panel" flip onClick={() => setZoomed(true)} />
         <p className="card-name">{card.label}</p>
-        <p className="hint">
-          The deck says the piece is finished. You still hold Delay — accept
-          the ending, or set the Coda aside. It slips back into the deck and
-          the next deal is blind: it can come straight back, and the right is
-          spent.
-        </p>
+        <p className="hint">{T.codaHint}</p>
         <button type="button" className="secondary" onClick={onDelayCoda}>
-          Not yet — set it aside
+          {T.codaSetAside}
         </button>
       </div>
       <button type="button" className="primary" onClick={onAcceptCoda}>
-        Accept — the piece is finished
+        {T.codaAccept}
       </button>
     </aside>
   )
@@ -310,7 +299,7 @@ function CardRevealed({ state, entry, controls, info, ready, committing, onContr
         <CardZoom id={card.id} label={card.label} kind={card.kind} onClose={() => setZoomed(false)} />
       )}
       <div className="panel-scroll">
-        <h2>THIS ROUND</h2>
+        <h2>{T.roundTitle}</h2>
         <Card
           id={card.id}
           label={card.label}
@@ -329,12 +318,12 @@ function CardRevealed({ state, entry, controls, info, ready, committing, onContr
               onControlChange={onControlChange}
             />
           ) : (
-            <span className="hint">(placeholder — this card&apos;s tools arrive in a later phase)</span>
+            <span className="hint">{T.toolsPlaceholder}</span>
           )}
         </div>
       </div>
       <button type="button" className="primary commit" title="Enter" onClick={onCommit} disabled={commitDisabled}>
-        {committing ? 'Committing…' : commitDisabled ? 'Setting up…' : 'End — commit'}
+        {committing ? T.committing : commitDisabled ? T.settingUp : T.endCommit}
       </button>
     </aside>
   )
@@ -343,7 +332,7 @@ function CardRevealed({ state, entry, controls, info, ready, committing, onContr
 function Complete({ state, exportState, onRestart, onOpenOutput }) {
   const status = exportState?.status ?? 'idle'
   const [zoomed, setZoomed] = useState(false)
-  const codaLabel = state.currentCard?.label ?? 'Coda'
+  const codaLabel = state.currentCard?.label ?? UI.cards.coda.name
   return (
     <aside className="deck-panel complete">
       {zoomed && (
@@ -355,7 +344,7 @@ function Complete({ state, exportState, onRestart, onOpenOutput }) {
         />
       )}
       <div className="panel-scroll">
-        <h2>FINISHED</h2>
+        <h2>{T.finishedTitle}</h2>
         <Card
           id={state.currentCard?.id ?? 'coda'}
           label={codaLabel}
@@ -365,24 +354,24 @@ function Complete({ state, exportState, onRestart, onOpenOutput }) {
           onClick={() => setZoomed(true)}
         />
         <p className="card-name">{codaLabel}</p>
-        <p className="hint">The piece is complete.</p>
-        {status === 'exporting' && <p className="hint">Writing PNG to your output folder…</p>}
+        <p className="hint">{T.complete}</p>
+        {status === 'exporting' && <p className="hint">{T.exporting}</p>}
         {status === 'done' && (
           <>
             {exportState.thumbDataUrl && (
               <img src={exportState.thumbDataUrl} className="export-thumb" alt="Final composition" />
             )}
-            <p className="hint">Saved to:</p>
+            <p className="hint">{T.savedTo}</p>
             <p className="export-path mono">{exportState.savedPath}</p>
             <button type="button" className="secondary" onClick={onOpenOutput}>
-              Open output folder
+              {T.openOutput}
             </button>
           </>
         )}
-        {status === 'error' && <p className="error">Export failed: {exportState.error}</p>}
+        {status === 'error' && <p className="error">{fmt(T.exportFailed, { error: exportState.error })}</p>}
       </div>
       <button type="button" className="primary" title="Enter" onClick={onRestart}>
-        Start a new composition
+        {T.restart}
       </button>
     </aside>
   )

@@ -73,11 +73,27 @@ export function dealTypeFonts(catalog) {
 }
 
 const loaded = new Set()
+const failed = new Set()
 
+// A font that can't load in 4s is treated as failed — the browser's serif
+// fallback renders instead and the session NEVER wedges on a bad file.
+// (Learned from the retired Beleren/MPlantin conversions, 2026-07-07:
+// legacy-converted TTFs can parse, load, and still poison canvas text
+// measurement — a failed font must always degrade, never block.)
 export async function ensureFontLoaded(font) {
-  if (loaded.has(font.name)) return
-  const face = new FontFace(font.name, `url("${font.url}")`)
-  await face.load()
-  document.fonts.add(face)
-  loaded.add(font.name)
+  if (loaded.has(font.name) || failed.has(font.name)) return
+  try {
+    const face = new FontFace(font.name, `url("${font.url}")`)
+    await Promise.race([
+      face.load(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('font load timed out')), 4000)
+      )
+    ])
+    document.fonts.add(face)
+    loaded.add(font.name)
+  } catch (err) {
+    failed.add(font.name)
+    console.warn(`Font "${font.name}" failed to load — falling back to serif:`, err)
+  }
 }

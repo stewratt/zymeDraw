@@ -8,9 +8,11 @@
 
 import * as fabric from 'fabric'
 import { createMaskSession } from '../brushCore.js'
+import { CARD_TEXT } from '../cardText.js'
 import { sampleImages } from '../sampling.js'
 import { READING_LABEL, computeLum, maskFor, maskToCanvas, pickMostShattered } from '../shatter.js'
 import { ArrangeMaskControls, maskHint } from './maskControls.jsx'
+import { UI, fmt } from '../../copy/uiText.js'
 
 // Fill the fragments with the char grey: depth 0 → white (multiply no-op),
 // depth 1 → black (burned through).
@@ -106,15 +108,15 @@ export function cleanupChar(ctx) {
 
 export function CharTools({ controls, info, ready, onControlChange }) {
   if (info.stage === 'shattering' || !ready) {
-    return <span className="hint">Reading the image for its most shattered form…</span>
+    return <span className="hint">{UI.shared.shattering}</span>
   }
   const brushing = controls.mode !== 'arrange'
   return (
     <div className="brush-tools card-tools">
       <p className="hint">
         {brushing
-          ? maskHint(controls.mode, 'the char')
-          : `This image ${info.reading ?? 'shattered'}. The fragments scorch what is beneath — arrange them, set the depth of the burn.`}
+          ? maskHint(controls.mode, UI.cardHints.char.subject)
+          : `${fmt(UI.shared.shatteredIntro, { reading: info.reading ?? 'shattered' })} ${CARD_TEXT.char.description}`}
       </p>
       <ArrangeMaskControls controls={controls} info={info} onControlChange={onControlChange} />
       <label className="ctrl">

@@ -14,6 +14,9 @@ import { useEffect, useState } from 'react'
 import Card from './Card.jsx'
 import CardZoom from './CardZoom.jsx'
 import { remainingCounts, spentCards } from './deck.js'
+import { UI } from '../copy/uiText.js'
+
+const T = UI.deckOverlay
 
 export default function HistoryOverlay({ state, onClose }) {
   // A clicked tile enlarges as CardZoom above this sheet. Esc backs out one
@@ -40,12 +43,12 @@ export default function HistoryOverlay({ state, onClose }) {
     <div className="deck-overlay" onClick={onClose}>
       {zoom && <CardZoom {...zoom} onClose={() => setZoom(null)} />}
       <div className="deck-sheet" role="dialog" aria-label="The deck">
-        <h2>THE DECK</h2>
+        <h2>{T.title}</h2>
 
         <section className="deck-section">
-          <h3>Spent — in sequence</h3>
+          <h3>{T.spentTitle}</h3>
           {spent.length === 0 && !inHand ? (
-            <p className="hint">Nothing yet — the sequence begins with the first committed card.</p>
+            <p className="hint">{T.spentEmpty}</p>
           ) : (
             <div className="deck-row">
               {spent.map((c, i) => (
@@ -71,7 +74,7 @@ export default function HistoryOverlay({ state, onClose }) {
                     onClick={() => setZoom({ id: inHand.id, label: inHand.label })}
                   />
                   <span className="deck-cell-name">{inHand.label}</span>
-                  <span className="deck-cell-tag">in hand</span>
+                  <span className="deck-cell-tag">{T.inHand}</span>
                 </div>
               )}
             </div>
@@ -79,12 +82,10 @@ export default function HistoryOverlay({ state, onClose }) {
         </section>
 
         <section className="deck-section">
-          <h3>Remains — in no order</h3>
+          <h3>{T.remainsTitle}</h3>
           {remaining.length === 0 ? (
             <p className="hint">
-              {state.deathShuffled && state.deck.length > 0
-                ? 'Only the Coda remains.'
-                : 'The modifications are spent.'}
+              {state.deathShuffled && state.deck.length > 0 ? T.onlyCoda : T.modsSpent}
             </p>
           ) : (
             <div className="deck-row">
@@ -103,11 +104,11 @@ export default function HistoryOverlay({ state, onClose }) {
             </div>
           )}
           {state.deathShuffled && remaining.length > 0 && (
-            <p className="hint">…and the Coda is somewhere in here.</p>
+            <p className="hint">{T.codaSomewhere}</p>
           )}
         </section>
 
-        <p className="hint">Click anywhere or press Esc to close.</p>
+        <p className="hint">{T.close}</p>
       </div>
     </div>
   )
