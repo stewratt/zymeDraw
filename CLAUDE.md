@@ -58,9 +58,12 @@ stay unordered. Exceptions only as dealt/spent mechanics (Skim, Cull).
 **Parallel track: Foundry, the card maker (`card_maker.md`, planned
 2026-07-06, not started).** A sibling app in this repo for casting the
 card faces themselves — deck-driven meta-sessions, plates + dealt
-fonts + graffiti, direct export to `assets/cards/<id>.png`. All
-decisions and the phased build plan live in that file; nothing is
-built yet.
+fonts + graffiti, direct export to `assets/cards/<id>.png`. Core layer
+model (its §3.5): the plate is an alpha *matte on top* (art shows
+through a punched window), the type layer floats above it, one **Press**
+seals the whole foundation to pixels, then the graffiti deck distorts
+the sealed card. All decisions and the phased build plan live in that
+file; nothing is built yet.
 
 **Next actions (the notes' §10):** 1) Stew verifies Wave 2 in the
 browser. 2) Playtest question (§7.2): does the splash-over tension

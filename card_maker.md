@@ -49,12 +49,20 @@ cast, commission*. All Foundry copy obeys the zyme register.
    pure-reducer deck (`foundryDeck.js`, mirror of `deck.js`): materials
    are dealt, working rounds are dealt, End commits destructively, a
    Proof ends the session. The tool eats its own philosophy.
-3. **Layer model — structured until baked.** The type layer (name /
-   type line / description / rarity mark) starts as live, editable
-   Fabric text objects floating above the raster. A standing **Press**
-   action bakes the type into the pixels at any point — after Press,
-   graffiti cards smear straight through the lettering. Until Press,
-   graffiti works the raster *under* the type.
+3. **Layer model — matte-on-top, sealed in two phases.** The plate is a
+   *foreground matte*, not a background: a frame PNG with the image
+   window punched through as real alpha. Panel art lives *underneath*
+   and the plate's transparency crops it (edge detail, feathered
+   corners, ornamental overhangs all come for free). The type layer
+   (name / type line / description / rarity mark) floats *above* the
+   plate as live, editable Fabric objects; the description sits in a
+   **resizable wireframe box** you fit to each plate's text region.
+   **Phase 1 (foundation):** build art-under-plate-under-type.
+   **The Press** seals the whole stack into one flat raster at the
+   phase boundary. **Phase 2 (graffiti):** the working deck distorts
+   the sealed card on top. Spatial control is the brush's job — don't
+   paint over the name and it stays pristine — so there is no per-slot
+   Press. (Full z-order + rationale in §3.5.)
 4. **Export — direct to the Deck.** A session opens on a
    **commission**: which real card id (from `MOD_CARDS` + Coda) this
    face is for. The Proof writes `frontend/src/assets/cards/<id>.png`
@@ -88,25 +96,31 @@ cast, commission*. All Foundry copy obeys the zyme register.
 Shorter and tighter than a Deck session; a card face is a small piece.
 
 ```
+── PHASE 1 · THE FOUNDATION (live, editable, alpha-composited) ──
 COMMISSION    choose the card id being cast (MOD_CARDS + coda).
               Prefills the name (label), the type line (family:
               image / deck / coda), the rarity tier (copies).
 PLATE_DEAL    deal 3 plates — a mix of folder plates and procedural
-              plates — take one. It becomes the base raster.
-TYPE_SETTING  the type layer arrives, one dealt font per slot
-              (re-rollable, like Deck's N-key hue). Enter/edit the
-              text; nudge position and size within the slot's
-              conventional home. Live objects, not yet pixels.
-PANEL_PICK    grid pick (exports + inputs) for the center image
-              panel; place/scale within the panel bounds, mask brush
-              available. End bakes the panel in.
+              plates — take one. The plate is a MATTE ON TOP: a frame
+              with the image window punched through as alpha.
+PANEL_PICK    grid pick (exports + inputs) for the image; place/scale
+              it UNDERNEATH the plate — the plate's alpha window crops
+              it. Mask brush available. Live, not yet sealed.
+TYPE_SETTING  the type layer arrives ABOVE the plate, one dealt font
+              per slot (re-rollable, like Deck's N-key hue). Enter/edit
+              the text; nudge/size within each slot's home; the
+              description sits in a resizable wireframe box fit to the
+              plate's text region. Live objects, not yet pixels.
+── THE PRESS · seal the foundation (one commit, irreversible) ──
+              Flatten art + plate + type into a single raster. No more
+              alpha window, no more live text — a complete card face.
+── PHASE 2 · GRAFFITI (distort the sealed card) ──
 WORKING       the foundry deck deals graffiti rounds — Silt, Bruise,
-              Char... — each one End-committed through the universal
-              bake. PRESS is a standing action throughout: bake the
-              type into the raster, opening the lettering to harm.
+              Char... — each End-committed through the universal bake,
+              riding on top of the whole sealed card. Paint where you
+              want the harm; skip the name to keep it clean.
 PROOF         after TUNING.workingRounds, Proofs shuffle into the
-              remaining deck; dealing one finishes the card. Any
-              still-live type composites into the final render.
+              remaining deck; dealing one finishes the card.
               Export: assets/cards/<id>.png (745×1040) + master copy.
 ```
 
@@ -114,11 +128,16 @@ Foundry tuning numbers live in `foundryDeck.js` (`FOUNDRY_TUNING` +
 `FOUNDRY_CARDS`), same one-place rule as Deck. Draft: `plateDeal: 3`,
 `workingRounds: 3`, `proofCount: 2`.
 
-**The Press tension** is the heart of the design: unpressed type stays
-crisp and editable but the graffiti can never touch it; pressed type
-joins the pixels and can be destroyed. When you press is the session's
-big judgment call — the same commitment mechanic as End, aimed at
-legibility itself.
+**The Press tension** is the heart of the design, but it is one seal at
+the phase boundary, not a per-slot choice. Before the Press the whole
+foundation is live — re-pick art, re-word the description, re-deal
+fonts, nudge everything — and graffiti can't touch it. The Press
+commits the entire card face to pixels at once (the same commitment
+mechanic as End, aimed at the foundation as a whole); after it, the
+card is fair game for the graffiti deck. The judgment call is *how far
+you let the distortion eat a card you've fully composed* — and because
+every graffiti tool is a brush, sparing the name is just not painting
+there. (Why this replaces the old per-slot Press: §3.5.)
 
 **Canvas geometry.** Working canvas 745×1040 (the exact face size —
 what you see is the deliverable), master at 3× = **2235×3120**. Same
@@ -160,15 +179,17 @@ proxy-and-master pattern as Deck, different dimensions — which is why
   entries point at the shared behavior files; foundry-native cards
   (Proof) get their own files here.
 - `typeLayer.js` — the four slots (name, type line, description,
-  rarity mark) as Fabric Textbox/objects: slot conventions (anchor
-  positions, size ranges), font assignment, and the Press bake.
+  rarity mark) as Fabric objects *above the plate matte* (§3.5): the
+  name/type/rarity anchors, the description's resizable wireframe box,
+  font assignment, and the foundation-seal (the Press).
 - `fonts.js` — manifest over `src/assets/fonts/` (`import.meta.glob`),
   `FontFace` loading (fonts must be loaded before Fabric renders
   text), and the font deal.
-- `plates.js` — the plate deck: folder plates fetched from the
-  backend + the procedural generator (parameterized frame: border
-  width/inset, panel geometry, text-box treatment, corner style,
-  palette; seeded per deal).
+- `plates.js` — the plate deck as *alpha mattes* (§3.5): folder plates
+  (PNGs with the image window punched through) fetched from the backend
+  + the procedural generator drawing the frame around a transparent
+  window (parameterized: border width/inset, window geometry/shape,
+  text-box treatment, corner style, palette; seeded per deal).
 - `rarity.js` — imports `MOD_CARDS`/`DEATH_CARD` from
   `editor/deck.js`, derives the tier and the mark.
 
@@ -188,16 +209,86 @@ folders per request):**
 
 ---
 
+## 3.5. The layer stack (matte-on-top, two-phase seal)
+
+The single most load-bearing decision after "sibling app." Read it
+before touching plates, panel placement, or the bake.
+
+**The plate is a foreground matte, not a background.** A blank plate is
+a PNG frame with the image window punched through as *real alpha*
+(transparent pixels). The panel art lives underneath; the plate's own
+transparency crops it. This is why plate dimensions don't have to be
+perfectly consistent — the alpha window *is* the mask, so whatever edge
+detail a plate carries (rounded window corners, feathered edges,
+ornamental lips overhanging the art) crops the art for free, and the
+app never needs a strict clip rectangle or per-plate panel coordinates.
+
+**Phase-1 z-order, bottom to top (all live, composited every frame):**
+
+```
+   type layer     name · type line · description (resizable box) · rarity
+   plate matte    frame art + alpha-punched image window
+   panel art      the dealt image, placed/scaled under the window
+   ─────────────  (white master beneath, as ever)
+```
+
+Fabric composites this natively: three stacked objects with per-object
+alpha, `toCanvasElement` at master scale resolves the window correctly
+— no custom compositing code.
+
+**The Press seals Phase 1 into one flat raster.** At the phase boundary
+the whole stack flattens through the universal bake: the alpha window
+resolves (art shows through, baked in), the live text becomes pixels,
+and what remains is a single complete card face. Irreversible, like
+every End.
+
+**Phase 2 is graffiti on the sealed card.** The working deck (Silt,
+Bruise, Char…) rides on top of the flat face. There is **no per-slot
+Press** and no "graffiti goes under the type" mode, because every
+graffiti tool is a *brush* — spatial control is already yours. Want the
+name pristine? Don't paint over it. Want the whole card devoured
+(the evilbiscuit end)? Paint through everything. The design tension
+moved from *when do I expose the type* to *how far do I let the
+distortion go* — a better fit for the north star, and less machinery.
+
+**Two dimensional-inconsistency workarounds, one per problem area:**
+- *Image box varies between plates* → the alpha window absorbs it; art
+  is placed generously under the hole and cropped to whatever shape.
+- *Text box varies between plates* → the description is a **resizable
+  wireframe box** (Fabric's native Textbox handles) you fit to each
+  plate's text region per session. Micro-adjust until the copy sits.
+
+**Plate-authoring spec** (for the blank PNGs Stew makes — see also the
+`foundry_card_template.png` guide at repo root):
+- 745×1040, or draw at 3× (2235×3120) for crisp edges; app downscales.
+- PNG with **real alpha**. The image window must be *transparent
+  pixels* (alpha 0), never a white/colored fill. Feathered /
+  semi-transparent edges are encouraged — they blend the art.
+- Frame, borders, text-panel graphics: opaque (or whatever you design).
+- Keep the name / type / text-box regions relatively clear — live type
+  sits on top of them.
+- **No baked-in placeholder text** — name/type/description come from
+  the type layer.
+- Align the transparent window roughly with the template's panel guide,
+  but the exact window shape is yours; the crop follows your alpha, not
+  the guide rectangle.
+
+---
+
 ## 4. The type system (the genuinely new machinery)
 
 Deck has no text. Foundry's type layer is the one subsystem with no
 existing organ to borrow, so its rules are spelled out here:
 
-- **Four slots, conventional homes.** Name (upper-left), type line
-  (upper-right), description (bottom-center textbox, wrapping), rarity
-  mark (bottom corner). Each slot has an anchor region and a size
-  range, not a fixed box — nudging within the convention is free;
-  the convention itself is only broken by graffiti after Press.
+- **Four slots, conventional homes, above the plate.** Name
+  (upper-left), type line (upper-right), description (bottom-center
+  textbox, wrapping), rarity mark (bottom corner) — all rendered
+  *on top of* the plate matte (§3.5). Name/type/rarity have an anchor
+  region and size range, not a fixed box; the **description is a
+  resizable wireframe box** (Fabric Textbox handles) fit to each
+  plate's text region per session, since plates disagree on where the
+  text panel sits. Nudging within the convention is free; the
+  convention is only broken by graffiti after the Press.
 - **Fonts are dealt.** Each slot draws a font from the bundled deck at
   TYPE_SETTING; a re-roll accent (N, matching Deck's hue re-roll) is
   free per slot until Press. The description slot biases toward the
@@ -208,10 +299,12 @@ existing organ to borrow, so its rules are spelled out here:
   Textbox editing; keymap suppression while a text object is in
   editing mode (the existing form-control rule extends to Fabric's
   text editing state).
-- **Press** bakes the whole type layer (or per-slot? — open question
-  §7) into the master via the universal bake, then removes the live
-  objects. Irreversible, like every bake. Unpressed type at Proof time
-  composites into the export — a card can end pristine.
+- **Press** seals the whole foundation — art + plate + type together —
+  into the master via the universal bake, then removes the live objects
+  (§3.5). One commit at the Phase-1/Phase-2 boundary, not per-slot and
+  not per-object; irreversible, like every bake. There is no "unpressed
+  type at Proof" case: the Press *is* the transition into graffiti, so
+  by the time Proofs deal, the type is already pixels.
 - **Loading discipline:** every font in the manifest is registered via
   `FontFace`/`document.fonts` and awaited before any Fabric text
   renders in that font — unloaded fonts silently render as serif and
@@ -254,43 +347,53 @@ one is verified). Every phase ends with explicit test steps.
 
 ### Phase 1 — The hollow session: foundryDeck.js end to end
 - `foundryDeck.js` pure reducer with the full arc (COMMISSION →
-  PLATE_DEAL → TYPE_SETTING → PANEL_PICK → WORKING → PROOF) but stub
-  content: commission is a simple list from `MOD_CARDS` + Coda,
-  plates are flat-color stubs, type/panel phases are pass-through,
-  working rounds deal from a two-card stub deck, Proof exports a
-  plain PNG through the existing `/api/export`.
+  PLATE_DEAL → PANEL_PICK → TYPE_SETTING → PRESS → WORKING → PROOF) but
+  stub content: commission is a simple list from `MOD_CARDS` + Coda,
+  plates are flat-color stubs, panel/type phases are pass-through, the
+  Press is a no-op bake, working rounds deal from a two-card stub deck,
+  Proof exports a plain PNG through the existing `/api/export`.
 - `FoundryEditor.jsx` + `FoundryPanel.jsx` dispatching through
   `foundryRegistry.jsx` — the registry contract from day one.
 - **Verify:** click through a whole hollow session; deal/End rhythm,
   restart, and the Proof export all work.
 
-### Phase 2 — Plates
+### Phase 2 — Plates (the alpha matte)
 - Backend: `platesFolder` config + `/api/plates` routes; Setup-style
   folder pick in Foundry (persisted to `~/.deck-config.json`).
-- `plates.js`: procedural generator v1 (border, panel geometry,
-  text-box treatment, corner style, palette — parameterized and
-  seeded per deal) + folder plates; PLATE_DEAL becomes a real 3-up
-  grid pick mixing both sources.
-- **Verify:** deal plates, see folder + generated mixed, take one,
-  it's the base raster; re-deal gives different generated plates.
+- `plates.js`: procedural generator v1 — draws the frame around a
+  *transparent window* (border, window geometry/shape, text-box
+  treatment, corner style, palette — parameterized and seeded per
+  deal) + folder plates (PNGs with the window punched through);
+  PLATE_DEAL becomes a real 3-up grid pick mixing both sources.
+- The plate mounts as a *matte on top* (§3.5), not the background —
+  render it above the (still empty) panel layer so the alpha window
+  shows through.
+- **Verify:** deal plates, see folder + generated mixed, take one, its
+  window is transparent (the white master shows through the hole);
+  re-deal gives different generated plates.
 
-### Phase 3 — Type
+### Phase 3 — The panel (art under the matte)
+- Extend sampling to the output folder; PANEL_PICK grid (exports +
+  inputs), art placed/scaled *underneath* the plate matte — the
+  plate's alpha window crops it, no explicit clip rectangle. Mask brush
+  available. Live, not yet sealed.
+- **Verify:** pick a finished Deck piece as panel art, drag/scale it
+  under the window, watch the plate's edge detail crop it cleanly.
+
+### Phase 4 — Type + the Press (seal the foundation)
 - Bundle the first ~12 fonts (OFL; licenses committed alongside) +
   `fonts.js` manifest and loading.
-- `typeLayer.js`: the four slots, dealt fonts, re-roll accent, text
-  entry (prefilled name/type from the commission), nudge/size within
-  slot conventions; keymap suppressed during text editing.
-- **Press** as a standing action: bake the type, remove the live
-  objects, disable further type editing.
-- **Verify:** set a card's type, re-roll fonts, edit the description,
-  Press, export — the lettering is in the pixels.
-
-### Phase 4 — The panel
-- Extend sampling to the output folder; PANEL_PICK grid (exports +
-  inputs), placement clipped to the plate's panel region, mask brush
-  available, End bakes.
-- **Verify:** pick a finished Deck piece as panel art, mask its edge
-  into the frame, End.
+- `typeLayer.js`: the four slots *above the plate*, dealt fonts,
+  re-roll accent, text entry (prefilled name/type from the commission),
+  the description's **resizable wireframe box** fit to the plate's text
+  region, nudge/size within slot conventions; keymap suppressed during
+  text editing.
+- **The Press**: one commit that seals art + plate + type into the
+  master via the universal bake, removes the live objects, and crosses
+  into WORKING. Not per-slot (§3.5).
+- **Verify:** place art, set the type, re-roll fonts, resize the
+  description box to fit, Press — the whole face (window resolved,
+  lettering included) is now flat pixels.
 
 ### Phase 5 — Graffiti, wave 1
 - Foundry registry entries for the brush-core cards — Silt, Bruise,
@@ -299,13 +402,14 @@ one is verified). Every phase ends with explicit test steps.
   FoundryEditor rather than forking card files.
 - The WORKING deck becomes real: draft one copy each, `FOUNDRY_CARDS`
   in `foundryDeck.js`.
-- **Verify:** two or three full sessions; graffiti under live type,
-  then Press mid-session and graffiti through the lettering.
+- **Verify:** two or three full sessions; after the Press, graffiti
+  rides on the sealed face — paint through the lettering to eat it, or
+  spare the name to keep it clean.
 
 ### Phase 6 — The Proof: direct to the Deck
-- `rarity.js` tier + mark rendered at TYPE_SETTING; `POST
-  /api/foundry/export` writing `assets/cards/<id>.png` + the master
-  copy; unpressed type composited at export.
+- `rarity.js` tier + mark rendered into the foundation at TYPE_SETTING;
+  `POST /api/foundry/export` writing `assets/cards/<id>.png` + the
+  master copy (the face is already flat — sealed at the Press).
 - **Verify:** cast a face for a real card id, reload Deck, the face
   is live on the dealt card. The loop closes.
 
@@ -323,12 +427,13 @@ one is verified). Every phase ends with explicit test steps.
 - **Commission: chosen or dealt?** Current draft: chosen (you came to
   cast a specific face). A "deal me a commission" option is cheap and
   very Foundry — decide when the COMMISSION screen is real (Phase 1).
-- **Press: whole layer or per-slot?** Whole-layer is one clean
-  commitment; per-slot lets the name stay live while the description
-  gets eaten. Decide in Phase 3 with the tool in hand.
-- **Does a forcing Press belong in the deck?** A dealt card that
-  presses the type whether you're ready or not — pure Foundry chaos,
-  but maybe the standing action's judgment is the better design.
+- ~~Press: whole layer or per-slot?~~ **Resolved (§3.5):** one seal of
+  the whole foundation at the Phase-1/Phase-2 boundary. Spatial control
+  over what graffiti eats is the brush's job, not a per-slot mode.
+- **Does the Press stay a manual boundary, or can a dealt card force
+  it?** Current design: you choose when to seal. A dealt "seal now"
+  card is pure Foundry chaos, but the deliberate seal is probably the
+  better judgment beat. Revisit once graffiti (Phase 5) has a feel.
 - **Description text source:** free entry only, or a committed
   `cardText.js` data file so the canonical card text lives in code
   and prefills? (Leaning data file once texts stabilize.)
