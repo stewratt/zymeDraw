@@ -35,12 +35,17 @@
 //     disabled until it resolves; begin's ctx has isCancelled for restarts.
 //   - `skipBake`: the card never touches the canvas (Cull), so End skips
 //     the universal bake and the state capture — nothing changed.
+//   - `deckActions`: the reducer action types this card's Overlay may fire
+//     through `onDeckAction`. Editor builds its fence from this list — a
+//     card can never dispatch a deck action it hasn't declared, and the
+//     reducer's legality guards remain the real gate.
 //   - `hotkeys`: keyboard accents [{ key|code, shift?, run(ctx, e) }]
 //     (hotkeys.md §5.4). Editor dispatches them ahead of the shared scopes
 //     (keymap.js); run gets { controls, setControl, info, session, canvas }
 //     and may return false to pass the key along. Any card with a `color`
 //     control gets N (re-roll the hue) for free, like the random opening.
 
+import { MOD_CARDS } from '../deck.js'
 import { ghostCard } from './ghost.jsx'
 import { stainCard } from './stain.jsx'
 import { graftControls } from './graftCardFactory.jsx'
@@ -208,6 +213,7 @@ export const cardRegistry = {
     Tools: CullTools,
     Overlay: CullOverlay,
     begin: beginCull,
+    deckActions: ['PICK_FROM_DECK'],
     skipBake: true
   },
 
@@ -217,6 +223,7 @@ export const cardRegistry = {
     Tools: SkimTools,
     Overlay: SkimOverlay,
     begin: beginSkim,
+    deckActions: ['SKIM', 'SKIM_KEEP', 'SKIM_BURY'],
     skipBake: true
   },
 
@@ -264,5 +271,16 @@ export const cardRegistry = {
     update: updateShatteredTransfer,
     commit: commitShatteredTransfer,
     cleanup: cleanupShatteredTransfer
+  }
+}
+
+// Every card deck.js can deal must resolve here. Editor tolerates a missing
+// entry as a placeholder round (deliberate — cards are built in waves), but
+// that tolerance would also swallow a typo'd id, so surface the gap in dev.
+if (import.meta.env.DEV) {
+  for (const { id } of MOD_CARDS) {
+    if (!cardRegistry[id]) {
+      console.warn(`MOD_CARDS deals "${id}" but cardRegistry has no entry for it.`)
+    }
   }
 }

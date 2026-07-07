@@ -52,11 +52,6 @@ function randomizeColors(defaults) {
   return out
 }
 
-// The deck actions a card's Overlay may fire (v4 Wave 2: Cull, Skim). The
-// reducer's legality guards are the real gate — this fence just means no
-// card ever holds raw dispatch.
-const CARD_DECK_ACTIONS = new Set(['PICK_FROM_DECK', 'SKIM', 'SKIM_KEEP', 'SKIM_BURY'])
-
 // Editor is a generic dispatcher. It doesn't know what any card does — it
 // looks up the current card in cardRegistry and calls
 // begin/update/commit/cleanup at the right times. The session arc itself
@@ -497,8 +492,12 @@ function Editor({ config, onBackToSetup }) {
   // state.skim is the one raw field: the paid exception, shown only while
   // Skim itself is in hand (the reducer clears it on COMMIT).
   const deckView = { remaining: remainingCounts(state), skim: state.skim }
+  // The fence: a card's Overlay may only fire the deck actions its registry
+  // entry declares (`deckActions`) — no card ever holds raw dispatch, and
+  // the reducer's legality guards remain the real gate.
+  const cardDeckActions = new Set(currentEntry?.deckActions ?? [])
   function handleDeckAction(action) {
-    if (CARD_DECK_ACTIONS.has(action.type)) dispatch(action)
+    if (cardDeckActions.has(action.type)) dispatch(action)
   }
 
   // ---- the hotkey map (hotkeys.md §5) ----

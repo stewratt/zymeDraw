@@ -43,9 +43,24 @@ never bottom; the death shuffle preserves a kept top card). New generic
 machinery: Overlay props `deckView` + `onDeckAction`, registry `skipBake`
 (no canvas touched → no bake/state capture).
 
+**Card framework hardening (2026-07-06, same verification pass):**
+`card_anatomy.md` is now the card designer's contract — primitive
+catalog, registry contract, invariant checklists, and the card-sheet
+template every new card idea starts from. Two code fixes with it: deck
+cards declare their own `deckActions` in the registry (Editor's fence is
+built from them — the last per-card list left Editor.jsx), and the
+registry dev-warns if a `MOD_CARDS` id has no entry.
+
 **Policy locked (notes §2): set-knowledge is free; order-knowledge and
 order-control are never ambient** — the deal stays blind, the remains
 stay unordered. Exceptions only as dealt/spent mechanics (Skim, Cull).
+
+**Parallel track: Foundry, the card maker (`card_maker.md`, planned
+2026-07-06, not started).** A sibling app in this repo for casting the
+card faces themselves — deck-driven meta-sessions, plates + dealt
+fonts + graffiti, direct export to `assets/cards/<id>.png`. All
+decisions and the phased build plan live in that file; nothing is
+built yet.
 
 **Next actions (the notes' §10):** 1) Stew verifies Wave 2 in the
 browser. 2) Playtest question (§7.2): does the splash-over tension
@@ -159,6 +174,7 @@ zymeDraw/
 ├── CLAUDE.md · README.md · hotkeys.md   # this file / setup / hotkey map
 ├── design_changes_july2.md · redesign_v2_plan.md · version_3_design.md
 ├── v4_design.md · v4_design_notes.md    # v4 spec / ACTIVE PLAN (its §10)
+├── card_anatomy.md                      # the card designer's contract (§11)
 ├── cardPNG/                  # local-only placeholder card art (gitignored)
 ├── frontend/src/             # main.jsx · App.jsx · Setup.jsx
 │   ├── assets/cards/         # card faces <id>.png, 745×1040
@@ -297,6 +313,9 @@ a form control; `KeysReference.jsx` is the in-app overlay.
 ---
 
 ## 11. How to add a new card
+
+**Start with `card_anatomy.md`** — fill in its §9 card sheet before any
+code; its checklists (§7 canvas, §8 deck) are the review. Then:
 
 1. Design freedom inside the constraint (§1); name it in the zyme
    register. Add the descriptor + copy count to `deck.js`.
