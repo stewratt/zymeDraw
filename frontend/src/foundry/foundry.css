@@ -24,6 +24,21 @@
   font-weight: 500;
 }
 
+/* The dealt-fonts readout at TYPE_SETTING. */
+.foundry-fonts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.foundry-fonts .hint strong {
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
 /* The commission grid: more tiles than fit the overlay, so unlike the image
    grids (which shrink to always fit) this one scrolls — card tiles have a
    minimum legible size. */

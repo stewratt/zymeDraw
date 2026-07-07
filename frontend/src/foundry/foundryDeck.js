@@ -91,6 +91,9 @@ export function initialFoundryState() {
     panelGrid: [], // the panel pick's dealt images — tagged filenames
     //               (`in:`/`out:`, panelArt.js), reported via SET_PANEL_GRID
     panelArt: null, // the tagged filename placed under the window, or null
+    typeFonts: null, // the dealt style pairing { style, title, body } —
+    //                 font descriptors (ids + urls), dealt by FoundryEditor
+    //                 from fonts.js and reported via SET_TYPE_FONTS
     deck: buildFoundryDeck(), // the literal shuffled working deck
     roundsDone: 0,
     proofsShuffled: false,
@@ -187,6 +190,15 @@ export function foundryReducer(state, action) {
     case 'END_PANEL': {
       if (state.phase !== 'PANEL_PICK') return state
       return { ...state, phase: 'TYPE_SETTING' }
+    }
+
+    // The font deal — first deal and every N re-roll land here. Recording
+    // the style in history at Press time isn't needed: the face itself is
+    // the record.
+    case 'SET_TYPE_FONTS': {
+      if (state.phase !== 'TYPE_SETTING') return state
+      if (!action.fonts) return state
+      return { ...state, typeFonts: action.fonts }
     }
 
     case 'PRESS': {

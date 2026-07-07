@@ -8,6 +8,8 @@ import { foundryReducer, initialFoundryState, COMMISSIONS, FOUNDRY_TUNING } from
 import { foundryRegistry } from './foundryRegistry.jsx'
 import { dealPlateOffer, fetchPlateList, mountPlate, plateUrl } from './plates.js'
 import { dealPanelGrid, fetchArtSources, mountPanelArt, panelArtUrl } from './panelArt.js'
+import { dealTypeFonts, fetchFontCatalog } from './fonts.js'
+import { applyTypeFonts, mountTypeLayer } from './typeLayer.js'
 import { createMaskSession } from '../editor/brushCore.js'
 import { dispatchKey } from '../editor/keymap.js'
 import { arrangeBindings, brushBindings } from '../editor/sessionBindings.js'
@@ -58,6 +60,13 @@ function FoundryEditor() {
 
   // Panel-art sources: inputs + exports, tagged (panelArt.js).
   const [artSources, setArtSources] = useState({ status: 'loading', files: [], error: null })
+
+  // The font catalog (fonts.js): committed OFL set + this machine's local
+  // overlay. Loaded once; the deal draws from it at TYPE_SETTING.
+  const [fontCatalog, setFontCatalog] = useState(null) // null while loading
+  // The live type slots (typeLayer.js) — consumed by the Press.
+  const typeSlotsRef = useRef(null)
+  const [typeReady, setTypeReady] = useState(false)
   // The mounted panel art (under the matte) — consumed by the Press.
   const panelImgRef = useRef(null)
   const [artReady, setArtReady] = useState(true) // false only while art is in flight
@@ -91,6 +100,9 @@ function FoundryEditor() {
     })
     fetchArtSources().then((sources) => {
       if (!cancelled) setArtSources(sources)
+    })
+    fetchFontCatalog().then((catalog) => {
+      if (!cancelled) setFontCatalog(catalog)
     })
     return () => {
       cancelled = true
@@ -160,6 +172,43 @@ function FoundryEditor() {
       setArtReady(true)
     }
   }, [state.panelArt])
+
+  // Deal the fonts when TYPE_SETTING opens (and never re-deal on re-render
+  // — only N does that, through the same action).
+  useEffect(() => {
+    if (state.phase !== 'TYPE_SETTING' || state.typeFonts || !fontCatalog) return
+    dispatch({ type: 'SET_TYPE_FONTS', fonts: dealTypeFonts(fontCatalog) })
+  }, [state.phase, state.typeFonts, fontCatalog])
+
+  // Mount the type slots when the first deal lands; on a re-deal, swap
+  // faces on the LIVING objects — entered text and nudged positions
+  // survive the roll (typeLayer.js).
+  useEffect(() => {
+    if (!state.typeFonts) return
+    const canvas = canvasStageRef.current?.getCanvas()
+    if (!canvas) return
+    let cancelled = false
+    if (typeSlotsRef.current) {
+      applyTypeFonts(canvas, typeSlotsRef.current, state.typeFonts).catch((err) =>
+        console.warn('Font re-deal failed to load:', err)
+      )
+      return
+    }
+    setTypeReady(false)
+    mountTypeLayer(canvas, state.commission, state.typeFonts)
+      .then((slots) => {
+        if (cancelled) {
+          canvas.remove(...Object.values(slots))
+          return
+        }
+        typeSlotsRef.current = slots
+        setTypeReady(true)
+      })
+      .catch((err) => console.warn('Type layer failed to mount:', err))
+    return () => {
+      cancelled = true
+    }
+  }, [state.typeFonts])
 
   // The taken plate mounts as the matte on top (card_maker.md §3.5) and
   // stays live until the Press seals it. Fires exactly when `plate` is
@@ -343,6 +392,8 @@ function FoundryEditor() {
     if (canvas) masterRef.current = bake(canvas)
     plateObjRef.current = null
     panelImgRef.current = null
+    typeSlotsRef.current = null
+    setTypeReady(false)
     dispatch({ type: 'PRESS' })
   }
 
@@ -365,6 +416,8 @@ function FoundryEditor() {
     cardSessionRef.current = null
     plateObjRef.current = null
     panelImgRef.current = null
+    typeSlotsRef.current = null
+    setTypeReady(false)
     setMaskControls({ mode: 'arrange', size: 40, hardness: 'soft', softness: 0.5, strength: 1 })
     setMaskHistory({ canUndo: false, canRedo: false })
     setCardControls({})
@@ -441,6 +494,16 @@ function FoundryEditor() {
     (state.phase === 'PANEL_PICK' && artInHand && maskControls.mode === 'arrange') ||
     state.phase === 'TYPE_SETTING'
   if (arranging) bindings.push(...arrangeBindings(getCanvas))
+
+  // N re-deals the type fonts — the same accent as Deck's hue re-roll.
+  // (Suppressed automatically while a text is being edited: Fabric's
+  // hidden textarea is a form target.)
+  if (state.phase === 'TYPE_SETTING' && fontCatalog) {
+    bindings.push({
+      key: 'n',
+      run: () => dispatch({ type: 'SET_TYPE_FONTS', fonts: dealTypeFonts(fontCatalog) })
+    })
+  }
 
   if (state.phase === 'WORKING' && !state.currentCard) {
     bindings.push(
@@ -526,6 +589,10 @@ function FoundryEditor() {
             committing={committing}
             plateReady={plateReady}
             artReady={artReady}
+            typeReady={typeReady}
+            onRerollFonts={() =>
+              fontCatalog && dispatch({ type: 'SET_TYPE_FONTS', fonts: dealTypeFonts(fontCatalog) })
+            }
             maskControls={maskControls}
             maskHistory={maskHistory}
             onMaskControlsChange={(patch) => setMaskControls((prev) => ({ ...prev, ...patch }))}

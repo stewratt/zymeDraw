@@ -233,6 +233,61 @@ app.get('/api/plates/:filename', async (req, res) => {
   })
 })
 
+// ---- Foundry: the local font overlay (card_maker.md §1.1, Phase 4) ----
+// Loose .ttf/.otf files under <plates>/fonts/<role>/<style>/ join the
+// committed OFL set per machine — this is where the proprietary faces
+// (Beleren, MPlantin) live, dealt when present, absent without error.
+// Zips in the same folders are source material and are ignored.
+const FONT_EXTENSIONS = new Set(['.ttf', '.otf'])
+const FONT_ROLES = new Set(['title', 'body'])
+
+app.get('/api/fonts', async (req, res) => {
+  const base = path.join(await resolvePlatesFolder(), 'fonts')
+  const fonts = []
+  try {
+    for (const role of FONT_ROLES) {
+      const roleDir = path.join(base, role)
+      let styles = []
+      try {
+        styles = (await fs.readdir(roleDir, { withFileTypes: true })).filter((e) => e.isDirectory())
+      } catch {
+        continue // no such role folder on this machine — fine
+      }
+      for (const styleEntry of styles) {
+        const styleDir = path.join(roleDir, styleEntry.name)
+        const entries = await fs.readdir(styleDir, { withFileTypes: true })
+        for (const e of entries) {
+          if (e.isFile() && FONT_EXTENSIONS.has(path.extname(e.name).toLowerCase())) {
+            fonts.push({ role, style: styleEntry.name, file: e.name })
+          }
+        }
+      }
+    }
+    res.json({ ok: true, fonts })
+  } catch (err) {
+    res.json({ ok: true, fonts: [] }) // overlay is optional — never an error
+  }
+})
+
+app.get('/api/fonts/:role/:style/:filename', async (req, res) => {
+  const { role, style, filename } = req.params
+  if (!FONT_ROLES.has(role)) return res.status(400).send('Invalid role.')
+  const base = path.join(await resolvePlatesFolder(), 'fonts')
+  const folderRoot = path.resolve(path.join(base, role, path.basename(style)))
+  const resolved = path.resolve(folderRoot, path.basename(filename))
+  if (!resolved.startsWith(path.resolve(base) + path.sep)) {
+    return res.status(400).send('Invalid path.')
+  }
+  if (!FONT_EXTENSIONS.has(path.extname(resolved).toLowerCase())) {
+    return res.status(400).send('Not a font.')
+  }
+  res.sendFile(resolved, (err) => {
+    if (err && !res.headersSent) {
+      res.status(err.code === 'ENOENT' ? 404 : 500).send('Failed to send file.')
+    }
+  })
+})
+
 // Point platesFolder somewhere else (persisted per machine). Validates
 // read access; saveConfig merges, so Deck's folders are untouched.
 app.post('/api/plates-folder', async (req, res) => {

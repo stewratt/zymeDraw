@@ -21,6 +21,8 @@ function FoundryPanel({
   committing,
   plateReady,
   artReady,
+  typeReady,
+  onRerollFonts,
   maskControls,
   maskHistory,
   onMaskControlsChange,
@@ -121,19 +123,38 @@ function FoundryPanel({
           <div className="panel-scroll">
             <h2>THE TYPE</h2>
             <p className="hint">
-              Name, type line, description, and the rarity mark set here.
-              (Stub — the type layer arrives in Phase 4.) The art is still
-              live underneath — arrow keys nudge, comma/period rotate,
-              minus/equals scale.
+              The type is set — name upper-left, type line upper-right,
+              the description in its box. <strong>Double-click</strong> a
+              slot to edit its text; drag to nudge, handles to size. The
+              description box resizes to fit the plate&apos;s text region.
             </p>
+            {state.typeFonts && (
+              <div className="foundry-fonts">
+                <p className="hint">
+                  Dealt style: <strong>{state.typeFonts.style}</strong>
+                  <br />
+                  title · {state.typeFonts.title.name}
+                  <br />
+                  body · {state.typeFonts.body.name}
+                </p>
+                <button type="button" className="secondary" title="N" onClick={onRerollFonts}>
+                  Re-deal the fonts
+                </button>
+              </div>
+            )}
             <p className="hint">
               The Press seals the whole foundation — art, plate, and type
               flatten to pixels for good. After it, the graffiti deck works
               the sealed face.
             </p>
           </div>
-          <button type="button" className="primary" disabled={!plateReady} onClick={onPress}>
-            Press — seal the foundation
+          <button
+            type="button"
+            className="primary"
+            disabled={!plateReady || !typeReady}
+            onClick={onPress}
+          >
+            {typeReady ? 'Press — seal the foundation' : 'Setting the type…'}
           </button>
         </aside>
       )

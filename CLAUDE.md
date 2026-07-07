@@ -66,13 +66,22 @@ sealed card. **2026-07-07 adjustments (its §1.1):** Proofs export to a
 per-machine *casts folder* for hand curation, never directly into
 `assets/cards/`; plates are Stew's 8 templates in `card_template/`
 (2235×3120, real alpha windows, untracked) with the procedural
-generator deferred; fonts are style-paired trios (mtg/pk/jp zips in
-`card_template/fonts/`), one style dealt per session. **Phase 0
-shipped:** `foundry.html` + `src/foundry/` (throwaway proving shell at
-745×1040/2235×3120), `masterRaster.js` createMaster parameterized,
-`CanvasStage.jsx` takes width/height props, second Vite build entry.
-Deck untouched by defaults. Next: Phase 1, the hollow session
-(`foundryDeck.js` end to end).
+generator deferred; fonts are style-paired trios (mtg/pk/jp), one
+style dealt per session, OFL faces committed under
+`frontend/src/assets/fonts/` + proprietary Beleren/MPlantin as a
+local-only backend overlay (`/api/fonts`). **Phases 0–3 verified:**
+the scaffold (second Vite entry, parameterized raster/canvas), the
+hollow session (`foundryDeck.js` + FoundryEditor/FoundryPanel/
+foundryRegistry — commission chosen-with-deal-option), the plates
+(`/api/plates`, matte-on-top mount), the panel (`/api/outputs`, art
+under the window via `panelArt.js`, mask brush; the brush/arrange key
+grammars now live in shared `editor/sessionBindings.js` — Editor.jsx
+imports them). **Phase 4 built, awaiting browser verification:**
+`fonts.js` (catalog + style deal + FontFace discipline),
+`typeLayer.js` (name/type/description slots above the plate, N
+re-deals fonts on living objects), the Press seals the full stack.
+Next: Phase 5 (graffiti wave 1 — registry entries over shared card
+files), Phase 6 (rarity mark + casts-folder export).
 
 **Next actions (the notes' §10):** 1) Stew verifies Wave 2 in the
 browser. 2) Playtest question (§7.2): does the splash-over tension
