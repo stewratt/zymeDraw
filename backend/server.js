@@ -146,6 +146,47 @@ app.get('/api/images/:filename', async (req, res) => {
   })
 })
 
+// ---- Foundry: the output folder as an art source (Phase 3) ----
+// The deck's own finished pieces feed the deck's faces (card_maker.md
+// §1.9): Foundry's panel pick samples the export folder alongside the
+// inputs. Same shape and safety as the /api/images pair.
+app.get('/api/outputs', async (req, res) => {
+  const { outputFolder } = await loadConfig()
+  if (!outputFolder) {
+    return res.status(400).json({ ok: false, error: 'Output folder is not configured.' })
+  }
+  try {
+    const entries = await fs.readdir(outputFolder, { withFileTypes: true })
+    const filenames = entries
+      .filter((e) => e.isFile() && IMAGE_EXTENSIONS.has(path.extname(e.name).toLowerCase()))
+      .map((e) => e.name)
+      .sort()
+    res.json({ ok: true, filenames })
+  } catch (err) {
+    res.status(400).json({ ok: false, error: `Cannot read output folder: ${err.message}` })
+  }
+})
+
+app.get('/api/outputs/:filename', async (req, res) => {
+  const { outputFolder } = await loadConfig()
+  if (!outputFolder) return res.status(400).send('Output folder is not configured.')
+
+  const safeName = path.basename(req.params.filename)
+  const folderRoot = path.resolve(outputFolder)
+  const resolved = path.resolve(folderRoot, safeName)
+  if (!resolved.startsWith(folderRoot + path.sep)) {
+    return res.status(400).send('Invalid filename.')
+  }
+  if (!IMAGE_EXTENSIONS.has(path.extname(resolved).toLowerCase())) {
+    return res.status(400).send('Not an image.')
+  }
+  res.sendFile(resolved, (err) => {
+    if (err && !res.headersSent) {
+      res.status(err.code === 'ENOENT' ? 404 : 500).send('Failed to send file.')
+    }
+  })
+})
+
 // ---- Foundry: the plates (card_maker.md §1.1, Phase 2) ----
 // Blank card frames with the image window punched as alpha. Local-only
 // materials, never committed; the folder defaults to the repo's

@@ -8,8 +8,9 @@
 // It knows nothing about specific cards — it renders whatever Tools
 // component the current foundryRegistry entry provides.
 
-import { FOUNDRY_TUNING, foundryProgressLabel } from './foundryDeck.js'
+import { foundryProgressLabel } from './foundryDeck.js'
 import Card from '../editor/Card.jsx'
+import { ArrangeMaskControls, maskHint } from '../editor/cards/maskControls.jsx'
 
 function FoundryPanel({
   state,
@@ -19,6 +20,13 @@ function FoundryPanel({
   ready,
   committing,
   plateReady,
+  artReady,
+  maskControls,
+  maskHistory,
+  onMaskControlsChange,
+  onMaskUndo,
+  onMaskRedo,
+  onRepick,
   exportState,
   onControlChange,
   onEndPanel,
@@ -51,27 +59,61 @@ function FoundryPanel({
         </aside>
       )
 
-    case 'PANEL_PICK':
+    case 'PANEL_PICK': {
+      const hasArt = !!state.panelArt
+      const brushing = maskControls.mode !== 'arrange'
+      const canContinue = plateReady && artReady
       return (
         <aside className="deck-panel">
           <div className="panel-scroll">
             <h2>THE PANEL</h2>
-            <p className="hint">
-              The plate is on the face — the white window is its punched
-              image panel. The art that goes under it arrives in Phase 3.
-            </p>
+            {!hasArt ? (
+              <p className="hint">
+                Take an image from the grid. Or continue with the window
+                empty — the white shows, and the graffiti decides what it
+                becomes.
+              </p>
+            ) : (
+              <>
+                <p className="hint">
+                  Arrange the art under the window — the plate&apos;s edge
+                  crops whatever crosses it.{' '}
+                  {brushing
+                    ? maskHint(maskControls.mode, 'the art')
+                    : 'Drag to move, corner handles to scale, top handle to rotate.'}{' '}
+                  Everything stays live until the Press.
+                </p>
+                <div className="brush-tools">
+                  <ArrangeMaskControls
+                    controls={maskControls}
+                    info={{ ...maskHistory, undo: onMaskUndo, redo: onMaskRedo }}
+                    onControlChange={(key, value) => onMaskControlsChange({ [key]: value })}
+                  />
+                </div>
+                <button type="button" className="secondary" onClick={onRepick}>
+                  Put it back — re-pick
+                </button>
+              </>
+            )}
           </div>
           <button
             type="button"
             className="primary"
-            title="Enter"
-            disabled={!plateReady}
+            title={hasArt ? 'Enter' : undefined}
+            disabled={!canContinue}
             onClick={onEndPanel}
           >
-            {plateReady ? 'Continue' : 'Mounting the plate…'}
+            {!plateReady
+              ? 'Mounting the plate…'
+              : !artReady
+                ? 'Placing the art…'
+                : hasArt
+                  ? 'Continue — to the type'
+                  : 'Continue — window empty'}
           </button>
         </aside>
       )
+    }
 
     case 'TYPE_SETTING':
       return (
@@ -80,7 +122,9 @@ function FoundryPanel({
             <h2>THE TYPE</h2>
             <p className="hint">
               Name, type line, description, and the rarity mark set here.
-              (Stub — the type layer arrives in Phase 4.)
+              (Stub — the type layer arrives in Phase 4.) The art is still
+              live underneath — arrow keys nudge, comma/period rotate,
+              minus/equals scale.
             </p>
             <p className="hint">
               The Press seals the whole foundation — art, plate, and type

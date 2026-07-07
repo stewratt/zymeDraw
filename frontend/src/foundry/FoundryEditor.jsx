@@ -2,11 +2,15 @@ import { useEffect, useReducer, useRef, useState } from 'react'
 import * as fabric from 'fabric'
 import CanvasStage from '../editor/CanvasStage.jsx'
 import Card from '../editor/Card.jsx'
+import { CardGridPicker } from '../editor/GridPicker.jsx'
 import FoundryPanel from './FoundryPanel.jsx'
 import { foundryReducer, initialFoundryState, COMMISSIONS, FOUNDRY_TUNING } from './foundryDeck.js'
 import { foundryRegistry } from './foundryRegistry.jsx'
 import { dealPlateOffer, fetchPlateList, mountPlate, plateUrl } from './plates.js'
+import { dealPanelGrid, fetchArtSources, mountPanelArt, panelArtUrl } from './panelArt.js'
+import { createMaskSession } from '../editor/brushCore.js'
 import { dispatchKey } from '../editor/keymap.js'
+import { arrangeBindings, brushBindings } from '../editor/sessionBindings.js'
 import {
   bake,
   createMaster,
@@ -52,6 +56,25 @@ function FoundryEditor() {
   const plateObjRef = useRef(null)
   const [plateReady, setPlateReady] = useState(false)
 
+  // Panel-art sources: inputs + exports, tagged (panelArt.js).
+  const [artSources, setArtSources] = useState({ status: 'loading', files: [], error: null })
+  // The mounted panel art (under the matte) — consumed by the Press.
+  const panelImgRef = useRef(null)
+  const [artReady, setArtReady] = useState(true) // false only while art is in flight
+
+  // The standing mask brush over the panel art (brushCore.js) — same
+  // machinery as Deck's placement sessions. Controls live in React; the
+  // session reads them through a ref so mid-stroke changes don't rebuild.
+  const maskSessionRef = useRef(null)
+  const maskControlsRef = useRef(null)
+  const [maskControls, setMaskControls] = useState({ mode: 'arrange', size: 40, hardness: 'soft', softness: 0.5, strength: 1 })
+  const [maskHistory, setMaskHistory] = useState({ canUndo: false, canRedo: false })
+
+  useEffect(() => {
+    maskControlsRef.current = maskControls
+    maskSessionRef.current?.setActive(maskControls.mode !== 'arrange')
+  }, [maskControls])
+
   // Create the master once the Fabric canvas exists — card-face dimensions.
   useEffect(() => {
     const canvas = canvasStageRef.current?.getCanvas()
@@ -60,11 +83,14 @@ function FoundryEditor() {
     showMaster(canvas, masterRef.current)
   }, [])
 
-  // Fetch the plates folder listing once.
+  // Fetch the plates folder listing and the art sources once.
   useEffect(() => {
     let cancelled = false
     fetchPlateList().then((list) => {
       if (!cancelled) setPlateList(list)
+    })
+    fetchArtSources().then((sources) => {
+      if (!cancelled) setArtSources(sources)
     })
     return () => {
       cancelled = true
@@ -82,6 +108,58 @@ function FoundryEditor() {
       plates: dealPlateOffer(plateList.filenames, FOUNDRY_TUNING.plateDeal)
     })
   }, [state.phase, state.plateOffer.length, plateList])
+
+  // Deal the panel grid when the pick opens (SET_GRID's pattern again).
+  useEffect(() => {
+    if (state.phase !== 'PANEL_PICK' || state.panelGrid.length > 0) return
+    if (artSources.status !== 'ready') return
+    dispatch({
+      type: 'SET_PANEL_GRID',
+      files: dealPanelGrid(artSources.files, FOUNDRY_TUNING.panelGrid)
+    })
+  }, [state.phase, state.panelGrid.length, artSources])
+
+  // The picked art mounts UNDER the plate matte and gets the mask brush —
+  // the window crops it live. Cleanup covers re-pick (REPICK_PANEL) and
+  // restarts, including mid-flight loads.
+  useEffect(() => {
+    if (!state.panelArt) return
+    const canvas = canvasStageRef.current?.getCanvas()
+    if (!canvas) return
+    let cancelled = false
+    setArtReady(false)
+    setMaskControls({ mode: 'arrange', size: 40, hardness: 'soft', softness: 0.5, strength: 1 })
+    setMaskHistory({ canUndo: false, canRedo: false })
+    mountPanelArt(canvas, state.panelArt)
+      .then((img) => {
+        if (cancelled) {
+          canvas.remove(img)
+          return
+        }
+        panelImgRef.current = img
+        maskSessionRef.current = createMaskSession(canvas, [img], {
+          getControls: () => maskControlsRef.current,
+          onHistoryChange: (canUndo, canRedo) => setMaskHistory({ canUndo, canRedo }),
+          onSizeChange: (size) => setMaskControls((prev) => ({ ...prev, size }))
+        })
+        setArtReady(true)
+      })
+      .catch((err) => console.warn('Panel art failed to load:', err))
+      .finally(() => {
+        if (!cancelled) setArtReady(true)
+      })
+    return () => {
+      cancelled = true
+      maskSessionRef.current?.dispose()
+      maskSessionRef.current = null
+      if (panelImgRef.current) {
+        canvas.remove(panelImgRef.current)
+        canvas.requestRenderAll()
+        panelImgRef.current = null
+      }
+      setArtReady(true)
+    }
+  }, [state.panelArt])
 
   // The taken plate mounts as the matte on top (card_maker.md §3.5) and
   // stays live until the Press seals it. Fires exactly when `plate` is
@@ -255,17 +333,24 @@ function FoundryEditor() {
 
   // The Press: seal the whole foundation — art + plate + type — into the
   // master in one commit (card_maker.md §3.5). The bake consumes the live
-  // objects; the plate ref dies with them.
+  // objects; the refs and the mask session die with them (a brush left in
+  // Erase must not survive into the graffiti rounds).
   function handlePress() {
     const canvas = canvasStageRef.current?.getCanvas()
+    maskSessionRef.current?.dispose()
+    maskSessionRef.current = null
+    setMaskControls((prev) => ({ ...prev, mode: 'arrange' }))
     if (canvas) masterRef.current = bake(canvas)
     plateObjRef.current = null
+    panelImgRef.current = null
     dispatch({ type: 'PRESS' })
   }
 
   function handleRestart() {
     if (committingRef.current) return
     const canvas = canvasStageRef.current?.getCanvas()
+    maskSessionRef.current?.dispose()
+    maskSessionRef.current = null
     if (canvas) {
       if (state.currentCard) {
         const entry = foundryRegistry[state.currentCard.id]
@@ -279,6 +364,9 @@ function FoundryEditor() {
     }
     cardSessionRef.current = null
     plateObjRef.current = null
+    panelImgRef.current = null
+    setMaskControls({ mode: 'arrange', size: 40, hardness: 'soft', softness: 0.5, strength: 1 })
+    setMaskHistory({ canUndo: false, canRedo: false })
     setCardControls({})
     setCardInfo({})
     setExportState({ status: 'idle', savedPath: null, error: null, thumbDataUrl: null })
@@ -329,7 +417,31 @@ function FoundryEditor() {
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [])
 
+  const getCanvas = () => canvasStageRef.current?.getCanvas()
   const bindings = []
+  const artInHand = !!state.panelArt && artReady
+
+  // The brush grammar over the panel art (sessionBindings.js — the same
+  // dialect as Deck's placement sessions), plus its undo/redo.
+  if (state.phase === 'PANEL_PICK' && artInHand) {
+    bindings.push(
+      ...brushBindings(
+        () => maskControls,
+        (patch) => setMaskControls((prev) => ({ ...prev, ...patch })),
+        { canArrange: true, hasMode: true, hasHardness: true }
+      ),
+      { key: 'z', mod: true, shift: false, run: () => maskSessionRef.current?.undo() },
+      { key: 'z', mod: true, shift: true, run: () => maskSessionRef.current?.redo() }
+    )
+  }
+  // Arrange keys wherever the foundation is live and arrangeable: the art
+  // under the window (while the brush is in arrange), and TYPE_SETTING —
+  // "nudge everything" holds until the Press.
+  const arranging =
+    (state.phase === 'PANEL_PICK' && artInHand && maskControls.mode === 'arrange') ||
+    state.phase === 'TYPE_SETTING'
+  if (arranging) bindings.push(...arrangeBindings(getCanvas))
+
   if (state.phase === 'WORKING' && !state.currentCard) {
     bindings.push(
       { code: 'Space', run: () => dispatch({ type: 'DEAL' }) },
@@ -337,14 +449,27 @@ function FoundryEditor() {
     )
   } else if (state.phase === 'WORKING' && cardReady && !committing) {
     bindings.push({ key: 'Enter', run: handleCommit })
-  } else if (state.phase === 'PANEL_PICK' && plateReady) {
+  } else if (state.phase === 'PANEL_PICK' && plateReady && artInHand) {
+    // Before the pick, the grid overlay owns Enter (CardGridPicker's own
+    // listener confirms the taken image); artless Continue stays click-only.
     bindings.push({ key: 'Enter', run: () => dispatch({ type: 'END_PANEL' }) })
   } else if (state.phase === 'COMPLETE') {
     bindings.push({ key: 'Enter', run: handleRestart })
   }
   // The Press is deliberately click-only — sealing the foundation should
   // never be a double-press accident (the CodaChoice rule).
-  bindings.push({ key: 'r', shift: true, run: handleRestart })
+  bindings.push(
+    { key: 'r', shift: true, run: handleRestart },
+    {
+      key: 'Escape', // back out of a selection; never ends or commits
+      run: () => {
+        const canvas = getCanvas()
+        if (!canvas?.getActiveObject()) return false
+        canvas.discardActiveObject()
+        canvas.requestRenderAll()
+      }
+    }
+  )
   bindingsRef.current = bindings
 
   return (
@@ -380,6 +505,16 @@ function FoundryEditor() {
               onChooseFolder={handleChoosePlatesFolder}
             />
           )}
+          {state.phase === 'PANEL_PICK' && !state.panelArt && (
+            <CardGridPicker
+              title="THE PANEL"
+              hint="Take an image for the window — your finished pieces and raw inputs, dealt together. It lands under the plate; the window crops it."
+              files={state.panelGrid}
+              fileUrl={panelArtUrl}
+              confirmLabel="Take — place under the window"
+              onConfirm={(file) => dispatch({ type: 'PICK_PANEL', file })}
+            />
+          )}
         </section>
         <aside className="side-stack">
           <FoundryPanel
@@ -390,6 +525,13 @@ function FoundryEditor() {
             ready={cardReady}
             committing={committing}
             plateReady={plateReady}
+            artReady={artReady}
+            maskControls={maskControls}
+            maskHistory={maskHistory}
+            onMaskControlsChange={(patch) => setMaskControls((prev) => ({ ...prev, ...patch }))}
+            onMaskUndo={() => maskSessionRef.current?.undo()}
+            onMaskRedo={() => maskSessionRef.current?.redo()}
+            onRepick={() => dispatch({ type: 'REPICK_PANEL' })}
             exportState={exportState}
             onControlChange={handleControlChange}
             onEndPanel={() => dispatch({ type: 'END_PANEL' })}

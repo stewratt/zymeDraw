@@ -116,8 +116,17 @@ function gridShape(n) {
 
 // Single-pick variant for cards that deal their own grid (Ghost, Stamp).
 // No stash: click an image to take it (click again to put it back), then
-// confirm.
-export function CardGridPicker({ title, hint, files, confirmLabel, onConfirm }) {
+// confirm. `fileUrl` maps an entry to its image URL — Deck's default is the
+// input folder; Foundry's panel pick passes its own (mixed input/output
+// sources, panelArt.js).
+export function CardGridPicker({
+  title,
+  hint,
+  files,
+  confirmLabel,
+  onConfirm,
+  fileUrl = (f) => `/api/images/${encodeURIComponent(f)}`
+}) {
   const [chosen, setChosen] = useState(null)
   const shape = gridShape(files.length)
 
@@ -156,7 +165,7 @@ export function CardGridPicker({ title, hint, files, confirmLabel, onConfirm }) 
                 className={`grid-thumb ${chosen === f ? 'place' : ''}`}
                 onClick={() => setChosen((c) => (c === f ? null : f))}
               >
-                <img src={`/api/images/${encodeURIComponent(f)}`} alt={f} loading="lazy" />
+                <img src={fileUrl(f)} alt={f} loading="lazy" />
                 {chosen === f && <span className="thumb-badge">TAKE</span>}
               </button>
             ))}

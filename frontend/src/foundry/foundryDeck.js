@@ -23,6 +23,7 @@ import { DEATH_CARD, MOD_CARDS } from '../editor/deck.js'
 // Every Foundry pacing number lives here.
 export const FOUNDRY_TUNING = {
   plateDeal: 3, // plates offered at PLATE_DEAL
+  panelGrid: 12, // images dealt into the panel pick (inputs + exports mixed)
   workingRounds: 3, // graffiti rounds before Proofs shuffle in
   proofCount: 2 // Proofs shuffled into whatever deck remains
 }
@@ -87,6 +88,9 @@ export function initialFoundryState() {
     //                SET_PLATE_OFFER (folder listing is not deck logic; the
     //                SET_GRID pattern)
     plate: null, // the plate taken: { id, file }
+    panelGrid: [], // the panel pick's dealt images — tagged filenames
+    //               (`in:`/`out:`, panelArt.js), reported via SET_PANEL_GRID
+    panelArt: null, // the tagged filename placed under the window, or null
     deck: buildFoundryDeck(), // the literal shuffled working deck
     roundsDone: 0,
     proofsShuffled: false,
@@ -151,8 +155,35 @@ export function foundryReducer(state, action) {
       }
     }
 
+    case 'SET_PANEL_GRID': {
+      if (state.phase !== 'PANEL_PICK') return state
+      return { ...state, panelGrid: action.files }
+    }
+
+    case 'PICK_PANEL': {
+      if (state.phase !== 'PANEL_PICK') return state
+      if (!state.panelGrid.includes(action.file)) return state
+      return {
+        ...state,
+        panelArt: action.file,
+        history: [
+          ...state.history,
+          { event: 'panel', file: action.file, ts: Date.now() }
+        ]
+      }
+    }
+
+    // Foundation liveness (§3.5): before the Press, the art can go back on
+    // the table. The dealt grid stays the same — the re-pick is a change of
+    // mind within the deal, not a fresh deal.
+    case 'REPICK_PANEL': {
+      if (state.phase !== 'PANEL_PICK' || !state.panelArt) return state
+      return { ...state, panelArt: null }
+    }
+
     // Advancing PANEL_PICK → TYPE_SETTING is NOT a commit: the whole
     // foundation stays live (re-pick, re-word, nudge) until the Press.
+    // Continuing artless is allowed — an empty window is a choice.
     case 'END_PANEL': {
       if (state.phase !== 'PANEL_PICK') return state
       return { ...state, phase: 'TYPE_SETTING' }
