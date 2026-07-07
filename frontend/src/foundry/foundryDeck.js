@@ -14,9 +14,9 @@
 //   WORKING       graffiti rounds, deal/End, destructive
 //   COMPLETE      a Proof surfaced — the face is cast; export
 //
-// Phase-1 hollowness: plates are flat-color stubs, panel/type are
-// pass-through, and the working deck deals placeholder cards (their real
-// behaviors arrive in Phase 5 through foundryRegistry).
+// Phase-1 hollowness still standing: panel/type are pass-through, and the
+// working deck deals placeholder cards (their real behaviors arrive in
+// Phase 5 through foundryRegistry).
 
 import { DEATH_CARD, MOD_CARDS } from '../editor/deck.js'
 
@@ -78,24 +78,15 @@ function proofCards() {
   }))
 }
 
-// Phase-1 stub plates: flat colors, muted so they read as frames-to-be.
-// Phase 2 replaces this with real plates reported in by FoundryEditor
-// (folder listing is not deck logic — the SET_GRID pattern).
-function stubPlateOffer() {
-  return Array.from({ length: FOUNDRY_TUNING.plateDeal }, (_, i) => ({
-    id: `stub-${i}`,
-    label: `Plate ${['I', 'II', 'III', 'IV', 'V'][i] ?? i + 1}`,
-    stub: true,
-    color: `hsl(${Math.floor(Math.random() * 360)} 22% 38%)`
-  }))
-}
-
 export function initialFoundryState() {
   return {
     phase: 'COMMISSION',
     commission: null, // { id, label, copies, family } — the card being cast
-    plateOffer: stubPlateOffer(), // the plates on the table at PLATE_DEAL
-    plate: null, // the plate taken
+    plateOffer: [], // the plates on the table at PLATE_DEAL — FoundryEditor
+    //                deals them from the plates folder and reports back via
+    //                SET_PLATE_OFFER (folder listing is not deck logic; the
+    //                SET_GRID pattern)
+    plate: null, // the plate taken: { id, file }
     deck: buildFoundryDeck(), // the literal shuffled working deck
     roundsDone: 0,
     proofsShuffled: false,
@@ -137,6 +128,11 @@ export function foundryReducer(state, action) {
           { event: 'commission', cardId: commission.id, dealt: true, ts: Date.now() }
         ]
       }
+    }
+
+    case 'SET_PLATE_OFFER': {
+      if (state.phase !== 'PLATE_DEAL') return state
+      return { ...state, plateOffer: action.plates }
     }
 
     case 'TAKE_PLATE': {

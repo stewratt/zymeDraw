@@ -18,6 +18,7 @@ function FoundryPanel({
   info,
   ready,
   committing,
+  plateReady,
   exportState,
   onControlChange,
   onEndPanel,
@@ -56,12 +57,18 @@ function FoundryPanel({
           <div className="panel-scroll">
             <h2>THE PANEL</h2>
             <p className="hint">
-              The image goes under the plate&apos;s window here. (Stub — the
-              panel pick arrives in Phase 3.)
+              The plate is on the face — the white window is its punched
+              image panel. The art that goes under it arrives in Phase 3.
             </p>
           </div>
-          <button type="button" className="primary" title="Enter" onClick={onEndPanel}>
-            Continue
+          <button
+            type="button"
+            className="primary"
+            title="Enter"
+            disabled={!plateReady}
+            onClick={onEndPanel}
+          >
+            {plateReady ? 'Continue' : 'Mounting the plate…'}
           </button>
         </aside>
       )
@@ -81,7 +88,7 @@ function FoundryPanel({
               the sealed face.
             </p>
           </div>
-          <button type="button" className="primary" onClick={onPress}>
+          <button type="button" className="primary" disabled={!plateReady} onClick={onPress}>
             Press — seal the foundation
           </button>
         </aside>

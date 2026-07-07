@@ -3,8 +3,9 @@ import * as fabric from 'fabric'
 import CanvasStage from '../editor/CanvasStage.jsx'
 import Card from '../editor/Card.jsx'
 import FoundryPanel from './FoundryPanel.jsx'
-import { foundryReducer, initialFoundryState, COMMISSIONS } from './foundryDeck.js'
+import { foundryReducer, initialFoundryState, COMMISSIONS, FOUNDRY_TUNING } from './foundryDeck.js'
 import { foundryRegistry } from './foundryRegistry.jsx'
+import { dealPlateOffer, fetchPlateList, mountPlate, plateUrl } from './plates.js'
 import { dispatchKey } from '../editor/keymap.js'
 import {
   bake,
@@ -45,6 +46,12 @@ function FoundryEditor() {
 
   const [exportState, setExportState] = useState({ status: 'idle', savedPath: null, error: null, thumbDataUrl: null })
 
+  // The plates folder listing (plates.js). `status`: loading | ready | error.
+  const [plateList, setPlateList] = useState({ status: 'loading', filenames: [], folder: null, error: null })
+  // The mounted plate matte (a Fabric object) — consumed by the Press.
+  const plateObjRef = useRef(null)
+  const [plateReady, setPlateReady] = useState(false)
+
   // Create the master once the Fabric canvas exists — card-face dimensions.
   useEffect(() => {
     const canvas = canvasStageRef.current?.getCanvas()
@@ -52,6 +59,55 @@ function FoundryEditor() {
     masterRef.current = createMaster(FACE_MASTER_WIDTH, FACE_MASTER_HEIGHT)
     showMaster(canvas, masterRef.current)
   }, [])
+
+  // Fetch the plates folder listing once.
+  useEffect(() => {
+    let cancelled = false
+    fetchPlateList().then((list) => {
+      if (!cancelled) setPlateList(list)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // The reducer never touches the filesystem: when the plate offer is
+  // needed, deal it from the folder listing and report back (SET_GRID's
+  // pattern, deck.js).
+  useEffect(() => {
+    if (state.phase !== 'PLATE_DEAL' || state.plateOffer.length > 0) return
+    if (plateList.status !== 'ready') return
+    dispatch({
+      type: 'SET_PLATE_OFFER',
+      plates: dealPlateOffer(plateList.filenames, FOUNDRY_TUNING.plateDeal)
+    })
+  }, [state.phase, state.plateOffer.length, plateList])
+
+  // The taken plate mounts as the matte on top (card_maker.md §3.5) and
+  // stays live until the Press seals it. Fires exactly when `plate` is
+  // taken (and cleans up if a restart lands while the PNG is in flight).
+  useEffect(() => {
+    if (!state.plate) return
+    const canvas = canvasStageRef.current?.getCanvas()
+    if (!canvas) return
+    let cancelled = false
+    setPlateReady(false)
+    mountPlate(canvas, state.plate.file)
+      .then((obj) => {
+        if (cancelled) {
+          canvas.remove(obj)
+          return
+        }
+        plateObjRef.current = obj
+        setPlateReady(true)
+      })
+      .catch((err) => console.warn('Plate failed to load:', err))
+    return () => {
+      cancelled = true
+      plateObjRef.current = null
+      setPlateReady(false)
+    }
+  }, [state.plate])
 
   // BEGIN hook: a new working card appears. Registry entries get the same
   // lifecycle as Deck's Editor; cards WITHOUT an entry are placeholders —
@@ -198,11 +254,12 @@ function FoundryEditor() {
   }
 
   // The Press: seal the whole foundation — art + plate + type — into the
-  // master in one commit (card_maker.md §3.5). Phase 1 has nothing live to
-  // seal yet, but the code path is the real one from day one.
+  // master in one commit (card_maker.md §3.5). The bake consumes the live
+  // objects; the plate ref dies with them.
   function handlePress() {
     const canvas = canvasStageRef.current?.getCanvas()
     if (canvas) masterRef.current = bake(canvas)
+    plateObjRef.current = null
     dispatch({ type: 'PRESS' })
   }
 
@@ -221,10 +278,37 @@ function FoundryEditor() {
       showMaster(canvas, masterRef.current)
     }
     cardSessionRef.current = null
+    plateObjRef.current = null
     setCardControls({})
     setCardInfo({})
     setExportState({ status: 'idle', savedPath: null, error: null, thumbDataUrl: null })
     dispatch({ type: 'RESTART' })
+  }
+
+  // Point the plates deck at a different folder (native picker → persist →
+  // refetch). Offered from the plate deal when the folder is missing/empty.
+  async function handleChoosePlatesFolder() {
+    try {
+      const picked = await fetch('/api/pick-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'read', current: plateList.folder })
+      }).then((r) => r.json())
+      if (!picked.ok || !picked.path) return
+      const saved = await fetch('/api/plates-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: picked.path })
+      }).then((r) => r.json())
+      if (!saved.ok) {
+        setPlateList((prev) => ({ ...prev, status: 'error', error: saved.error }))
+        return
+      }
+      setPlateList({ status: 'loading', filenames: [], folder: null, error: null })
+      setPlateList(await fetchPlateList())
+    } catch (err) {
+      setPlateList((prev) => ({ ...prev, status: 'error', error: err.message }))
+    }
   }
 
   async function handleOpenOutput() {
@@ -253,7 +337,7 @@ function FoundryEditor() {
     )
   } else if (state.phase === 'WORKING' && cardReady && !committing) {
     bindings.push({ key: 'Enter', run: handleCommit })
-  } else if (state.phase === 'PANEL_PICK') {
+  } else if (state.phase === 'PANEL_PICK' && plateReady) {
     bindings.push({ key: 'Enter', run: () => dispatch({ type: 'END_PANEL' }) })
   } else if (state.phase === 'COMPLETE') {
     bindings.push({ key: 'Enter', run: handleRestart })
@@ -291,7 +375,9 @@ function FoundryEditor() {
           {state.phase === 'PLATE_DEAL' && (
             <PlateDeal
               plates={state.plateOffer}
+              plateList={plateList}
               onTake={(plateId) => dispatch({ type: 'TAKE_PLATE', plateId })}
+              onChooseFolder={handleChoosePlatesFolder}
             />
           )}
         </section>
@@ -303,6 +389,7 @@ function FoundryEditor() {
             info={cardInfo}
             ready={cardReady}
             committing={committing}
+            plateReady={plateReady}
             exportState={exportState}
             onControlChange={handleControlChange}
             onEndPanel={() => dispatch({ type: 'END_PANEL' })}
@@ -356,29 +443,47 @@ function CommissionPick({ onChoose, onDeal }) {
   )
 }
 
-// The plate deal. Phase-1 stubs are flat colors; Phase 2 turns this into a
-// real grid pick over plate images.
-function PlateDeal({ plates, onTake }) {
+// The plate deal: real plates from the plates folder, dealt face up. The
+// transparent window renders over white here — exactly what the empty
+// master will show through it.
+function PlateDeal({ plates, plateList, onTake, onChooseFolder }) {
   return (
     <div className="grid-picker">
       <h2>THE PLATE</h2>
-      <p className="hint">
-        {plates.length} plates dealt — take one. Its frame becomes the
-        card&apos;s convention layer. (Flat-color stubs until Phase 2.)
-      </p>
-      <div className="foundry-plate-row">
-        {plates.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            className="foundry-plate"
-            style={{ background: p.color }}
-            onClick={() => onTake(p.id)}
-          >
-            <span className="foundry-plate-label">{p.label}</span>
-          </button>
-        ))}
-      </div>
+      {plateList.status === 'loading' && <p className="hint">Reading the plates folder…</p>}
+      {plateList.status === 'error' && (
+        <>
+          <p className="error">{plateList.error}</p>
+          {plateList.folder && <p className="hint mono">{plateList.folder}</p>}
+          <div>
+            <button type="button" className="secondary" onClick={onChooseFolder}>
+              Choose plates folder
+            </button>
+          </div>
+        </>
+      )}
+      {plateList.status === 'ready' && (
+        <>
+          <p className="hint">
+            {plates.length} plate{plates.length === 1 ? '' : 's'} dealt — take
+            one. Its frame is the card&apos;s convention layer; the white
+            window is the punched image panel, waiting for art.
+          </p>
+          <div className="foundry-plate-row">
+            {plates.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="foundry-plate"
+                onClick={() => onTake(p.id)}
+                title="Take this plate"
+              >
+                <img src={plateUrl(p.file)} alt="A blank plate" draggable={false} />
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   )
 }

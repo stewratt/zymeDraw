@@ -6,7 +6,7 @@ import os from 'os'
 // Each machine (Linux, Mac, Windows) has its own — paths differ per OS.
 const CONFIG_PATH = path.join(os.homedir(), '.deck-config.json')
 
-const EMPTY = { inputFolder: '', outputFolder: '' }
+const EMPTY = { inputFolder: '', outputFolder: '', platesFolder: '' }
 
 export async function loadConfig() {
   try {
@@ -19,8 +19,11 @@ export async function loadConfig() {
   }
 }
 
+// Merges over what's already on disk, so a partial save (Deck's Setup
+// writing input/output, Foundry writing platesFolder) never drops the
+// other app's keys.
 export async function saveConfig(config) {
-  const next = { ...EMPTY, ...config }
+  const next = { ...(await loadConfig()), ...config }
   await fs.writeFile(CONFIG_PATH, JSON.stringify(next, null, 2), 'utf8')
   return next
 }

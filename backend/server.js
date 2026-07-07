@@ -3,6 +3,7 @@ import { promises as fs, constants as fsc } from 'fs'
 import { spawn } from 'child_process'
 import path from 'path'
 import os from 'os'
+import { fileURLToPath } from 'url'
 import { loadConfig, saveConfig } from './config-store.js'
 
 const app = express()
@@ -143,6 +144,63 @@ app.get('/api/images/:filename', async (req, res) => {
       res.status(err.code === 'ENOENT' ? 404 : 500).send('Failed to send file.')
     }
   })
+})
+
+// ---- Foundry: the plates (card_maker.md §1.1, Phase 2) ----
+// Blank card frames with the image window punched as alpha. Local-only
+// materials, never committed; the folder defaults to the repo's
+// card_template/ (resolved from this file's location, never hardcoded per
+// machine) and `platesFolder` in ~/.deck-config.json overrides it.
+const DEFAULT_PLATES_FOLDER = fileURLToPath(new URL('../card_template', import.meta.url))
+
+async function resolvePlatesFolder() {
+  const { platesFolder } = await loadConfig()
+  return platesFolder || DEFAULT_PLATES_FOLDER
+}
+
+// Plates must carry real alpha, so the deck is .png only.
+app.get('/api/plates', async (req, res) => {
+  const folder = await resolvePlatesFolder()
+  try {
+    const entries = await fs.readdir(folder, { withFileTypes: true })
+    const filenames = entries
+      .filter((e) => e.isFile() && path.extname(e.name).toLowerCase() === '.png')
+      .map((e) => e.name)
+      .sort()
+    res.json({ ok: true, filenames, folder })
+  } catch (err) {
+    res.status(400).json({ ok: false, folder, error: `Cannot read plates folder: ${err.message}` })
+  }
+})
+
+// Same defence in depth as /api/images/:filename.
+app.get('/api/plates/:filename', async (req, res) => {
+  const folder = await resolvePlatesFolder()
+  const safeName = path.basename(req.params.filename)
+  const folderRoot = path.resolve(folder)
+  const resolved = path.resolve(folderRoot, safeName)
+  if (!resolved.startsWith(folderRoot + path.sep)) {
+    return res.status(400).send('Invalid filename.')
+  }
+  if (path.extname(resolved).toLowerCase() !== '.png') {
+    return res.status(400).send('Not a plate.')
+  }
+  res.sendFile(resolved, (err) => {
+    if (err && !res.headersSent) {
+      res.status(err.code === 'ENOENT' ? 404 : 500).send('Failed to send file.')
+    }
+  })
+})
+
+// Point platesFolder somewhere else (persisted per machine). Validates
+// read access; saveConfig merges, so Deck's folders are untouched.
+app.post('/api/plates-folder', async (req, res) => {
+  const validated = await validateFolder(req.body?.path, 'read')
+  if (!validated.ok) {
+    return res.status(400).json({ ok: false, error: validated.error })
+  }
+  await saveConfig({ platesFolder: validated.resolved })
+  res.json({ ok: true, platesFolder: validated.resolved })
 })
 
 // Phase 5: write the final composition to the configured output folder.
