@@ -13,6 +13,7 @@ import { applyTypeFonts, mountTypeLayer } from './typeLayer.js'
 import { createMaskSession } from '../editor/brushCore.js'
 import { dispatchKey } from '../editor/keymap.js'
 import { arrangeBindings, brushBindings } from '../editor/sessionBindings.js'
+import { randomHexColor, randomizeColors } from '../editor/colorSeed.js'
 import {
   bake,
   createMaster,
@@ -265,7 +266,11 @@ function FoundryEditor() {
       }
     }
 
-    setCardControls(entry.defaultControls ? { ...entry.defaultControls } : {})
+    // Fresh defaults per deal: the color invariant first, then the card's
+    // own randomize hook (Deck's Editor, verbatim).
+    let defaults = randomizeColors(entry.defaultControls || {})
+    if (entry.randomize) defaults = entry.randomize(defaults)
+    setCardControls(defaults)
     setCardInfo({})
     setCardReady(false)
 
@@ -274,7 +279,12 @@ function FoundryEditor() {
       const ctx = {
         canvas,
         master: masterRef.current,
-        controls: entry.defaultControls ? { ...entry.defaultControls } : {},
+        controls: defaults,
+        // The stencil cards sample their own source image; raw input-folder
+        // filenames, exactly what Deck's Editor hands them.
+        imageList: artSources.files
+          .filter((f) => f.startsWith('in:'))
+          .map((f) => f.slice(3)),
         canvasWidth: FACE_WIDTH,
         canvasHeight: FACE_HEIGHT,
         report: (patch) => setCardInfo((prev) => ({ ...prev, ...patch })),
@@ -290,7 +300,7 @@ function FoundryEditor() {
     return () => {
       cancelled = true
     }
-  }, [state.currentCard])
+  }, [state.currentCard, artSources])
 
   // UPDATE hook, verbatim from Deck's Editor.
   useEffect(() => {
@@ -473,9 +483,38 @@ function FoundryEditor() {
   const getCanvas = () => canvasStageRef.current?.getCanvas()
   const bindings = []
   const artInHand = !!state.panelArt && artReady
+  const cardUp = state.phase === 'WORKING' && !!state.currentCard
 
-  // The brush grammar over the panel art (sessionBindings.js — the same
-  // dialect as Deck's placement sessions), plus its undo/redo.
+  // Card accents (registry `hotkeys`) + the color re-roll — Deck's Editor,
+  // verbatim.
+  if (cardUp) {
+    for (const hk of currentEntry?.hotkeys ?? []) {
+      bindings.push({
+        ...hk,
+        run: (e) =>
+          hk.run(
+            {
+              controls: cardControls,
+              setControl: (key, value) => setCardControls((prev) => ({ ...prev, [key]: value })),
+              info: cardInfo,
+              session: cardSessionRef.current,
+              canvas: getCanvas()
+            },
+            e
+          )
+      })
+    }
+    if (currentEntry?.controls?.includes('color')) {
+      bindings.push({
+        key: 'n',
+        run: () => setCardControls((prev) => ({ ...prev, color: randomHexColor() }))
+      })
+    }
+  }
+
+  // The brush grammar (sessionBindings.js — the same dialect as Deck):
+  // over the panel art during PANEL_PICK, over the current card's controls
+  // during a working round. Plus the matching undo/redo.
   if (state.phase === 'PANEL_PICK' && artInHand) {
     bindings.push(
       ...brushBindings(
@@ -486,13 +525,34 @@ function FoundryEditor() {
       { key: 'z', mod: true, shift: false, run: () => maskSessionRef.current?.undo() },
       { key: 'z', mod: true, shift: true, run: () => maskSessionRef.current?.redo() }
     )
+  } else if (cardUp && cardReady && currentEntry?.controls?.includes('size')) {
+    bindings.push(
+      ...brushBindings(
+        () => cardControls,
+        (patch) => setCardControls((prev) => ({ ...prev, ...patch })),
+        {
+          canArrange: currentEntry.defaultControls?.mode === 'arrange',
+          hasMode: currentEntry.controls.includes('mode'),
+          hasHardness: currentEntry.controls.includes('hardness')
+        }
+      )
+    )
   }
-  // Arrange keys wherever the foundation is live and arrangeable: the art
-  // under the window (while the brush is in arrange), and TYPE_SETTING —
-  // "nudge everything" holds until the Press.
+  if (cardUp) {
+    bindings.push(
+      { key: 'z', mod: true, shift: false, run: () => cardInfo.undo?.() },
+      { key: 'z', mod: true, shift: true, run: () => cardInfo.redo?.() }
+    )
+  }
+
+  // Arrange keys wherever something is live and arrangeable: the art under
+  // the window (while the brush is in arrange), TYPE_SETTING ("nudge
+  // everything" holds until the Press), and working cards whose mode is
+  // arrange — or that have no mode at all.
   const arranging =
     (state.phase === 'PANEL_PICK' && artInHand && maskControls.mode === 'arrange') ||
-    state.phase === 'TYPE_SETTING'
+    state.phase === 'TYPE_SETTING' ||
+    (cardUp && (!currentEntry?.controls?.includes('mode') || cardControls.mode === 'arrange'))
   if (arranging) bindings.push(...arrangeBindings(getCanvas))
 
   // N re-deals the type fonts — the same accent as Deck's hue re-roll.

@@ -29,14 +29,18 @@ export const FOUNDRY_TUNING = {
 }
 
 // The working deck: one entry per graffiti card, expanded by copy count and
-// shuffled at session start. These are the real Phase-5 roster (brush-core
-// cards, card_maker.md §1.8) dealt as placeholders until their registry
-// entries land — a scribble stands in for each card's tool.
+// shuffled at session start. Wave 1 (card_maker.md §1.8): the brush-core
+// roster, one copy each, riding on the shared behavior files through
+// foundryRegistry. Graft cards + Deeper come with a later wave.
 export const FOUNDRY_CARDS = [
-  { id: 'silt', label: 'Silt', copies: 1 },
-  { id: 'bruise', label: 'Bruise', copies: 1 },
-  { id: 'char', label: 'Char', copies: 1 },
-  { id: 'steep', label: 'Steep', copies: 1 }
+  { id: 'silt', label: 'Silt', copies: 1 }, // Reveal × deposit
+  { id: 'bruise', label: 'Bruise', copies: 1 }, // Reveal × Bruise
+  { id: 'dissolve', label: 'Dissolve', copies: 1 }, // Reveal × blur
+  { id: 'steep', label: 'Steep', copies: 1 }, // Wash × Sink
+  { id: 'turn', label: 'Turn', copies: 1 }, // Wash (hue)
+  { id: 'cure', label: 'Cure', copies: 1 }, // Wash × Cure
+  { id: 'char', label: 'Char', copies: 1 }, // Stencil × Sink
+  { id: 'rails', label: 'Rails', copies: 1 } // Stencil × solid
 ]
 
 export const PROOF_CARD = { id: 'proof', label: 'Proof' }
