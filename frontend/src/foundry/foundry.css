@@ -1,51 +1,66 @@
-/* Foundry shell layout. Design tokens come from App.css (imported globally
-   by foundry's main.jsx); canvas chrome (.canvas-wrap) comes from editor.css.
-   This file only lays out Foundry's own frame. */
+/* Foundry-specific styles. The shell reuses Deck's layout wholesale —
+   .editor / .editor-main / .canvas-area / .side-stack / .deck-panel /
+   .grid-picker all come from editor.css (imported by FoundryEditor), so the
+   two apps share one visual language. Only Foundry's own pieces live here:
+   the commission grid scroll, the plate deal, the header note. */
 
-.foundry-shell {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
+/* Deck's back-to-setup is a button; Foundry's is a real link to the other
+   app. Match button.link's look (App.css). */
+.editor-header a.link {
+  color: var(--text);
+  font-size: 0.875rem;
+  text-decoration: underline;
+}
+.editor-header a.link:hover {
+  color: #ffffff;
 }
 
-.foundry-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 10px 20px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-}
-.foundry-header h1 {
-  font-size: 1rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  margin: 0;
-}
-.foundry-note {
+.foundry-commission-note {
   color: var(--text-dim);
   font-size: 0.8125rem;
 }
-.foundry-end {
-  margin-left: auto;
-  background: var(--fill);
+.foundry-commission-note strong {
   color: var(--text);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  padding: 6px 22px;
-}
-.foundry-end:hover {
-  background: var(--fill-hover);
+  font-weight: 500;
 }
 
-.foundry-stage {
+/* The commission grid: more tiles than fit the overlay, so unlike the image
+   grids (which shrink to always fit) this one scrolls — card tiles have a
+   minimum legible size. */
+.foundry-commission-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 2px;
+}
+
+/* The plate deal: a few large takes side by side, card-proportioned. */
+.foundry-plate-row {
   flex: 1;
   min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  gap: 24px;
+  padding: 12px;
 }
-.foundry-stage .canvas-wrap {
-  height: min(88vh, 900px);
+.foundry-plate {
+  aspect-ratio: 745 / 1040;
+  height: min(100%, 480px);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 14px;
+  cursor: pointer;
+}
+.foundry-plate:hover {
+  outline: 2px solid var(--sel-border);
+}
+.foundry-plate-label {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
 }
