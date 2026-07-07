@@ -7,6 +7,10 @@ output/
 *.png
 *.jpg
 
+# Exception: the two Foundry card-design template images are tracked.
+!foundry_card_template.png
+!foundry_card_template@3x.png
+
 # Debug loop artifacts (binary screenshots; the findings .md stays tracked)
 debug_loop_screenshots/
 .gstack/
