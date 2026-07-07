@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Copy — Deck</title>
+<style>
+  :root {
+    --bg: #141412;
+    --panel: #1c1c19;
+    --ink: #d8d4c8;
+    --dim: #8a867a;
+    --line: #2c2c27;
+    --edited: #b8a04a;
+    --accent: #d8d4c8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  header {
+    position: sticky; top: 0; z-index: 2;
+    display: flex; align-items: baseline; gap: 14px;
+    padding: 14px 22px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+  }
+  header h1 { font-size: 15px; letter-spacing: 0.18em; margin: 0; font-weight: 600; }
+  header .sub { color: var(--dim); font-size: 12px; }
+  main { max-width: 860px; margin: 0 auto; padding: 20px 22px 120px; }
+  .section-title {
+    letter-spacing: 0.18em; font-size: 12px; color: var(--dim);
+    margin: 30px 0 10px; border-bottom: 1px solid var(--line); padding-bottom: 6px;
+  }
+  .group {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 12px 14px 14px;
+    margin-bottom: 10px;
+  }
+  .group-title { font-size: 12px; color: var(--dim); letter-spacing: 0.1em; margin-bottom: 8px; }
+  .field { margin-bottom: 10px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label {
+    display: block; font-size: 11px; color: var(--dim);
+    letter-spacing: 0.08em; margin-bottom: 3px;
+  }
+  .field textarea {
+    display: block; width: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 7px 9px;
+    font: inherit;
+    resize: none;
+    overflow: hidden;
+    min-height: 34px;
+  }
+  .field textarea:focus { outline: none; border-color: var(--dim); }
+  .field.edited textarea { border-color: var(--edited); }
+  .field.edited label::after { content: ' — edited'; color: var(--edited); }
+  footer {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 2;
+    display: flex; align-items: center; gap: 16px;
+    padding: 12px 22px;
+    background: var(--bg);
+    border-top: 1px solid var(--line);
+  }
+  footer button {
+    font: inherit;
+    letter-spacing: 0.08em;
+    background: var(--ink);
+    color: var(--bg);
+    border: none; border-radius: 3px;
+    padding: 8px 18px;
+    cursor: pointer;
+  }
+  footer button:disabled { opacity: 0.35; cursor: default; }
+  #status { color: var(--dim); font-size: 12px; }
+  #status.err { color: #c46a5a; }
+</style>
+</head>
+<body>
+<header>
+  <h1>COPY</h1>
+  <span class="sub">every title and description in the application — edit, then save; the running app updates live</span>
+</header>
+<main id="main">Loading…</main>
+<footer>
+  <button id="save" disabled>Save</button>
+  <span id="status"></span>
+</footer>
+
+<script>
+const main = document.getElementById('main')
+const saveBtn = document.getElementById('save')
+const statusEl = document.getElementById('status')
+
+let copy = null      // the live, edited structure
+let baseline = null  // what the file held at load / last save
+
+const SECTION_LABELS = { cards: 'CARDS' }
+
+function getAt(obj, path) { return path.reduce((o, k) => o[k], obj) }
+function setAt(obj, path, value) {
+  const parent = getAt(obj, path.slice(0, -1))
+  parent[path[path.length - 1]] = value
+}
+
+function autoGrow(ta) {
+  ta.style.height = 'auto'
+  ta.style.height = ta.scrollHeight + 2 + 'px'
+}
+
+function editedCount() {
+  let n = 0
+  const walk = (a, b) => {
+    for (const k of Object.keys(a)) {
+      if (typeof a[k] === 'string') { if (a[k] !== b[k]) n++ }
+      else walk(a[k], b[k])
+    }
+  }
+  walk(copy, baseline)
+  return n
+}
+
+function refreshFooter() {
+  const n = editedCount()
+  saveBtn.disabled = n === 0
+  if (!statusEl.classList.contains('err')) {
+    statusEl.textContent = n === 0 ? '' : n + ' field' + (n === 1 ? '' : 's') + ' edited'
+  }
+}
+
+function makeField(path, value) {
+  const wrap = document.createElement('div')
+  wrap.className = 'field'
+  const label = document.createElement('label')
+  label.textContent = path[path.length - 1]
+  const ta = document.createElement('textarea')
+  ta.value = value
+  ta.rows = 1
+  ta.addEventListener('input', () => {
+    setAt(copy, path, ta.value)
+    wrap.classList.toggle('edited', ta.value !== getAt(baseline, path))
+    statusEl.classList.remove('err')
+    autoGrow(ta)
+    refreshFooter()
+  })
+  wrap.append(label, ta)
+  requestAnimationFrame(() => autoGrow(ta))
+  return wrap
+}
+
+// One node per string leaf; nested objects become titled groups. The page
+// knows nothing about the schema — new sections in uiText.json just appear.
+function render() {
+  main.textContent = ''
+  for (const [section, entries] of Object.entries(copy)) {
+    const title = document.createElement('div')
+    title.className = 'section-title'
+    title.textContent = SECTION_LABELS[section] ?? section.toUpperCase()
+    main.appendChild(title)
+
+    if (typeof entries === 'string') {
+      main.appendChild(makeField([section], entries))
+      continue
+    }
+    for (const [key, value] of Object.entries(entries)) {
+      if (typeof value === 'string') {
+        main.appendChild(makeField([section, key], value))
+        continue
+      }
+      const group = document.createElement('div')
+      group.className = 'group'
+      const gt = document.createElement('div')
+      gt.className = 'group-title'
+      gt.textContent = key
+      group.appendChild(gt)
+      for (const [leaf, text] of Object.entries(value)) {
+        group.appendChild(makeField([section, key, leaf], text))
+      }
+      main.appendChild(group)
+    }
+  }
+  refreshFooter()
+}
+
+async function load() {
+  try {
+    const res = await fetch('/api/dev/copy')
+    const data = await res.json()
+    if (!data.ok) throw new Error(data.error)
+    copy = data.copy
+    baseline = structuredClone(copy)
+    render()
+  } catch (err) {
+    main.textContent = 'Could not load the copy file: ' + err.message
+  }
+}
+
+async function save() {
+  if (saveBtn.disabled) return
+  saveBtn.disabled = true
+  statusEl.classList.remove('err')
+  statusEl.textContent = 'Saving…'
+  try {
+    const res = await fetch('/api/dev/copy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ copy })
+    })
+    const data = await res.json()
+    if (!data.ok) throw new Error(data.error)
+    baseline = structuredClone(copy)
+    document.querySelectorAll('.field.edited').forEach((f) => f.classList.remove('edited'))
+    statusEl.textContent = 'Saved — the running app has the new wording.'
+  } catch (err) {
+    statusEl.classList.add('err')
+    statusEl.textContent = 'Save failed: ' + err.message
+    saveBtn.disabled = false
+  }
+}
+
+saveBtn.addEventListener('click', save)
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); save() }
+})
+window.addEventListener('beforeunload', (e) => {
+  if (copy && baseline && editedCount() > 0) e.preventDefault()
+})
+
+load()
+</script>
+</body>
+</html>
