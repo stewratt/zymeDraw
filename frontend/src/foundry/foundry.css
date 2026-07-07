@@ -1,0 +1,51 @@
+/* Foundry shell layout. Design tokens come from App.css (imported globally
+   by foundry's main.jsx); canvas chrome (.canvas-wrap) comes from editor.css.
+   This file only lays out Foundry's own frame. */
+
+.foundry-shell {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.foundry-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.foundry-header h1 {
+  font-size: 1rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin: 0;
+}
+.foundry-note {
+  color: var(--text-dim);
+  font-size: 0.8125rem;
+}
+.foundry-end {
+  margin-left: auto;
+  background: var(--fill);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 6px 22px;
+}
+.foundry-end:hover {
+  background: var(--fill-hover);
+}
+
+.foundry-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.foundry-stage .canvas-wrap {
+  height: min(88vh, 900px);
+}

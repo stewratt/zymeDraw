@@ -11,6 +11,13 @@ output/
 !foundry_card_template.png
 !foundry_card_template@3x.png
 
+# Foundry materials: local-only, never committed. The plates carry the same
+# trademark caution as card art, and the fonts folder mixes OFL zips with
+# proprietary faces (Beleren, MPlantin) that must not be redistributed.
+# OFL fonts get unzipped into frontend/src/assets/fonts/ (tracked) at
+# Phase 4; proprietary ones stay here as a local overlay.
+card_template/
+
 # Debug loop artifacts (binary screenshots; the findings .md stays tracked)
 debug_loop_screenshots/
 .gstack/

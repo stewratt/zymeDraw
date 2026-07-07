@@ -16,14 +16,18 @@ export const MASTER_SCALE = 3
 export const MASTER_WIDTH = CANVAS_WIDTH * MASTER_SCALE // 2400
 export const MASTER_HEIGHT = CANVAS_HEIGHT * MASTER_SCALE // 3000
 
-// A fresh, white master.
-export function createMaster() {
+// A fresh, white master. Dimensions default to Deck's 2400×3000; Foundry
+// passes its own (2235×3120 — the card face at the same 3× scale). Every
+// other function here is already dimension-agnostic: showMaster reads the
+// master element's own size, and bake scales by MASTER_SCALE, which is the
+// shared proxy→master ratio in both apps.
+export function createMaster(width = MASTER_WIDTH, height = MASTER_HEIGHT) {
   const el = document.createElement('canvas')
-  el.width = MASTER_WIDTH
-  el.height = MASTER_HEIGHT
+  el.width = width
+  el.height = height
   const ctx = el.getContext('2d')
   ctx.fillStyle = '#ffffff'
-  ctx.fillRect(0, 0, MASTER_WIDTH, MASTER_HEIGHT)
+  ctx.fillRect(0, 0, width, height)
   return el
 }
 

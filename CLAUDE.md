@@ -55,15 +55,24 @@ registry dev-warns if a `MOD_CARDS` id has no entry.
 order-control are never ambient** — the deal stays blind, the remains
 stay unordered. Exceptions only as dealt/spent mechanics (Skim, Cull).
 
-**Parallel track: Foundry, the card maker (`card_maker.md`, planned
-2026-07-06, not started).** A sibling app in this repo for casting the
-card faces themselves — deck-driven meta-sessions, plates + dealt
-fonts + graffiti, direct export to `assets/cards/<id>.png`. Core layer
-model (its §3.5): the plate is an alpha *matte on top* (art shows
-through a punched window), the type layer floats above it, one **Press**
-seals the whole foundation to pixels, then the graffiti deck distorts
-the sealed card. All decisions and the phased build plan live in that
-file; nothing is built yet.
+**Parallel track: Foundry, the card maker (`card_maker.md`; Phase 0
+built 2026-07-07, awaiting browser verification).** A sibling app in
+this repo for casting the card faces themselves — deck-driven
+meta-sessions, plates + dealt fonts + graffiti. Core layer model (its
+§3.5): the plate is an alpha *matte on top* (art shows through a
+punched window), the type layer floats above it, one **Press** seals
+the whole foundation to pixels, then the graffiti deck distorts the
+sealed card. **2026-07-07 adjustments (its §1.1):** Proofs export to a
+per-machine *casts folder* for hand curation, never directly into
+`assets/cards/`; plates are Stew's 8 templates in `card_template/`
+(2235×3120, real alpha windows, untracked) with the procedural
+generator deferred; fonts are style-paired trios (mtg/pk/jp zips in
+`card_template/fonts/`), one style dealt per session. **Phase 0
+shipped:** `foundry.html` + `src/foundry/` (throwaway proving shell at
+745×1040/2235×3120), `masterRaster.js` createMaster parameterized,
+`CanvasStage.jsx` takes width/height props, second Vite build entry.
+Deck untouched by defaults. Next: Phase 1, the hollow session
+(`foundryDeck.js` end to end).
 
 **Next actions (the notes' §10):** 1) Stew verifies Wave 2 in the
 browser. 2) Playtest question (§7.2): does the splash-over tension

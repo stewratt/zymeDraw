@@ -20,8 +20,8 @@ contract, the pure-reducer state machine, the grid pick.
 (a plate, fonts), you set the conventions (name, type line, image
 panel, text box), and then a small deck of graffiti cards works the
 face over, End by End, destructively, until a **Proof** is dealt and
-the card is finished — exported straight into
-`frontend/src/assets/cards/<id>.png`, live in Deck on next reload.
+the card is finished — exported to the **casts folder** (§1.1), where
+finished faces accumulate for curation into packs.
 
 **The north star for chaos** is the evilbiscuit *card nft 2*
 (tensor.trade/trade/card_nft_2): a card whose TCG anatomy is present
@@ -89,6 +89,43 @@ cast, commission*. All Foundry copy obeys the zyme register.
 10. **Name — Foundry.** A type foundry casts the type; this casts the
     deck's faces.
 
+### 1.1 Adjustments (Stew, 2026-07-07) — these override §1 where they conflict
+
+- **Export — casts folder, not direct-to-Deck (amends #4).** Foundry is
+  a generative space: many casts, then a curated set. The Proof writes
+  the 745×1040 face + full-res master to a per-machine **casts folder**
+  (config key in `~/.deck-config.json`; never `assets/cards/` directly).
+  Stew curates packs by hand and drops them into
+  `frontend/src/assets/cards/` file-for-file. Direct-to-Deck export
+  moves to the §6 Phase-7 backlog — revisit if/when casts are reliably
+  good enough to swap on the fly.
+- **Plates — Stew's 8 templates exist (amends #6).** `card_template/`
+  at repo root holds 8 blank plates, exactly 2235×3120 (3× master) RGBA
+  with the image window punched as real alpha; name/type plaques and
+  text box are opaque graphics. Untracked (repo-wide `*.png` ignore) —
+  local-only as planned; `platesFolder` defaults to the repo's
+  `card_template/`. Text working areas are uniform across plates, but
+  corner-box shapes vary — type slots stay nudgeable (§4) to fit them.
+  The procedural plate generator is **deferred to the Phase-7 backlog**;
+  8 real plates are enough of a deck to start.
+- **Fonts — style-paired trios, dealt per session (amends #5).**
+  `card_template/fonts/{title,body}/{mtg,pk,jp}/` holds Google-Fonts
+  zips (all OFL, licenses inside): title mtg=Cinzel, pk=Cabin,
+  jp=M PLUS Rounded 1c; body mtg=EB Garamond, pk=Jost+Hind, jp=Kosugi.
+  One of the three **styles** (mtg / pk / jp) is dealt at session start;
+  the name/type slots set in the style's title font, the description in
+  its body font — matched pairings, not per-slot draws from one big
+  deck. Re-roll (N) re-deals the style. At Phase 4 the zips are
+  unzipped into `frontend/src/assets/fonts/<style>/` and committed
+  (no OS install — the browser loads `.ttf` via `FontFace`).
+  **Proprietary faces (added 2026-07-07):** Beleren + MPlantin (the
+  real MTG fonts, Wizards-proprietary) sit as loose `.ttf`s in the mtg
+  folders. They are **never committed** — `card_template/` is
+  gitignored wholesale — so `fonts.js` treats them as a *local
+  overlay*: served per-machine by the backend alongside the committed
+  OFL set, dealt when present, absent without error on machines that
+  lack them (the card-art-placeholder pattern).
+
 ---
 
 ## 2. The Foundry session arc (design draft — iterate at checkpoints)
@@ -121,7 +158,7 @@ WORKING       the foundry deck deals graffiti rounds — Silt, Bruise,
               want the harm; skip the name to keep it clean.
 PROOF         after TUNING.workingRounds, Proofs shuffle into the
               remaining deck; dealing one finishes the card.
-              Export: assets/cards/<id>.png (745×1040) + master copy.
+              Export: casts folder (§1.1) — face at 745×1040 + master.
 ```
 
 Foundry tuning numbers live in `foundryDeck.js` (`FOUNDRY_TUNING` +
@@ -202,10 +239,9 @@ folders per request):**
 - Panel-pick sampling from the output folder as well as inputs
   (extend `/api/images/sample` with a source param, or a sibling
   route — keep it registered before any `/:filename` route).
-- `POST /api/foundry/export` — writes the 745×1040 face to
-  `frontend/src/assets/cards/<id>.png` (repo-relative path, resolved
-  from the server's location, never hardcoded per machine) and the
-  full-res master to the output folder.
+- `POST /api/foundry/export` — writes the 745×1040 face and the
+  full-res master to the casts folder (§1.1), filenames carrying the
+  commission id + a timestamp so iterations never overwrite.
 
 ---
 
@@ -358,19 +394,17 @@ one is verified). Every phase ends with explicit test steps.
   restart, and the Proof export all work.
 
 ### Phase 2 — Plates (the alpha matte)
-- Backend: `platesFolder` config + `/api/plates` routes; Setup-style
-  folder pick in Foundry (persisted to `~/.deck-config.json`).
-- `plates.js`: procedural generator v1 — draws the frame around a
-  *transparent window* (border, window geometry/shape, text-box
-  treatment, corner style, palette — parameterized and seeded per
-  deal) + folder plates (PNGs with the window punched through);
-  PLATE_DEAL becomes a real 3-up grid pick mixing both sources.
+- Backend: `platesFolder` config + `/api/plates` routes; defaults to
+  the repo's `card_template/` (§1.1), Setup-style folder pick to
+  override (persisted to `~/.deck-config.json`).
+- `plates.js`: folder plates only (§1.1 — the procedural generator is
+  Phase-7 backlog); PLATE_DEAL becomes a real 3-up grid pick from the
+  8 templates.
 - The plate mounts as a *matte on top* (§3.5), not the background —
   render it above the (still empty) panel layer so the alpha window
   shows through.
-- **Verify:** deal plates, see folder + generated mixed, take one, its
-  window is transparent (the white master shows through the hole);
-  re-deal gives different generated plates.
+- **Verify:** deal plates, take one, its window is transparent (the
+  white master shows through the hole); re-deal gives a different mix.
 
 ### Phase 3 — The panel (art under the matte)
 - Extend sampling to the output folder; PANEL_PICK grid (exports +
@@ -381,12 +415,14 @@ one is verified). Every phase ends with explicit test steps.
   under the window, watch the plate's edge detail crop it cleanly.
 
 ### Phase 4 — Type + the Press (seal the foundation)
-- Bundle the first ~12 fonts (OFL; licenses committed alongside) +
-  `fonts.js` manifest and loading.
-- `typeLayer.js`: the four slots *above the plate*, dealt fonts,
-  re-roll accent, text entry (prefilled name/type from the commission),
-  the description's **resizable wireframe box** fit to the plate's text
-  region, nudge/size within slot conventions; keymap suppressed during
+- Unzip the style trios into `frontend/src/assets/fonts/<style>/`
+  (OFL licenses committed alongside) + `fonts.js` manifest, `FontFace`
+  loading, and the per-session style deal (§1.1: mtg / pk / jp).
+- `typeLayer.js`: the four slots *above the plate*, the dealt style's
+  title/body pairing, re-roll accent (re-deals the style), text entry
+  (prefilled name/type from the commission), the description's
+  **resizable wireframe box** fit to the plate's text region,
+  nudge/size within slot conventions; keymap suppressed during
   text editing.
 - **The Press**: one commit that seals art + plate + type into the
   master via the universal bake, removes the live objects, and crosses
@@ -406,16 +442,20 @@ one is verified). Every phase ends with explicit test steps.
   rides on the sealed face — paint through the lettering to eat it, or
   spare the name to keep it clean.
 
-### Phase 6 — The Proof: direct to the Deck
+### Phase 6 — The Proof: into the casts folder
 - `rarity.js` tier + mark rendered into the foundation at TYPE_SETTING;
-  `POST /api/foundry/export` writing `assets/cards/<id>.png` + the
-  master copy (the face is already flat — sealed at the Press).
-- **Verify:** cast a face for a real card id, reload Deck, the face
-  is live on the dealt card. The loop closes.
+  `POST /api/foundry/export` writing face + master to the casts folder
+  (§1.1; the face is already flat — sealed at the Press).
+- **Verify:** cast a face for a real card id, find both files in the
+  casts folder; copy the face into `assets/cards/<id>.png` by hand,
+  reload Deck, the face is live on the dealt card.
 
 ### Phase 7 — Later (unordered, post-verification backlog)
 - Graft cards + Deeper in the foundry deck (sampling + sidecar).
-- Procedural plates v2 (more families, texture, wear).
+- The procedural plate generator (deferred from Phase 2 — §1.1); then
+  v2 families, texture, wear.
+- Direct-to-Deck export (deferred — §1.1): Proof writes
+  `assets/cards/<id>.png` live, once casts are reliably keepable.
 - Recast (re-deal fonts as a dealt card), a forcing Press card (§7).
 - User font folder joining the font deck; print-resolution export
   with bleed; a Foundry state cache/plinth if wanted.
