@@ -1,32 +1,32 @@
-// Cull — the tutor (v4 notes §5.1). The deck overlay's remains view,
-// cashed in: while Cull is in hand the undealt mods are laid out face up
-// and you take any one — that card becomes this round. The Coda is never
+// Searcher — the tutor (v4 notes §5.1). The deck overlay's remains view,
+// cashed in: while Searcher is in hand the undealt mods are laid out face
+// up and you take any one — that card becomes this round. The Coda is never
 // in the view and never pickable (remainingCounts filters it in deck.js,
-// and the reducer only finds mods).
+// and the reducer only finds mods). (id `searcher`, was Cull.)
 //
-// Cull never touches the canvas. The pick is a deck action
+// Searcher never touches the canvas. The pick is a deck action
 // (PICK_FROM_DECK): the reducer removes the chosen card and makes it
 // current, which retires this overlay and begins the chosen card — so
-// Cull has no commit, no cleanup, and skipBake in its registry entry.
+// Searcher has no commit, no cleanup, and skipBake in its registry entry.
 
 import { useEffect, useState } from 'react'
 import Card from '../Card.jsx'
 import { CARD_TEXT } from '../cardText.js'
 import { UI } from '../../copy/uiText.js'
 
-const H = UI.cardHints.cull
+const H = UI.cardHints.searcher
 
 // The Ghost pattern: begin awaits the user, so End stays disabled while
 // the remains are open. Normally the pick swaps the current card and this
 // promise is simply cancelled; done() only fires for the empty-remains
 // round (deck exhausted to deaths), where End is the round's whole
 // content — and `ready` doubles as that round's flag for the panel.
-export async function beginCull(ctx) {
+export async function beginSearcher(ctx) {
   await new Promise((resolve) => ctx.report({ done: resolve }))
   return null
 }
 
-export function CullOverlay({ info, deckView, onDeckAction, workUrl }) {
+export function SearcherOverlay({ info, deckView, onDeckAction, workUrl }) {
   const remaining = deckView?.remaining ?? []
   const [chosen, setChosen] = useState(null) // a card id, or null
 
@@ -55,25 +55,25 @@ export function CullOverlay({ info, deckView, onDeckAction, workUrl }) {
   }, [empty, info])
 
   return (
-    <div className="grid-picker cull-picker">
+    <div className="grid-picker searcher-picker">
       <div className="grid-picker-head">
         <h2>{H.title}</h2>
         <p className="hint">
-          {empty ? H.emptyDeck : CARD_TEXT.cull.description}
+          {empty ? H.emptyDeck : CARD_TEXT.searcher.description}
         </p>
       </div>
       {!empty && (
         <>
           {/* The work beside the choice — you're picking FOR the piece as
               it stands, so it stands right there. */}
-          <div className="cull-body">
+          <div className="searcher-body">
             {workUrl && (
               <figure className="work-glance">
                 <img src={workUrl} alt="The work as it stands" />
                 <figcaption className="hint">{UI.shared.workGlance}</figcaption>
               </figure>
             )}
-            <div className="deck-row cull-row">
+            <div className="deck-row searcher-row">
               {remaining.map((c) => (
                 <div className={`deck-cell${chosen === c.id ? ' chosen' : ''}`} key={c.id}>
                   <Card
@@ -107,7 +107,7 @@ export function CullOverlay({ info, deckView, onDeckAction, workUrl }) {
   )
 }
 
-export function CullTools({ ready }) {
+export function SearcherTools({ ready }) {
   return (
     <span className="hint">
       {ready ? H.toolReady : H.toolWaiting}

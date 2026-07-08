@@ -1,7 +1,7 @@
-// Turn — the whole batch turns: a whole-canvas hue/saturation/brightness
-// shift with an influence slider. The shifted copy of the master sits over
-// the canvas at `intensity` opacity, so 100% is the full turn and 40% is a
-// lean. The other permitted whole-canvas modifier (CLAUDE.md §1).
+// Hue — a whole-canvas hue/saturation/brightness shift with an influence
+// slider. The shifted copy of the master sits over the canvas at
+// `intensity` opacity, so 100% is the full shift and 40% is a lean. The
+// other permitted whole-canvas modifier (CLAUDE.md §1). (id `hue`, was Turn.)
 //
 // Reuses Bruise's filter draw; no mask, no brush — the influence slider IS
 // the judgment here.
@@ -11,7 +11,7 @@ import { CARD_TEXT } from '../cardText.js'
 import { UI } from '../../copy/uiText.js'
 import { HsvSliders, applyHsvShift } from './bruise.jsx'
 
-export function beginTurn(ctx) {
+export function beginHue(ctx) {
   const effected = document.createElement('canvas')
   effected.width = ctx.master.width
   effected.height = ctx.master.height
@@ -32,7 +32,7 @@ export function beginTurn(ctx) {
   return { effected, overlay, master: ctx.master }
 }
 
-export function updateTurn(ctx) {
+export function updateHue(ctx) {
   const s = ctx.session
   if (!s) return
   applyHsvShift(s.effected, s.master, ctx.controls)
@@ -41,17 +41,17 @@ export function updateTurn(ctx) {
   ctx.canvas.requestRenderAll()
 }
 
-export function cleanupTurn(ctx) {
+export function cleanupHue(ctx) {
   if (!ctx.session) return
   ctx.canvas.remove(ctx.session.overlay)
   ctx.canvas.requestRenderAll()
 }
 
-export function TurnTools({ controls, ready, onControlChange }) {
+export function HueTools({ controls, ready, onControlChange }) {
   if (!ready) return <span className="hint">{UI.shared.preparing}</span>
   return (
     <div className="brush-tools card-tools">
-      <p className="hint">{CARD_TEXT.turn.description}</p>
+      <p className="hint">{CARD_TEXT.hue.description}</p>
       <HsvSliders controls={controls} onControlChange={onControlChange} />
       <label className="ctrl">
         <span className="ctrl-label">Influence</span>

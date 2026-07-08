@@ -28,7 +28,7 @@ import { cardRegistry } from '../editor/cards/registry.jsx'
 // FOUNDRY_CARDS). Stamp brings the first `Overlay` (its grid pick) and
 // degrades gracefully when the ML sidecar is down: the whole image places
 // and the erase brush takes over.
-const ROSTER = ['stamp', 'silt', 'bruise', 'dissolve', 'steep', 'turn', 'cure', 'char', 'rails']
+const ROSTER = ['stamp', 'dust', 'bruise', 'blur', 'steep', 'hue', 'cure', 'char', 'rails']
 
 export const foundryRegistry = Object.fromEntries(
   ROSTER.map((id) => [id, cardRegistry[id]])

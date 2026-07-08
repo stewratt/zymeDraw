@@ -1,8 +1,8 @@
-// Silt — fine particulate settles where you paint. Nothing changes until
+// Dust — fine particulate settles where you paint. Nothing changes until
 // you paint. Built on the effect-card factory; this file is only the grain
 // itself plus its Tools panel. (Deck anatomy: Reveal × deposit — and the
 // canonical deposit card: a later Deeper texturizes the settled grain into
-// real sediment.)
+// real sediment.) (id `dust`, was Silt.)
 
 import { CARD_TEXT } from '../cardText.js'
 import { UI } from '../../copy/uiText.js'
@@ -12,7 +12,7 @@ import { BrushControls, makeEffectCardHooks } from './effectCardFactory.jsx'
 // R/G/B so the grain reads as film, not confetti. Influence blends it down.
 const STRENGTH = 90
 
-function applySilt(effected, master) {
+function applyDust(effected, master) {
   const ctx = effected.getContext('2d')
   ctx.clearRect(0, 0, effected.width, effected.height)
   ctx.drawImage(master, 0, 0)
@@ -27,13 +27,13 @@ function applySilt(effected, master) {
   ctx.putImageData(imageData, 0, 0)
 }
 
-export const siltHooks = makeEffectCardHooks(applySilt)
+export const dustHooks = makeEffectCardHooks(applyDust)
 
-export function SiltTools({ controls, info, ready, onControlChange }) {
-  if (!ready) return <span className="hint">{UI.cardHints.silt.preparing}</span>
+export function DustTools({ controls, info, ready, onControlChange }) {
+  if (!ready) return <span className="hint">{UI.cardHints.dust.preparing}</span>
   return (
     <div className="brush-tools card-tools">
-      <p className="hint">{CARD_TEXT.silt.description}</p>
+      <p className="hint">{CARD_TEXT.dust.description}</p>
       <BrushControls controls={controls} info={info} onControlChange={onControlChange} />
     </div>
   )

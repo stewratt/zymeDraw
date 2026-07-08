@@ -23,7 +23,7 @@
 //     is live (the grid picks). Same props as Tools, plus `deckView`
 //     (deck.js selector outputs only — the legibility policy holds),
 //     `onDeckAction` (a fenced dispatch for the deck-facing cards'
-//     actions: Cull's pick, Skim's choices), and `workUrl` (the latest
+//     actions: Searcher's pick, Skim's choices), and `workUrl` (the latest
 //     committed state as an image — overlays cover the canvas, so a card
 //     whose decision is about the piece shows the piece).
 //   - `randomize`: (defaults) => defaults, applied when the card is dealt
@@ -33,7 +33,7 @@
 //     Editor awaits it and shows a generic "committing" state.
 //   - begin may await the user (Ghost's pick, Etch's frame) — End stays
 //     disabled until it resolves; begin's ctx has isCancelled for restarts.
-//   - `skipBake`: the card never touches the canvas (Cull), so End skips
+//   - `skipBake`: the card never touches the canvas (Searcher), so End skips
 //     the universal bake and the state capture — nothing changed.
 //   - `deckActions`: the reducer action types this card's Overlay may fire
 //     through `onDeckAction`. Editor builds its fence from this list — a
@@ -62,14 +62,14 @@ import {
   commitStamp,
   updateStamp
 } from './stamp.jsx'
-import { CullOverlay, CullTools, beginCull } from './cull.jsx'
+import { SearcherOverlay, SearcherTools, beginSearcher } from './searcher.jsx'
 import { SkimOverlay, SkimTools, beginSkim } from './skim.jsx'
 import { DelayTools } from './delay.jsx'
-import { SiltTools, siltHooks } from './silt.jsx'
-import { DissolveTools, dissolveHooks } from './dissolve.jsx'
+import { DustTools, dustHooks } from './dust.jsx'
+import { BlurTools, blurHooks } from './blur.jsx'
 import { BruiseTools, bruiseHooks } from './bruise.jsx'
 import { SteepTools, beginSteep, cleanupSteep, updateSteep } from './steep.jsx'
-import { TurnTools, beginTurn, cleanupTurn, updateTurn } from './turn.jsx'
+import { HueTools, beginHue, cleanupHue, updateHue } from './hue.jsx'
 import { CureTools, beginCure, cleanupCure, updateCure } from './cure.jsx'
 import {
   TransferTools,
@@ -149,21 +149,21 @@ export const cardRegistry = {
 
   // ---- Reveal brushes (paint the effect where it belongs) ----
 
-  silt: {
+  dust: {
     // Playtest tuning (2026-07-04): Stew works these two brushes big and
     // faint — open there instead of small and full-strength.
     // (2026-07-06): influence opens at 30% — 15% was too faint a start.
     controls: ['size', 'hardness', 'softness', 'intensity'],
     defaultControls: { size: 180, hardness: 'soft', softness: 0.5, intensity: 0.3 },
-    Tools: SiltTools,
-    ...siltHooks
+    Tools: DustTools,
+    ...dustHooks
   },
 
-  dissolve: {
+  blur: {
     controls: ['size', 'hardness', 'softness', 'intensity', 'radius'],
     defaultControls: { size: 180, hardness: 'soft', softness: 0.5, intensity: 0.7, radius: 10 },
-    Tools: DissolveTools,
-    ...dissolveHooks
+    Tools: BlurTools,
+    ...blurHooks
   },
 
   bruise: {
@@ -187,13 +187,13 @@ export const cardRegistry = {
     cleanup: cleanupSteep
   },
 
-  turn: {
+  hue: {
     controls: ['h', 's', 'v', 'intensity'],
     defaultControls: { h: 0, s: 100, v: 100, intensity: 1 },
-    Tools: TurnTools,
-    begin: beginTurn,
-    update: updateTurn,
-    cleanup: cleanupTurn
+    Tools: HueTools,
+    begin: beginHue,
+    update: updateHue,
+    cleanup: cleanupHue
   },
 
   cure: {
@@ -207,12 +207,12 @@ export const cardRegistry = {
 
   // ---- The deck itself (v4 Wave 2: order-control, dealt by chance) ----
 
-  cull: {
+  searcher: {
     controls: [],
     defaultControls: {},
-    Tools: CullTools,
-    Overlay: CullOverlay,
-    begin: beginCull,
+    Tools: SearcherTools,
+    Overlay: SearcherOverlay,
+    begin: beginSearcher,
     deckActions: ['PICK_FROM_DECK'],
     skipBake: true
   },

@@ -19,8 +19,8 @@ permanently. Two design rules are load-bearing and non-negotiable:
   something to the image* with no room for judgment. A blur is a brush
   you compose with, not a filter that happens to you. Every card is a
   short session of intentional editing.
-- **The zyme register.** One concrete process word — Silt, Bruise, Turn,
-  Steep, Char, Cure. Never a settings-menu label. Subliminal Etch is the
+- **The zyme register.** One concrete process word — Bruise, Steep,
+  Stain, Char, Cure. Never a settings-menu label. Subliminal Etch is the
   one deliberate two-word exception. All copy obeys the studio/darkroom
   tone (CLAUDE.md §1): a piece is *finished*, never *won*.
 
@@ -46,7 +46,7 @@ Not a code field — a design vocabulary. The **copy count** in
 
 | Tier | What it is | Code cost | Examples |
 |---|---|---|---|
-| **Base** | One primitive, doing the obvious thing | A factory config or one small function | Silt, Stain, Turn |
+| **Base** | One primitive, doing the obvious thing | A factory config or one small function | Dust, Stain, Hue |
 | **Chained** | Primitives pre-composed into a flavor — a personality card | A factory config with attitude, or a small file on shared modules | Ghost (graft × screen), Char (stencil × sink), Bruise (reveal × HSV) |
 | **Rare** | One hyper-specific action + one specific mechanic; usually 1 copy | A standalone behavior file, possibly a new registry capability | Subliminal Etch, Skim, Delay |
 
@@ -63,9 +63,9 @@ list is proposing a framework extension — say so explicitly.
 | Primitive | What it does | Machinery | Cost of a new card on it |
 |---|---|---|---|
 | **Graft** | An outside image joins the piece in a blend: grid pick → free transform + opacity + brightness/contrast + mask brush | `graftCardFactory.jsx` (`makeGraftCard` + `graftControls`) | One config object, ~15 lines (see `ghost.jsx`) — the blend mode is the flavor |
-| **Reveal brush** | Paint a full-strength effected copy of the master into view; influence per stroke | `effectCardFactory.jsx` (`makeEffectCardHooks` + `BrushControls`) on `brushCore.createRevealSession` | One `applyEffect(effected, master)` pixel function + a Tools panel, ~35 lines (see `silt.jsx`) |
+| **Reveal brush** | Paint a full-strength effected copy of the master into view; influence per stroke | `effectCardFactory.jsx` (`makeEffectCardHooks` + `BrushControls`) on `brushCore.createRevealSession` | One `applyEffect(effected, master)` pixel function + a Tools panel, ~35 lines (see `dust.jsx`) |
 | **Stencil** | An image read as an alpha cutout of itself, filled with something | Hand-rolled per card (`rails.jsx`, `char.jsx`) — two cards in, no factory yet; a third earns one | A behavior file, ~5 KB |
-| **Wash** | Whole-canvas color modification; **influence slider mandatory** (the one permitted global-modifier family) | Hand-rolled Fabric object per card (`steep.jsx`, `turn.jsx`, `cure.jsx`) — three cards in, no factory yet | A behavior file, ~2.5 KB |
+| **Wash** | Whole-canvas color modification; **influence slider mandatory** (the one permitted global-modifier family) | Hand-rolled Fabric object per card (`steep.jsx`, `hue.jsx`, `cure.jsx`) — three cards in, no factory yet | A behavior file, ~2.5 KB |
 | **Re-frame** | The master itself becomes the object: crop, flip | Hand-rolled (`deeper.jsx`; `rack.jsx`, retired) | A behavior file |
 | **Viewport glyph** | The card owns the viewport for its session, works at the master's grain | `etch.jsx` — the rare-tier exemplar | A standalone file; must restore the identity transform in commit AND cleanup |
 | **Deck mechanic** | The deck's order, knowledge, or a held right becomes the round | Reducer cases in `deck.js` + an Overlay using `deckView`/`onDeckAction` | See §8 — the checklist is the cost |
@@ -85,8 +85,17 @@ know it exists — **never add per-card branches to `Editor.jsx` or
    rewording a card is one edit here, nowhere else.
    Alongside it: **a `CARD_GLOSS` line** (`tools/copy-editor.html`) — a
    literal, plain-language note of what the card *does*, keyed by id.
-   The id never changes; the name is free to. The gloss is how the copy
-   editor stays legible after a card has been renamed away from its id.
+   **Naming convention:** the id is the display name slugified **at
+   creation**, chosen deliberately, and normally never changes — the name
+   is free to. That decoupling is the whole point: renaming a card is one
+   `CARD_TEXT` edit, no code touched. If a name is genuinely *wrong* and
+   settled, re-slugging the id is a legitimate move but a **deliberate
+   refactor commit**, never a copy-editor edit — it renames the behavior
+   file, the registry key, the `MOD_CARDS`/Foundry ids, the copy keys, the
+   `CARD_GLOSS` key, and the face `<id>.png`, plus any event/tag/CSS names
+   derived from it (the `dissolve→blur`, `silt→dust`, `turn→hue`,
+   `cull→searcher` pass is the worked example). The gloss keeps the copy
+   editor legible in the meantime, when a name has drifted from its id.
 1. **A `MOD_CARDS` line** (`editor/deck.js`) — deck presence:
    `{ id, copies }` (the label is derived from `CARD_TEXT`), plus
    `family: 'deck'` for deck cards, plus a comment naming its anatomy
@@ -200,16 +209,16 @@ the reducer already carries promises that new mechanics must not break.
   promise about order must survive that shuffle — extend the COMMIT
   case, with a comment naming the promise.
 - **The Coda's position stays secret; the Coda never appears in
-  REMAINS** and is never pickable (Cull's reducer case only finds
+  REMAINS** and is never pickable (Searcher's reducer case only finds
   mods). Seeing an armed Coda is possible only as a paid exception
   (Skim), decided explicitly.
 - **Every mechanic writes history events that `spentCards` can
   render.** A new event type needs a matching branch in `spentCards`
-  (see `cull` → "culled", `delayed` → "set aside") or it silently
+  (see `searched` → "searched", `delayed` → "set aside") or it silently
   vanishes from the piece's story.
 - **Rights are granted in COMMIT, one code path.** Delay's `delayHeld`
   is set when the Delay *round ends* — so it works identically whether
-  the card was dealt, culled, or skim-kept. New held rights follow this
+  the card was dealt, searched, or skim-kept. New held rights follow this
   pattern.
 - `skipBake: true` unless the card genuinely marks the canvas.
 

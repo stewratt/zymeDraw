@@ -19,6 +19,22 @@ first: `v4_design.md` (spec for card history + the standardized card
 panel; built) and `v4_design_notes.md` (the randomness/control analysis
 — **its §10 waves are the active plan**).
 
+**Session 2026-07-07 (checkpoint `8a7711f` then a rename commit):** two
+things landed. (1) **Card face sets** — card art now reads from a
+per-machine `cardsetsFolder` (Setup picker + live set switcher), served
+by `/api/cards`; `editor/cardArt.js` holds the set store + a fallback
+chain (active set → bundled `assets/cards/` → text face), so the
+committed art is the built-in default set and external sets are an
+override. Faces are keyed by **id** (`ghost.png`), one subfolder per set.
+(2) **Card id rename** (`dissolve→blur`, `silt→dust`, `turn→hue`,
+`cull→searcher`) — Stew's renamed cards now match their ids end to end.
+The convention is now in `card_anatomy.md` §5 item 0: id = name slugified
+at creation; re-slugging is a deliberate refactor commit, never a
+copy-editor edit. **Note the register tension** (§1 tone): Blur/Hue read
+as settings-menu labels, which the zyme register warns against — the
+register-exemplar lists were trimmed to surviving cards, not extended
+with the new names; revisit if the register still matters for these.
+
 **The deck today: 20 mod cards + 3 Coda** (`MOD_CARDS` in `deck.js`).
 Rack + the two style-transfer cards are retired/stashed — files and
 registry entries stay, deck lines commented out. Style-transfer works end
@@ -187,8 +203,8 @@ on a creative process. It must never *present* as a game.
 - **Language is a studio/darkroom/press, not an arcade.** Avoid "play,"
   "win," "score," "level," "player," "turn." Prefer *draw, deal, commit,
   compose, finish, export, this round.* "Card" and "deck" stay.
-- Card names use the **zyme register**: one concrete process word (Silt,
-  Bruise, Turn, Steep, Stain, Char, Cure), never a settings-menu label
+- Card names use the **zyme register**: one concrete process word (Bruise,
+  Steep, Stain, Char, Cure), never a settings-menu label
   (`version_3_design.md` §4). Subliminal Etch is the one deliberate
   two-word exception.
 - **No celebratory / gamer affect.** A piece is *finished*, not beaten.
@@ -332,7 +348,7 @@ request, and `/api/images/sample` stays registered BEFORE
   image-native; they travel through move/scale/rotate.
 - **Within-card undo/redo exists for brushes only, never across End.**
 - **Global modifiers are banned except color adjustments**, which must
-  carry an influence slider (Steep, Turn, Cure).
+  carry an influence slider (Steep, Hue, Cure).
 - **Color pickers start on a random hue.** Any control named `color` is
   seeded per deal (`randomizeColors` in `Editor.jsx`) — new color cards
   get this for free by naming the control `color`.

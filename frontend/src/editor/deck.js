@@ -44,17 +44,17 @@ export const MOD_CARDS = [
   // rounds never felt worth doing. Card + registry entry stay in place;
   // re-add this line to deal it again.
   // { id: 'rack', copies: 1 }, // Re-frame, neutral
-  { id: 'silt', copies: 2 }, // Reveal × deposit
+  { id: 'dust', copies: 2 }, // Reveal × deposit
   { id: 'bruise', copies: 1 }, // Reveal × Bruise
-  { id: 'dissolve', copies: 1 }, // Reveal × blur — provisional (§6.3)
+  { id: 'blur', copies: 1 }, // Reveal × blur — provisional (§6.3)
   { id: 'steep', copies: 1 }, // Wash × Sink
-  { id: 'turn', copies: 1 }, // Wash (hue)
+  { id: 'hue', copies: 1 }, // Wash (hue)
   { id: 'cure', copies: 1 }, // Wash × Cure
   { id: 'etch', copies: 1 }, // Pixel glyph, hidden at the grain
   // The deck itself (v4 notes §5.1–5.2, §5.9): deck modifications, dealt
   // by chance. `family: 'deck'` color-codes their faces apart from the
   // image cards (cardFamily below).
-  { id: 'cull', copies: 1, family: 'deck' }, // Tutor: the remains open, take one
+  { id: 'searcher', copies: 1, family: 'deck' }, // Tutor: the remains open, take one
   { id: 'skim', copies: 1, family: 'deck' }, // Scry: see the top, keep or bury
   { id: 'delay', copies: 1, family: 'deck' } // The right to set the first Coda aside
   // Stashed until Stew trains his own style model — the demo ONNX styles
@@ -226,12 +226,12 @@ export function deckReducer(state, action) {
     }
 
     case 'PICK_FROM_DECK': {
-      // Cull, the tutor (v4 notes §5.1): while Cull is in hand the remains
-      // are open, and the chosen mod becomes this round — Cull itself never
-      // touches the canvas. Only mods are findable, so the Coda can never
-      // be picked even if the UI misbehaved. The choice joins the record:
-      // spentCards shows Cull (culled) and then the card it took.
-      if (state.phase !== 'WORKING' || state.currentCard?.id !== 'cull') {
+      // Searcher, the tutor (v4 notes §5.1): while Searcher is in hand the
+      // remains are open, and the chosen mod becomes this round — Searcher
+      // itself never touches the canvas. Only mods are findable, so the Coda
+      // can never be picked even if the UI misbehaved. The choice joins the
+      // record: spentCards shows Searcher (searched) and then the card it took.
+      if (state.phase !== 'WORKING' || state.currentCard?.id !== 'searcher') {
         return state
       }
       const i = state.deck.findIndex(
@@ -246,7 +246,7 @@ export function deckReducer(state, action) {
         currentCard: card,
         history: [
           ...state.history,
-          { event: 'cull', cardId: card.id, ts: Date.now() }
+          { event: 'searched', cardId: card.id, ts: Date.now() }
         ]
       }
     }
@@ -293,7 +293,7 @@ export function deckReducer(state, action) {
         currentCard: null,
         skim: null,
         // Ending the Delay round is what grants the right — one code path
-        // whether it was dealt, culled, or skim-kept.
+        // whether it was dealt, searched, or skim-kept.
         delayHeld: state.delayHeld || card.id === 'delay',
         history: [
           ...state.history,
@@ -352,7 +352,7 @@ const CARD_LABELS = Object.fromEntries(
 )
 
 // The two families of modification card (v4): image cards act on the
-// canvas; deck cards (Cull, Skim, Delay) act on the deck itself. Card.jsx
+// canvas; deck cards (Searcher, Skim, Delay) act on the deck itself. Card.jsx
 // color-codes faces by family until Stew's designed art carries the
 // distinction. The Coda is neither — it has its own face.
 const DECK_FAMILY_IDS = new Set(
@@ -364,13 +364,13 @@ export function cardFamily(id) {
 
 // The cards spent so far, in dealt order — the sequence view. Includes the
 // Coda once the session is COMPLETE (it already happened); never the card
-// still in hand (it hasn't been committed). A Cull round reads as two
-// entries: Cull tagged "culled", then the card it took.
+// still in hand (it hasn't been committed). A Searcher round reads as two
+// entries: Searcher tagged "searched", then the card it took.
 export function spentCards(state) {
   const out = []
   for (const ev of state.history) {
-    if (ev.event === 'cull') {
-      out.push({ id: 'cull', label: CARD_LABELS.cull, kind: 'mod', tag: 'culled' })
+    if (ev.event === 'searched') {
+      out.push({ id: 'searcher', label: CARD_LABELS.searcher, kind: 'mod', tag: 'searched' })
       continue
     }
     if (ev.event === 'delayed') {

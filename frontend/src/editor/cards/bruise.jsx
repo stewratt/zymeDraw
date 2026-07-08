@@ -23,7 +23,7 @@ export function applyHsvShift(effected, master, controls) {
 
 export const bruiseHooks = makeEffectCardHooks(applyHsvShift)
 
-// Shared by Bruise (the brush) and Turn (the whole-batch shift).
+// Shared by Bruise (the brush) and Hue (the whole-batch shift).
 export function HsvSliders({ controls, onControlChange }) {
   return (
     <>

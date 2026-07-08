@@ -41,11 +41,11 @@ export const FOUNDRY_CARDS = [
   { id: 'stamp', copies: 3 }, // Graft (cutout)
   { id: 'char', copies: 2 }, // Stencil × Sink
   { id: 'rails', copies: 2 }, // Stencil × solid
-  { id: 'silt', copies: 1 }, // Reveal × deposit
+  { id: 'dust', copies: 1 }, // Reveal × deposit
   { id: 'bruise', copies: 1 }, // Reveal × Bruise
-  { id: 'dissolve', copies: 1 }, // Reveal × blur
+  { id: 'blur', copies: 1 }, // Reveal × blur
   { id: 'steep', copies: 1 }, // Wash × Sink
-  { id: 'turn', copies: 1 }, // Wash (hue)
+  { id: 'hue', copies: 1 }, // Wash (hue)
   { id: 'cure', copies: 1 } // Wash × Cure
 ].map((card) => ({ label: CARD_TEXT[card.id]?.name ?? card.id, ...card }))
 

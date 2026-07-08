@@ -1,9 +1,9 @@
-// Dissolve — paint where edges should give up their boundary. This is NOT
-// the standing soften (which feathers a placed layer's mask edge): Dissolve
-// blurs interior content on the baked master itself, a texture-eraser —
-// and a strong Deeper companion (dissolve, then dive). One copy in the
-// deck, provisional: if soften covers its job in playtests it retires
-// (v3 design §6.3).
+// Blur — paint where edges should give up their boundary. This is NOT the
+// standing soften (which feathers a placed layer's mask edge): it blurs
+// interior content on the baked master itself, a texture-eraser — and a
+// strong Deeper companion (blur, then dive). One copy in the deck,
+// provisional: if soften covers its job in playtests it retires
+// (v3 design §6.3). (id `blur`, was Dissolve.)
 //
 // The blurred copy is drawn with the GPU-accelerated canvas filter, so
 // changing the radius is quick. Radius is felt in display pixels and scaled
@@ -14,7 +14,7 @@ import { UI } from '../../copy/uiText.js'
 import { MASTER_SCALE } from '../masterRaster.js'
 import { BrushControls, makeEffectCardHooks } from './effectCardFactory.jsx'
 
-function applyDissolve(effected, master, controls) {
+function applyBlur(effected, master, controls) {
   const ctx = effected.getContext('2d')
   ctx.save()
   ctx.clearRect(0, 0, effected.width, effected.height)
@@ -23,13 +23,13 @@ function applyDissolve(effected, master, controls) {
   ctx.restore()
 }
 
-export const dissolveHooks = makeEffectCardHooks(applyDissolve)
+export const blurHooks = makeEffectCardHooks(applyBlur)
 
-export function DissolveTools({ controls, info, ready, onControlChange }) {
+export function BlurTools({ controls, info, ready, onControlChange }) {
   if (!ready) return <span className="hint">{UI.shared.preparing}</span>
   return (
     <div className="brush-tools card-tools">
-      <p className="hint">{CARD_TEXT.dissolve.description}</p>
+      <p className="hint">{CARD_TEXT.blur.description}</p>
       <label className="ctrl">
         <span className="ctrl-label">Radius</span>
         <input

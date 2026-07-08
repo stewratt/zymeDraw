@@ -257,7 +257,7 @@
   gap: 12px;
 }
 
-/* The work, glanced at while choosing (Cull, Skim): the deck-facing cards
+/* The work, glanced at while choosing (Searcher, Skim): the deck-facing cards
    cover the canvas, so the piece stands beside the decision instead.
    Width-driven: the figure takes a fixed share of the row and the image
    follows at 4:5 (the max-height is a short-window backstop). */
@@ -281,25 +281,25 @@
   text-align: center;
 }
 
-/* Cull (the tutor): the remains laid out face up in the canvas area. Card
+/* Searcher (the tutor): the remains laid out face up in the canvas area. Card
    faces are known quantities, so tile scale is enough (v4 notes §11.1);
    the chosen one takes the pick green, same signal as the opening grid. */
-.cull-body {
+.searcher-body {
   flex: 1;
   min-height: 0;
   display: flex;
   gap: 24px;
 }
-.cull-row {
+.searcher-row {
   flex: 1;
   align-content: start;
   overflow-y: auto;
   padding-top: 6px;
 }
-.cull-row .card--clickable {
+.searcher-row .card--clickable {
   cursor: pointer; /* a take, not a zoom */
 }
-.cull-row .deck-cell.chosen .card {
+.searcher-row .deck-cell.chosen .card {
   border-color: #7da869;
 }
 
@@ -469,7 +469,7 @@
   font-size: 0.85rem;
 }
 /* The two mod-card families (v4), color-coded until Stew's designed faces
-   carry the distinction: image cards warm, deck cards (Cull, Skim, Delay)
+   carry the distinction: image cards warm, deck cards (Searcher, Skim, Delay)
    cool. Tints live on the text face so real art simply covers them. */
 .card--family-image .card-text-face {
   background: linear-gradient(165deg, #2d2520, #221c18);

@@ -535,7 +535,7 @@ export function createMaskSession(canvas, images, { getControls, onHistoryChange
 
 // Everything a control panel shows that isn't the brush itself is an effect
 // param, snapshotted per stroke. (softness must live here: if it leaked into
-// params, sliding it would miss the effect cache and re-roll Silt's grain.)
+// params, sliding it would miss the effect cache and re-roll Dust's grain.)
 const BRUSH_KEYS = new Set(['size', 'hardness', 'softness', 'intensity'])
 
 function effectParams(controls) {

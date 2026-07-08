@@ -375,7 +375,7 @@ function Editor({ config, onBackToSetup }) {
             session: cardSessionRef.current
           })
         }
-        // Cards that never touch the canvas (Cull's empty-remains round)
+        // Cards that never touch the canvas (Searcher's empty-remains round)
         // skip the bake and the state capture — nothing changed.
         if (!entry?.skipBake) {
           masterRef.current = bake(canvas)

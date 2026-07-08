@@ -1,6 +1,6 @@
 // Cure — the piece cures in its own bath (Wash × soft light): a soft-light
 // self-overlay deepens the mids and richens tone without dominating — the
-// classic darkroom move, distinct from Steep (a dye) and Turn (a shift).
+// classic darkroom move, distinct from Steep (a dye) and Hue (a shift).
 // Influence is how far the cure has gone; it carries the mandatory
 // whole-canvas influence control (CLAUDE.md §1).
 //

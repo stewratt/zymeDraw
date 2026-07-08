@@ -37,7 +37,7 @@ export function plateEntries(filenames) {
 }
 
 // Re-color the mounted plate: hue-rotate + saturate drawn through the 2d
-// canvas filter (the Bruise/Turn pattern — GPU-fast, alpha preserved, so
+// canvas filter (the Bruise/Hue pattern — GPU-fast, alpha preserved, so
 // the punched window survives). Always draws from the UNTINTED source the
 // caller kept from mount time — tints never compound. The tinted element
 // carries the plate's native resolution, so the 3× bake loses nothing.
