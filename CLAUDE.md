@@ -16,7 +16,15 @@ raster + bake, brush core, ML sidecar), `version_3_design.md` (v3: card
 system, zyme register, mask brush), `v4_design.md` + `v4_design_notes.md`
 (v4: the legible deck — card standard, deck overlay, plinth, Foundry).
 
-**v4 is the current line; new work branches off `main`.** The v4 plan
+**v5 is now the active line — read `v5_plan.md`** (written 2026-07-07,
+the day of the merge). Theme: glue — the app is renamed **ZYME**, Foundry
+merges into one application shell, packaging (Electron, eventually) and
+the image-server stream get real plans, and the codebase gets
+overhaul-ready for the design-language project. Its §7 waves are the new
+checkpoint map for infrastructure work; §8 lists the questions Stew still
+owes answers on before each wave opens. Nothing in it is built yet.
+
+**Card-design work continues in parallel off the v4 notes.** The v4 plan
 (`v4_design_notes.md` §10 waves) still has open items — Wave 3 (the
 descent experiment), mid-state pulling (§9.3), suits (§10.1), Echo,
 Mount, death-crop. Read `v4_design.md` for the spec.
@@ -285,7 +293,8 @@ the backend.
 zymeDraw/
 ├── CLAUDE.md · README.md · hotkeys.md   # this file / setup / hotkey map
 ├── design_changes_july2.md · redesign_v2_plan.md · version_3_design.md
-├── v4_design.md · v4_design_notes.md    # v4 spec / ACTIVE PLAN (its §10)
+├── v4_design.md · v4_design_notes.md    # v4 spec + card-design backlog (its §10)
+├── v5_plan.md                           # ACTIVE PLAN — glue/ZYME (its §7 waves)
 ├── card_anatomy.md                      # the card designer's contract (§11)
 ├── cardPNG/                  # local-only placeholder card art (gitignored)
 ├── frontend/src/             # main.jsx · App.jsx · Setup.jsx
