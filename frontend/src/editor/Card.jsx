@@ -14,14 +14,14 @@ import { useEffect, useState } from 'react'
 import { cardArtSources, useActiveCardSet } from './cardArt.js'
 import { cardFamily } from './deck.js'
 
-function Card({ id, label, kind = 'mod', size = 'panel', count, dimmed, flip, onClick, title }) {
+function Card({ id, label, kind = 'mod', size = 'panel', count, dimmed, flip, onClick, title, variant = 1 }) {
   const activeSet = useActiveCardSet()
-  const sources = cardArtSources(id, activeSet)
-  // Walk the sources (active set → bundled) on image error; when exhausted,
-  // `art` is undefined and the text face shows. Reset when the card or set
-  // changes so a re-deal starts from the top.
+  const sources = cardArtSources(id, activeSet, variant)
+  // Walk the sources (active set → bundled, variant face → bare) on image
+  // error; when exhausted, `art` is undefined and the text face shows. Reset
+  // when the card, set, or variant changes so a re-deal starts from the top.
   const [attempt, setAttempt] = useState(0)
-  useEffect(() => setAttempt(0), [id, activeSet])
+  useEffect(() => setAttempt(0), [id, activeSet, variant])
   const art = sources[attempt]
   // Mod cards split into two color-coded families (image vs deck) until
   // the designed faces carry the distinction; the Coda stays its own thing.

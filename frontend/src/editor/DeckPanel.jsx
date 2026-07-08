@@ -296,7 +296,7 @@ function CardRevealed({ state, entry, controls, info, ready, committing, onContr
   return (
     <aside className="deck-panel">
       {zoomed && (
-        <CardZoom id={card.id} label={card.label} kind={card.kind} onClose={() => setZoomed(false)} />
+        <CardZoom id={card.id} label={card.label} kind={card.kind} variant={card.variant} onClose={() => setZoomed(false)} />
       )}
       <div className="panel-scroll">
         <h2>{T.roundTitle}</h2>
@@ -304,6 +304,7 @@ function CardRevealed({ state, entry, controls, info, ready, committing, onContr
           id={card.id}
           label={card.label}
           kind={card.kind}
+          variant={card.variant}
           size="panel"
           flip
           onClick={() => setZoomed(true)}

@@ -80,7 +80,10 @@ function shuffle(cards) {
 function buildDeck() {
   const cards = []
   for (const { copies, ...card } of MOD_CARDS) {
-    for (let n = 0; n < copies; n++) cards.push({ ...card, kind: 'mod' })
+    // `variant` (1-based) is which of the card's copies this is — a card in
+    // two copies may carry two distinct faces (see cardArt.js). It travels
+    // with the card through the shuffle; the dealt card renders its own face.
+    for (let n = 0; n < copies; n++) cards.push({ ...card, kind: 'mod', variant: n + 1 })
   }
   return shuffle(cards)
 }

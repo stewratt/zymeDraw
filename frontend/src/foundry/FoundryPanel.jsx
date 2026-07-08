@@ -363,7 +363,19 @@ function Proofed({ state, exportState, onRestart, onNextImpression, onOpenOutput
             )}
             <p className="hint">{T.savedTo}</p>
             <p className="export-path mono">{exportState.savedPath}</p>
-            <p className="hint">{rich(fmt(F.proof.dropIn, { id: state.commission.id }))}</p>
+            <p className="hint">
+              {rich(
+                fmt(F.proof.dropIn, {
+                  // Copy 1 (or a single cast) is the bare face; later
+                  // impressions curate as the opt-in `<id>.n.png` variant
+                  // (card_anatomy.md §5 home #4).
+                  file:
+                    state.copyIndex > 1
+                      ? `${state.commission.id}.${state.copyIndex}.png`
+                      : `${state.commission.id}.png`
+                })
+              )}
+            </p>
             <button type="button" className="secondary" onClick={onOpenOutput}>
               {T.openOutput}
             </button>

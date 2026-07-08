@@ -254,7 +254,7 @@
       "tailComplete": ". The run is complete.",
       "faceCast": "The face of **{label}** is cast.",
       "exporting": "Writing the cast to your casts folder…",
-      "dropIn": "Drop-in ready: to put it in play, copy it to `assets/cards/{id}.png` and reload Deck. The full-res master sits alongside.",
+      "dropIn": "Drop-in ready: to put it in play, copy it to `assets/cards/{file}` and reload Deck. The full-res master sits alongside.",
       "nextImpression": "Next impression — return to the base",
       "castAnother": "Cast another"
     },

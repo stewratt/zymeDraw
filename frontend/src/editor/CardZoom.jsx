@@ -7,7 +7,7 @@
 import { useEffect } from 'react'
 import Card from './Card.jsx'
 
-export default function CardZoom({ id, label, kind = 'mod', onClose }) {
+export default function CardZoom({ id, label, kind = 'mod', variant = 1, onClose }) {
   useEffect(() => {
     const onKeyDown = (e) => {
       e.stopPropagation()
@@ -26,7 +26,7 @@ export default function CardZoom({ id, label, kind = 'mod', onClose }) {
       }}
     >
       <div className="card-zoom">
-        <Card id={id} label={label} kind={kind} size="zoom" />
+        <Card id={id} label={label} kind={kind} variant={variant} size="zoom" />
         <span className="card-name">{label}</span>
       </div>
     </div>

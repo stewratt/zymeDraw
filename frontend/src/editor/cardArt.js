@@ -85,10 +85,26 @@ export function setActiveCardSet(name) {
 // The ordered face URLs to try for a card: the active set first, the bundled
 // art next, then nothing (→ text face). <Card> walks these on image error, so
 // a set that omits a face transparently borrows the built-in one.
-export function cardArtSources(id, activeSet) {
+//
+// `variant` (1 = the base face) is a card copy's design. A card dealt in N
+// copies may carry N distinct faces: copy 1 = `<id>.png`, copy 2 =
+// `<id>.2.png`, … Extra variants are OPT-IN — within each source tier we try
+// the variant face first and fall back to the bare `<id>.png`, so a set that
+// only ships one design has both copies borrow it with no special-casing (the
+// same error-walk that lets a set omit a card entirely). Generalizes to 3x+.
+export function cardArtSources(id, activeSet, variant = 1) {
+  const names = variant > 1 ? [`${id}.${variant}`, id] : [id]
   const sources = []
-  if (activeSet) sources.push(`/api/cards/${encodeURIComponent(activeSet)}/${id}.png`)
-  const b = bundledArt(id)
-  if (b) sources.push(b)
+  // Active set first — variant face, then the bare face.
+  if (activeSet) {
+    for (const name of names) {
+      sources.push(`/api/cards/${encodeURIComponent(activeSet)}/${name}.png`)
+    }
+  }
+  // Bundled next, same variant-then-bare order.
+  for (const name of names) {
+    const b = bundledArt(name)
+    if (b) sources.push(b)
+  }
   return sources
 }

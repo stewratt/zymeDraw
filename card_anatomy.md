@@ -110,6 +110,18 @@ know it exists — **never add per-card branches to `Editor.jsx` or
 4. **A face PNG** (`frontend/src/assets/cards/<id>.png`, 745×1040) —
    optional at first; `Card.jsx` renders a text face until it exists.
    All card geometry goes through `Card.jsx`; nothing else hardcodes it.
+   **Per-copy variants:** a card dealt in N copies may carry N distinct
+   faces — copy 1 = `<id>.png`, copy 2 = `<id>.2.png`, … (bare = copy 1,
+   `.n` = copy n, generalizing to 3x+). Extra variants are **opt-in**:
+   `cardArtSources` (`editor/cardArt.js`) tries the variant face first and
+   falls back to the bare `<id>.png` within each source tier, so a set
+   that ships only one design has every copy borrow it — no special case,
+   just the next link in the same error-walk that lets a set omit a card.
+   `deck.js`'s `buildDeck` tags each copy with a 1-based `variant` that
+   rides the shuffle; only the *dealt* card renders its variant, the deck
+   overlay stays on the base face. Faces come out of Foundry as a run of
+   impressions (`stain_i1_…`, `stain_i2_…`); curate them into a set as
+   `stain.png` + `stain.2.png`.
 
 ## 6. The registry contract
 
