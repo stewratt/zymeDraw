@@ -7,17 +7,31 @@
 
 ---
 
-## 0. Current state — resume here (updated 2026-07-06)
+## 0. Current state — resume here (updated 2026-07-07)
 
-**`main` holds the complete v1 → v3 tool, verified by Stew.** The version
-story lives in the design docs: `design_changes_july2.md` (v1 lessons),
-`redesign_v2_plan.md` (v2: master raster + bake, brush core, ML sidecar),
-`version_3_design.md` (v3: card system, zyme register, mask brush).
+**`main` holds the complete v1 → v4 tool, verified by Stew** — v4 merged
+(fast-forward) 2026-07-07. The version story lives in the design docs:
+`design_changes_july2.md` (v1 lessons), `redesign_v2_plan.md` (v2: master
+raster + bake, brush core, ML sidecar), `version_3_design.md` (v3: card
+system, zyme register, mask brush), `v4_design.md` + `v4_design_notes.md`
+(v4: the legible deck — card standard, deck overlay, plinth, Foundry).
 
-**Active work: v4, branch `v4` — the legible deck.** Read both v4 docs
-first: `v4_design.md` (spec for card history + the standardized card
-panel; built) and `v4_design_notes.md` (the randomness/control analysis
-— **its §10 waves are the active plan**).
+**v4 is the current line; new work branches off `main`.** The v4 plan
+(`v4_design_notes.md` §10 waves) still has open items — Wave 3 (the
+descent experiment), mid-state pulling (§9.3), suits (§10.1), Echo,
+Mount, death-crop. Read `v4_design.md` for the spec.
+
+**Per-copy card face variants (landed + verified 2026-07-07).** A card
+dealt in N copies may carry N distinct faces: copy 1 = `<id>.png`, copy 2
+= `<id>.2.png`, … (generalizes to 3x+). Opt-in — `cardArtSources`
+(`editor/cardArt.js`) tries the variant face first and falls back to the
+bare `<id>.png` within each source tier, so a set shipping one design has
+every copy borrow it. `deck.js`'s `buildDeck` tags each copy with a
+1-based `variant` that rides the shuffle; only the *dealt* card renders
+it (the deck overlay stays base-face). Foundry casts a run as `_i1/_i2`
+impressions; curate them into a set as `<id>.png` + `<id>.2.png`. Doc:
+`card_anatomy.md` §5 home #4. First curated set (`foundry-v1`, Stew's
+Foundry designs) verified in the browser.
 
 **Session 2026-07-07 (checkpoint `8a7711f` then a rename commit):** two
 things landed. (1) **Card face sets** — card art now reads from a
