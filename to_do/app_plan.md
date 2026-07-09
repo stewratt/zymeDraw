@@ -1,25 +1,31 @@
-# v5 plan — ZYME: one application
+# ZYME — one application
 
-> Written 2026-07-07, the day v4 merged to `main`. The MVP is done; v5 is
-> not a feature sprint. **The theme is glue: one application, portable,
-> readable, ready to wear its real face.** Five tracks, sequenced in §7.
-> Nothing here is committed to build until its wave opens — §8 holds the
-> questions still owed to Stew.
+> The **infrastructure line** — the glue chunk. No longer a "version," just
+> a named body of work you can pick up in any order relative to the card
+> line (`cards_plan.md`); the two share no dependency, only the repo.
+> Written 2026-07-07, the day v4 merged to `main`; the MVP is done, so this
+> is not a feature sprint. **The theme is glue: one application, portable,
+> readable, ready to wear its real face.** Five tracks, sequenced in §7 —
+> but the sequence is a suggestion, not a gate. Nothing here is committed
+> to build until its wave opens — §8 holds the questions still owed to Stew.
 >
 > Companion to CLAUDE.md §0. Read that first for what's true now.
+> Itemized as GitHub issues (label `infra`, #1–#11); this doc is the
+> rationale the issues point back into.
 
 ---
 
-## 0. Where v5 starts
+## 0. Where this line starts
 
 `main` holds the complete v1→v4 tool: the session arc, 20 mod cards + 3
 Coda, the legible deck (spent/remains), the plinth, the state cache, the
 card standard (745×1040 via `Card.jsx`), card face sets + per-copy
 variants, the copy editor (`uiText.json` end to end), and Foundry through
-its control wave. Still open from v4 (its notes §10): Wave 3 (the descent
-experiment), mid-state pulling, suits, Echo, Mount, death-crop. Those
-remain live options — v5 doesn't cancel them, it runs alongside as the
-infrastructure line while card design continues on its own clock.
+its control wave. Still open from v4 (now in `archive/`; carried in
+`cards_plan.md` §0): the descent experiment, mid-state pulling, suits, Echo,
+Mount, death-crop. Those remain live options — this line doesn't cancel
+them, it runs alongside as
+the infrastructure work while card design continues on its own clock.
 
 **The name.** The application is now **ZYME** — this project's ultimate
 form, so it takes the project's name. "Deck" survives as the mechanic
@@ -70,8 +76,8 @@ Foundry was built as a sibling app (second Vite entry, own Setup, dev-ish
 access). The insight from using it: **making cards and making
 compositions with the cards you made is one practice**, and seeing your
 own faces come up in a deal is the meta-loop that makes the toolchain
-feel alive. v5 promotes Foundry from dev tool to a first-class wing of
-ZYME.
+feel alive. This line promotes Foundry from dev tool to a first-class wing
+of ZYME.
 
 What the merge concretely means (proposal, to refine before the wave):
 
@@ -83,7 +89,7 @@ What the merge concretely means (proposal, to refine before the wave):
    commitment philosophy applies to navigation too.
 3. **Close the loop in-app.** Today the loop has a hand-curation gap:
    Foundry exports to `castsFolder`, Stew moves files into a set folder,
-   the studio reads the set. v5 adds the missing room — a small
+   the studio reads the set. The merge adds the missing room — a small
    **curation view** (register name TBD — the *bindery*? the *drawer*?)
    that shows recent casts and lets you place one into a set as a card
    face (`<id>.png` / `<id>.2.png`), replacing the file-manager step.
@@ -214,8 +220,8 @@ convention; nothing in this repo should couple to that app beyond
 The UI has been refined in *logic* (flow, panels, the two-press rhythm)
 but its *look* is still default-shaped. Stew wants a genuinely unique,
 custom design language — a significant standalone project, likely
-scaffolded with the paper.design MCP tooling. v5's job is not to do the
-overhaul; it's to make sure the codebase is **overhaul-ready** so that
+scaffolded with the paper.design MCP tooling. This track's job is not to do
+the overhaul; it's to make sure the codebase is **overhaul-ready** so that
 when the design project starts, it's a reskin, not a rewrite.
 
 Readiness pre-work (cheap now, expensive later):
@@ -247,7 +253,7 @@ other machines.
 
 ---
 
-## 6. The invariants v5 must not bend
+## 6. The invariants this line must not bend
 
 Carried forward explicitly, because glue work is where invariants get
 smeared:
@@ -295,7 +301,8 @@ parallel to all of this on its own checkpoints.
 2. **ZYME styling:** all-caps ZYME everywhere, or Zyme in prose? (Copy
    editor makes this cheap to change, but pick one for docs.)
 3. **The stream (Wave 2):** is multi-user (several people tapping one
-   server) a real v5 target, or is single-Stew-on-LAN enough for now?
+   server) a real target for this line, or is single-Stew-on-LAN enough for
+   now?
    Multi-user pulls config/export decisions forward.
 4. **Order of face vs package (Waves 3/4):** overhaul before Electron
    (recommended — ship the real face) or package early to start living

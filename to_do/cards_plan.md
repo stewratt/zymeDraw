@@ -1,25 +1,32 @@
-# v6 plan — the Kid Pix wave + the deck builder
+# The card line — new cards + the deck builder
 
-> Written 2026-07-08, on the new `v5` branch. **This is the card line's
-> plan** — new cards drawn from a Kid Pix exploration, and, once the card
-> count demands it, a deck-builder menu. It runs parallel to
-> `v5_plan.md`, which remains the *infrastructure* line (glue / ZYME /
-> packaging); the two lines share the branch-numbering accident that
-> gives this doc its name — `v5_plan.md` was already taken, the working
-> branch is `v5`, the plan is v6. Docs are cheap; the branch convention
-> (v2/v3/v4/v5) is the one that matters.
+> Written 2026-07-08. **This is the card line** — new cards drawn from a
+> Kid Pix exploration, and, once the card count demands it, a deck-builder
+> menu. No longer a "version," just a named chunk of work you can pick up
+> in any order relative to the infrastructure line (`app_plan.md`, the
+> glue / ZYME / packaging plan); the two share the repo, not a dependency.
 >
 > Companion to CLAUDE.md §0 and `card_anatomy.md` — every card below
 > gets a full §9 card sheet before its code, per the contract.
+> Itemized as GitHub issues (label `card-line`, #12–#16; the inherited
+> backlog below is `parked`, #18–#28); this doc is the rationale the
+> issues point back into.
 
 ---
 
 ## 0. Where this starts
 
-`main` (= this branch's base) holds the 20-mod + 3-Coda deck. The v4
-notes' §10 backlog (descent, suits, Echo, Mount, death-crop) stays live;
-this wave doesn't replace it, it grows the pool the same way — one card
-at a time, checkpointed, verified in the browser before commit.
+`main` (= this branch's base) holds the 20-mod + 3-Coda deck.
+
+**Inherited backlog** — the still-live card-design threads from the v4
+design docs (now under `archive/`, since v4 shipped): the **descent
+experiment** (1 Deeper dealt + 2 held in reserve, descents dilute the deck
+— `archive/v4_design_notes.md` §8.2, tabled), **mid-state pulling** (export
+a middle state; capture already ships, the pull decision stays open — §9.3),
+**death-crop** (a terminal crop at the Coda — §6.5), and from the v3 doc
+**suits**, **Echo**, and **Mount** (`archive/version_3_design.md`). These
+stay live; this line doesn't replace them, it grows the pool the same way —
+one card at a time, checkpointed, verified in the browser before commit.
 
 **The source**: Kid Pix. Its brushes are a catalog of exactly the kind
 of move Deck wants — concrete, physical, a little unruly, and always
@@ -273,8 +280,8 @@ verification before commit.
   archetype list. Opens only after the pool actually exceeds the deck —
   Waves 1–4 are what create that pressure.
 
-Parallel as ever: the v4 notes' §10 backlog and the `v5_plan.md`
-infrastructure waves run on their own clocks.
+Parallel as ever: the inherited backlog (§0, now under `archive/`) and the
+`app_plan.md` infrastructure waves run on their own clocks.
 
 ---
 

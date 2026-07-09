@@ -2,7 +2,7 @@
 
 > Written 2026-07-08. This is the founding document for the **other half
 > of the ZYME toolchain**: the always-on ComfyUI recursion server and the
-> front end that lets people tend it in real time. `v5_plan.md` §4 drew
+> front end that lets people tend it in real time. `app_plan.md` §4 drew
 > the boundary from the draw app's side — *"the complementary refinement
 > app for the server's stream is a different project; the shared surface
 > is only the folder convention."* This doc is that different project.
@@ -42,7 +42,7 @@ Strip everything away and the server owes the world exactly one thing:
 
 That folder is the entire coupling surface with ZYME (the draw app).
 Draw clients mount it (Samba/NFS/syncthing) or run against it locally;
-`v5_plan.md` §4 already covers the client side (the backend re-reads the
+`app_plan.md` §4 already covers the client side (the backend re-reads the
 input folder per request, so a growing folder feeds fresh grids with
 zero draw-app code). Nothing in this project may assume anything about
 the draw app beyond "images appear in a folder," and nothing in the draw

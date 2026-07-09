@@ -7,38 +7,57 @@
 
 ---
 
-## 0. Current state — resume here (updated 2026-07-08)
+## 0. Current state — resume here (updated 2026-07-09)
 
-**Branch `v5` opened 2026-07-08 — the card line's working branch. Read
-`v6_plan.md`** (the numbering quirk is explained in its header:
-`v5_plan.md` was already the infrastructure plan, so the card plan is
-v6 on branch v5). Theme: the Kid Pix wave — four new card designs
-(Closer, the lift brush, the stamp brush, the fracture exemplar) and,
-once the pool outgrows the deck, a deck-builder menu with a size cap +
-archetypes (decision locked in its §6; nothing built yet). Its §7 waves
-are the card line's checkpoint map; §8 lists the names/choices Stew
-still owes before each wave opens.
+**Version numbers are retired.** Work is now organized as two named
+**lines** — pickable in any order, no dependency between them, only the
+shared repo:
+
+**The itemized backlog lives in GitHub issues (2026-07-09).** The plan
+docs in `to_do/` hold the design rationale; the work units are issues on
+`stewratt/zymeDraw`, labeled by line (`card-line` / `infra` / `foundry`)
+and size. The workflow: pick an issue → branch off `main` (per issue, not
+per line) → build in checkpoints, Stew verifies in the browser on the
+branch → PR with "Closes #N" → merge. `size:S` items skip the ceremony
+(direct commit to `main` with "Closes #N"). Parent issues (the merge #5,
+design language #10, Electron #11, deck builder #16) are checklists whose
+children get their own issues when picked up. `parked` issues (#18–#31,
+the designed-but-uncommitted ideas from the archive docs + Foundry
+phase 7) never get a branch until deliberately promoted. Browse:
+`gh issue list` / by label `gh issue list -l card-line`.
+
+**The card line — read `to_do/cards_plan.md`.** Theme: the Kid Pix wave — four
+new card designs (Closer, the lift brush, the stamp brush, the fracture
+exemplar) and, once the pool outgrows the deck, a deck-builder menu with a
+size cap + archetypes (decision locked in its §6; nothing built yet). Its
+§7 waves are the card line's checkpoint map; §8 lists the names/choices
+Stew still owes before each wave opens. The old line-branch convention
+(`v5` as the card line's standing branch) is retired in favor of the
+per-issue branches above; `v5` remains only as history.
 
 **`main` holds the complete v1 → v4 tool, verified by Stew** — v4 merged
 (fast-forward) 2026-07-07. The version story lives in the design docs
-(v1–v3 now under `archive/`): `archive/design_changes_july2.md` (v1
+(v1–v4 now under `archive/`): `archive/design_changes_july2.md` (v1
 lessons), `archive/redesign_v2_plan.md` (v2: master raster + bake, brush
 core, ML sidecar), `archive/version_3_design.md` (v3: card
-system, zyme register, mask brush), `v4_design.md` + `v4_design_notes.md`
-(v4: the legible deck — card standard, deck overlay, plinth, Foundry).
+system, zyme register, mask brush), `archive/v4_design.md` +
+`archive/v4_design_notes.md` (v4: the legible deck — card standard, deck
+overlay, plinth, Foundry).
 
-**v5 is now the active line — read `v5_plan.md`** (written 2026-07-07,
+**The infrastructure line — read `to_do/app_plan.md`** (written 2026-07-07,
 the day of the merge). Theme: glue — the app is renamed **ZYME**, Foundry
 merges into one application shell, packaging (Electron, eventually) and
 the image-server stream get real plans, and the codebase gets
-overhaul-ready for the design-language project. Its §7 waves are the new
+overhaul-ready for the design-language project. Its §7 waves are the
 checkpoint map for infrastructure work; §8 lists the questions Stew still
 owes answers on before each wave opens. Nothing in it is built yet.
 
-**Card-design work continues in parallel off the v4 notes.** The v4 plan
-(`v4_design_notes.md` §10 waves) still has open items — Wave 3 (the
-descent experiment), mid-state pulling (§9.3), suits (§10.1), Echo,
-Mount, death-crop. Read `v4_design.md` for the spec.
+**Card-design work continues in parallel — read `to_do/cards_plan.md`**
+(the card line: the Kid Pix cards + the deck builder). Its §0 also carries
+the still-live backlog inherited from the now-archived v4 docs — the
+descent experiment, mid-state pulling (§9.3), death-crop (§6.5), and the v3
+threads suits/Echo/Mount. The v4 spec + notes are the reference:
+`archive/v4_design.md` + `archive/v4_design_notes.md`.
 
 **Per-copy card face variants (landed + verified 2026-07-07).** A card
 dealt in N copies may carry N distinct faces: copy 1 = `<id>.png`, copy 2
@@ -193,10 +212,12 @@ inputs+exports fallback (`/api/panel-art`); commission tiles show run
 size ×N; Stamp ×3. After that: the Phase-7 backlog (graft wave,
 procedural plates, direct-to-Deck…).
 
-**Next actions (the notes' §10):** 1) Stew verifies Wave 2 in the
-browser. 2) Playtest question (§7.2): does the splash-over tension
-survive remains-knowledge + occasional order-control? 3) Wave 3 — the
-descent experiment (§8.2): 1 Deeper dealt + 2 in reserve. 4) Later:
+**Next actions (§-refs below are into the archived v4 notes
+`archive/v4_design_notes.md`, and v3 `archive/version_3_design.md`; the
+live list is also carried in `to_do/cards_plan.md` §0):** 1) Stew verifies
+Wave 2 in the browser. 2) Playtest question (§7.2): does the splash-over
+tension survive remains-knowledge + occasional order-control? 3) Wave 3 —
+the descent experiment (§8.2): 1 Deeper dealt + 2 in reserve. 4) Later:
 mid-state *pulling* (§9.3). Still open from v3: suits visible or
 backstage (§10.1), Echo (§7.3), Mount (§7.4), death-crop (§6.5).
 
@@ -256,8 +277,8 @@ working code he can't maintain.
 
 - **Build in phases, stop at every checkpoint.** One unit at a time:
   summarize what was built, explain the *one* key concept in plain
-  language, wait for "continue." The active plan's phases are the
-  checkpoint map (today: `v4_design_notes.md` §10's waves).
+  language, wait for "continue." The active plans' waves are the
+  checkpoint map (`to_do/cards_plan.md` §7 · `to_do/app_plan.md` §7).
 - **Check in before any non-trivial implementation** — present the
   options before coding; `AskUserQuestion` helps make choices concrete.
 - **Keep code small and readable.** Boring/idiomatic > clever.
@@ -303,12 +324,14 @@ the backend.
 ```
 zymeDraw/
 ├── CLAUDE.md · README.md · hotkeys.md   # this file / setup / hotkey map
-├── v4_design.md · v4_design_notes.md    # v4 spec + card-design backlog (its §10)
-├── v5_plan.md · v6_plan.md              # ACTIVE PLANS — v5 glue/ZYME · v6 card line
 ├── card_anatomy.md · card_maker.md      # card designer's contract (§11) · Foundry spec
-├── server_plan.md                       # recursion server + switchboard founding doc
-├── archive/                             # superseded plans + one-off records
+├── to_do/                               # ACTIVE PLANS — in progress; archived when done
+│   ├── app_plan.md                      #   infra line: glue / ZYME / packaging / stream / design
+│   ├── cards_plan.md                    #   card line: Kid Pix cards + the deck builder
+│   └── server_plan.md                   #   recursion server + switchboard founding doc
+├── archive/                             # done/superseded plans + one-off records
 │   ├── design_changes_july2.md · redesign_v2_plan.md · version_3_design.md  # v1–v3
+│   ├── v4_design.md · v4_design_notes.md   # v4 spec + design notes (shipped)
 │   ├── shattered_transfer_plan.md       # retired style-transfer card plan
 │   ├── debug_loop.md · debug_loop_findings.md   # June /loop debug run
 │   └── ui_flexibility_audit.md · classifiers.md # one-off audit · early scratch note
@@ -463,7 +486,9 @@ code; its checklists (§7 canvas, §8 deck) are the review. Then:
 
 ### Where to start a fresh session
 
-This file (§0 is the state) → `v4_design_notes.md` (§10 is the active
-plan) + `v4_design.md` → `editor/deck.js` (the session rulebook) → skim
-`cards/registry.jsx` and one nearby card file. Check in with Stew before
-non-trivial work (§2): build one unit, checkpoint, wait for "continue."
+This file (§0 is the state) → the active plan for the work at hand
+(`to_do/cards_plan.md` for cards, `to_do/app_plan.md` for infrastructure;
+the shipped v4 spec is `archive/v4_design.md` + notes) → `editor/deck.js`
+(the session rulebook) → skim `cards/registry.jsx` and one nearby card
+file. Check in with Stew before non-trivial work (§2): build one unit,
+checkpoint, wait for "continue."
