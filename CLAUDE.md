@@ -7,12 +7,23 @@
 
 ---
 
-## 0. Current state — resume here (updated 2026-07-07)
+## 0. Current state — resume here (updated 2026-07-08)
+
+**Branch `v5` opened 2026-07-08 — the card line's working branch. Read
+`v6_plan.md`** (the numbering quirk is explained in its header:
+`v5_plan.md` was already the infrastructure plan, so the card plan is
+v6 on branch v5). Theme: the Kid Pix wave — four new card designs
+(Closer, the lift brush, the stamp brush, the fracture exemplar) and,
+once the pool outgrows the deck, a deck-builder menu with a size cap +
+archetypes (decision locked in its §6; nothing built yet). Its §7 waves
+are the card line's checkpoint map; §8 lists the names/choices Stew
+still owes before each wave opens.
 
 **`main` holds the complete v1 → v4 tool, verified by Stew** — v4 merged
-(fast-forward) 2026-07-07. The version story lives in the design docs:
-`design_changes_july2.md` (v1 lessons), `redesign_v2_plan.md` (v2: master
-raster + bake, brush core, ML sidecar), `version_3_design.md` (v3: card
+(fast-forward) 2026-07-07. The version story lives in the design docs
+(v1–v3 now under `archive/`): `archive/design_changes_july2.md` (v1
+lessons), `archive/redesign_v2_plan.md` (v2: master raster + bake, brush
+core, ML sidecar), `archive/version_3_design.md` (v3: card
 system, zyme register, mask brush), `v4_design.md` + `v4_design_notes.md`
 (v4: the legible deck — card standard, deck overlay, plinth, Foundry).
 
@@ -204,7 +215,7 @@ Within a card you adjust freely (including within-card brush undo/redo);
 after End it is baked in. Commitment is the central mechanic, not a
 missing feature.
 
-**The session arc** (v3 detail in `version_3_design.md`): opening pick
+**The session arc** (v3 detail in `archive/version_3_design.md`): opening pick
 (6×4 grid of 24; take two, strictly one *placed*, one *stashed*) →
 placement (move/scale/rotate + the standing mask brush) → Act I (~4 mod
 cards) → stash return → Act II (~2 rounds, then death cards shuffle in;
@@ -227,7 +238,7 @@ on a creative process. It must never *present* as a game.
   compose, finish, export, this round.* "Card" and "deck" stay.
 - Card names use the **zyme register**: one concrete process word (Bruise,
   Steep, Stain, Char, Cure), never a settings-menu label
-  (`version_3_design.md` §4). Subliminal Etch is the one deliberate
+  (`archive/version_3_design.md` §4). Subliminal Etch is the one deliberate
   two-word exception.
 - **No celebratory / gamer affect.** A piece is *finished*, not beaten.
 - **"Death card" is a design-conversation term, never UI copy** — on
@@ -292,10 +303,15 @@ the backend.
 ```
 zymeDraw/
 ├── CLAUDE.md · README.md · hotkeys.md   # this file / setup / hotkey map
-├── design_changes_july2.md · redesign_v2_plan.md · version_3_design.md
 ├── v4_design.md · v4_design_notes.md    # v4 spec + card-design backlog (its §10)
-├── v5_plan.md                           # ACTIVE PLAN — glue/ZYME (its §7 waves)
-├── card_anatomy.md                      # the card designer's contract (§11)
+├── v5_plan.md · v6_plan.md              # ACTIVE PLANS — v5 glue/ZYME · v6 card line
+├── card_anatomy.md · card_maker.md      # card designer's contract (§11) · Foundry spec
+├── server_plan.md                       # recursion server + switchboard founding doc
+├── archive/                             # superseded plans + one-off records
+│   ├── design_changes_july2.md · redesign_v2_plan.md · version_3_design.md  # v1–v3
+│   ├── shattered_transfer_plan.md       # retired style-transfer card plan
+│   ├── debug_loop.md · debug_loop_findings.md   # June /loop debug run
+│   └── ui_flexibility_audit.md · classifiers.md # one-off audit · early scratch note
 ├── cardPNG/                  # local-only placeholder card art (gitignored)
 ├── frontend/src/             # main.jsx · App.jsx · Setup.jsx
 │   ├── assets/cards/         # card faces <id>.png, 745×1040

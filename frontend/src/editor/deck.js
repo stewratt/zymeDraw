@@ -30,7 +30,7 @@ export const TUNING = {
 
 // The mod deck: one entry per card design, expanded by copy count and
 // shuffled at session start. Rebalancing the deck = editing this array
-// (target ratios in version_3_design.md §8–9). Names and descriptions
+// (target ratios in archive/version_3_design.md §8–9). Names and descriptions
 // live in cardText.js — labels are derived from it below, so a rename
 // happens there, never here.
 export const MOD_CARDS = [
