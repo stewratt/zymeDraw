@@ -35,6 +35,25 @@ Stew still owes before each wave opens. The old line-branch convention
 (`v5` as the card line's standing branch) is retired in favor of the
 per-issue branches above; `v5` remains only as history.
 
+**The deck editor (card line Wave 5, issue #16) — built 2026-07-10 on
+branch `claude/deck-editor-16`, awaiting Stew's browser verification.**
+Built ahead of the remaining Kid Pix cards (Stew's call: the room exists
+*before* the pool bloats, reversing the plan's original ordering). A room
+off the setup screen — plainly named **Deck editor** per the new §1
+legibility clause — where the next session's deck is assembled from the
+pool (= all active `MOD_CARDS` designs) under a cap. Rules (cap 22 /
+floor 12 / max 3 copies per design) live in `DeckEditor.jsx`, NOT
+`deck.js`: the reducer never learns about the room; its entire output is
+a `[{ id, copies }]` spec handed to `initialState(deckSpec)` (rides
+`state.deckSpec` so Restart rebuilds the same deck; null = house deck;
+unknown ids are dropped in `resolveSpec`, empty falls back to house).
+Saved decks persist per machine in `~/.deck-config.json` (`decks` key,
+whole-list replace via `POST /api/decks`). Starting points: House deck
+only until the pool grows (archetypes are one-line data entries). NOTE:
+the cap is 22 because the house deck is *already* 21 (22 once Lift
+merges) — Stew's approved "cap 20" needs a deliberate deck-thinning
+pass or a cap retune; flagged, one-number edit either way.
+
 **`main` holds the complete v1 → v4 tool, verified by Stew** — v4 merged
 (fast-forward) 2026-07-07. The version story lives in the design docs
 (v1–v4 now under `archive/`): `archive/design_changes_july2.md` (v1
@@ -262,6 +281,14 @@ on a creative process. It must never *present* as a game.
   (`archive/version_3_design.md` §4). Subliminal Etch is the one deliberate
   two-word exception.
 - **No celebratory / gamer affect.** A piece is *finished*, not beaten.
+- **The legibility clause (2026-07-10, Stew's ruling):** the register is
+  not a totalizing rule. Some things are better named legibly than
+  creatively for the sake of UX — navigation and utility surfaces
+  especially, where a flavored name would cost the user clarity. The rule
+  exists to keep *game* affect out, not to make the UI oblique. First
+  case: the deck-assembly room is plainly the **Deck editor** on screen
+  (the §6 candidates *case/drawer/tray/press bed* were passed over for
+  exactly this reason). Card *names* keep the register.
 - **"Death card" is a design-conversation term, never UI copy** — on
   screen it's the **Coda**.
 - Apply to everything user-facing: copy, labels, states, new names.
