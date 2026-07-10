@@ -30,7 +30,7 @@
     },
     "lift": {
       "name": "Lift",
-      "description": "Cut a rectangle of the piece loose and set it down elsewhere. Nothing new enters — the pixels change address, and the vacancy stays white."
+      "description": "Copy a rectangle of the piece and stamp it down elsewhere. The source stays where it is — a second impression, cropped where it runs off the edge."
     },
     "dust": {
       "name": "Dust",
@@ -127,8 +127,8 @@
       "preparing": "Preparing the dust…"
     },
     "lift": {
-      "takeHint": "Drag a rectangle over the piece — on release it lifts free and follows your hand. Take as many as the round wants.",
-      "carryHint": "Click to set it down where it hangs. Esc returns it to its place."
+      "takeHint": "Drag a rectangle over the piece — on release a copy lifts free and follows your hand. Stamp as many as the round wants.",
+      "carryHint": "Click to stamp the copy where it hangs. Esc discards it."
     },
     "etch": {
       "frameHint": "Drag the small frame to where the mark should hide. Its size is fixed — about a hundred pixels of the piece.",
@@ -381,7 +381,7 @@
       "Enter": "The primary action — End, Deal, begin again. Never confirms the opening pick.",
       "Space": "Deal.",
       "Shift+R": "Restart. It destroys the piece, so it takes two keys.",
-      "Esc": "Back out: deselect, put a grid pick back, return a lifted piece, close this."
+      "Esc": "Back out: deselect, put a grid pick back, discard a copy in hand, close this."
     },
     "brush": {
       "title": "Brush in hand",

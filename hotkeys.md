@@ -178,7 +178,7 @@ These target the active/topmost placed object (Deeper: the frame rect).
 | Rack | **F** / **Shift+F** | Flip H / Flip V |
 | Etch | **Enter** | Advances the chain: frame placed → Zoom in (then End as usual) — Enter as "next step", consistent with §5.1 |
 | Etch | **`[` / `]`** | Pixel size − / + (its own tiny scale) |
-| Lift | **Esc** | A lifted piece in hand returns to its place — the §5.1 back-out, extended; with nothing in hand the key passes along |
+| Lift | **Esc** | Discards a copy in hand (or clears a marquee mid-drag) — the §5.1 back-out, extended; with nothing in progress the key passes along |
 | Steep, Rails, Etch (any `color` control) | **N** | Re-roll a new random hue — extends the "color pickers open random" invariant into the session |
 | Ghost / Stain / Stamp grids | **Enter** | Confirm once an image is taken (decided: allowed — a single-pick card grid is a smaller decision than the opening, which keeps its no-Enter rule) |
 

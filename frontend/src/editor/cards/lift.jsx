@@ -1,14 +1,16 @@
-// Lift — the truck (cards_plan.md §3). Relocation only: drag a rectangle
-// over the piece, its pixels lift free and follow the hand, a click sets
-// them down. Nothing new enters the piece; the vacancy stays white. The
-// machinery is the lift session (editor/liftSession.js) — this file is only
-// the card's voice: hooks, the Esc accent, and the panel.
+// Lift — the clone stamp (cards_plan.md §3). Copy only: drag a rectangle
+// over the piece, a copy of its pixels lifts free and follows the hand, a
+// click stamps it down. The source stays untouched — a second impression is
+// added, nothing is removed. The machinery is the clone session
+// (editor/liftSession.js) — this file is only the card's voice: hooks, the
+// Esc accent, and the panel.
 
 import { UI } from '../../copy/uiText.js'
 import { createLiftSession } from '../liftSession.js'
 
-// Esc returns a carried piece to its place (hotkeys.md §5.4). With nothing
-// in hand the key passes along to the global back-out.
+// Esc discards a copy in hand, or clears a marquee mid-drag (hotkeys.md
+// §5.4). With nothing in progress the key passes along to the global
+// back-out.
 export const liftHotkeys = [
   {
     key: 'Escape',
@@ -25,8 +27,8 @@ export function beginLift(ctx) {
 }
 
 export function commitLift(ctx) {
-  // A piece still in hand settles where it hangs; the holes and set-downs
-  // stay on the canvas for the universal bake.
+  // A copy still in hand settles where it hangs; the stamped copies stay on
+  // the canvas for the universal bake.
   ctx.session?.settle()
   ctx.session?.dispose({ keepObjects: true })
 }

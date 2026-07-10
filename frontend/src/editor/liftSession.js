@@ -1,24 +1,29 @@
-// The lift session — the third gesture engine, sibling to brushCore's
-// stroke engines (cards_plan.md §3: the Kid Pix truck).
+// The clone session — the third gesture engine, sibling to brushCore's
+// stroke engines (cards_plan.md §3).
 //
-// The rule: NOTHING NEW ENTERS THE PIECE. A lift relocates the piece's own
-// pixels — a press-drag marquee chooses a rectangle, on release its master
-// pixels lift free as a floating image that follows the cursor, and a click
-// sets it down. The vacated space fills with the ground white (hole v1; the
-// hole's contents are a future variant card, never a control). A round is a
-// series of these gestures.
+// The rule: a gesture COPIES a rectangle of the piece and stamps it down
+// elsewhere. A press-drag marquee chooses the source rectangle; on release
+// a copy of its master pixels lifts free as a floating image that follows
+// the cursor, and a click stamps it down. The source stays exactly as it
+// was — nothing is removed, nothing white is left behind; the copy simply
+// adds a second impression of what was already there. A round is a series
+// of these clone gestures.
 //
-// Master discipline: the marquee snaps to whole master pixels, the lifted
-// element is a master-resolution canvas displayed at 1/MASTER_SCALE, and the
-// set-down snaps back to the master grid — so the universal bake lands every
-// relocation 1:1, no resampling. Lifted pixels are read from a composite of
-// the master plus the round's earlier gestures (holes + set-downs, in
-// order), so lifting where you just set something down takes what you see.
+// Master discipline: the marquee snaps to whole master pixels, the copied
+// element is a master-resolution canvas displayed at 1/MASTER_SCALE, and
+// the stamp-down snaps back to the master grid — so the universal bake
+// lands every clone 1:1, no resampling. A copy carried past an edge is
+// cropped by the bake (it renders only the visible canvas); that is by
+// design — the source is untouched, so nothing unique is ever lost.
+//
+// Copied pixels are read from a composite of the master plus the round's
+// earlier clones, in order — so cloning a region you just stamped into
+// takes what you see.
 //
 // Undo/redo is per gesture, reported through the card's ctx (the sanctioned
-// within-card channel): undo removes the last hole + set-down pair, redo
-// restores it. Both are held while a piece is in hand — a carry reads from
-// a composite that an undo would falsify.
+// within-card channel): undo removes the last stamped copy, redo restores
+// it. Both are held while a copy is in hand — a carry reads from a
+// composite that an undo would falsify.
 //
 // The fracture family (cards_plan.md §4) is expected to inherit this
 // machinery — keep the card-specific voice in lift.jsx, not here.
@@ -27,7 +32,6 @@ import * as fabric from 'fabric'
 import { MASTER_SCALE } from './masterRaster.js'
 
 const MIN_LIFT = 6 // display px per side — smaller is a click, not a take
-const GROUND = '#ffffff' // the master's ground (masterRaster.createMaster)
 
 // Marquee visuals: white-under-black dashed pair, Etch's frame trick, so
 // the rectangle reads on any ground.
@@ -53,10 +57,10 @@ function makeMarqueeRects() {
 
 export function createLiftSession(canvas, master, { onStateChange }) {
   const S = MASTER_SCALE
-  const gestures = [] // { src, dest, pixels, hole, img } — set down, in order
+  const gestures = [] // { dest, pixels, img } — stamped copies, in order
   let redoStack = []
-  let marquee = null // { rects, start } while the take-rectangle is dragging
-  let carry = null // { img, hole, src, pixels, offsetX, offsetY } in hand
+  let marquee = null // { rects, start } while the source-rectangle is dragging
+  let carry = null // { img, pixels, offsetX, offsetY } in hand
 
   const saved = {
     selection: canvas.selection,
@@ -71,25 +75,20 @@ export function createLiftSession(canvas, master, { onStateChange }) {
   function notify() {
     onStateChange?.({
       stage: carry ? 'carry' : 'take',
-      lifts: gestures.length,
       canUndo: !carry && gestures.length > 0,
       canRedo: !carry && redoStack.length > 0
     })
   }
 
-  // The piece as it stands mid-round: the master plus every set-down gesture
-  // replayed in order — a later hole may punch through an earlier landing.
+  // The piece as it stands mid-round: the master plus every stamped copy
+  // replayed in order.
   function compositeCurrent() {
     const c = document.createElement('canvas')
     c.width = master.width
     c.height = master.height
     const ctx = c.getContext('2d')
     ctx.drawImage(master, 0, 0)
-    ctx.fillStyle = GROUND
-    for (const g of gestures) {
-      ctx.fillRect(g.src.x, g.src.y, g.src.w, g.src.h)
-      ctx.drawImage(g.pixels, g.dest.x, g.dest.y)
-    }
+    for (const g of gestures) ctx.drawImage(g.pixels, g.dest.x, g.dest.y)
     return c
   }
 
@@ -117,8 +116,9 @@ export function createLiftSession(canvas, master, { onStateChange }) {
     canvas.requestRenderAll()
   }
 
-  // Release of the marquee: the region's pixels lift free and follow the
-  // cursor from where they lie — no jump; the first movement is the drag.
+  // Release of the marquee: a copy of the region's pixels lifts free and
+  // follows the cursor from where it lies — no jump; the first movement is
+  // the drag. The source pixels stay untouched behind it.
   function beginCarry(bounds, scenePoint) {
     const src = {
       x: Math.round(bounds.left * S),
@@ -131,17 +131,6 @@ export function createLiftSession(canvas, master, { onStateChange }) {
     pixels.height = src.h
     pixels.getContext('2d').drawImage(compositeCurrent(), src.x, src.y, src.w, src.h, 0, 0, src.w, src.h)
 
-    const hole = new fabric.Rect({
-      left: src.x / S,
-      top: src.y / S,
-      width: src.w / S,
-      height: src.h / S,
-      originX: 'left',
-      originY: 'top',
-      fill: GROUND,
-      selectable: false,
-      evented: false
-    })
     const img = new fabric.FabricImage(pixels, {
       left: src.x / S,
       top: src.y / S,
@@ -152,29 +141,31 @@ export function createLiftSession(canvas, master, { onStateChange }) {
       selectable: false,
       evented: false
     })
-    canvas.add(hole)
     canvas.add(img)
+    // Offset the copy against the clamped release point, so releasing the
+    // marquee past an edge doesn't snap the copy away from the cursor.
+    const rx = clamp(scenePoint.x, 0, canvas.getWidth())
+    const ry = clamp(scenePoint.y, 0, canvas.getHeight())
     carry = {
       img,
-      hole,
-      src,
       pixels,
-      offsetX: img.left - scenePoint.x,
-      offsetY: img.top - scenePoint.y
+      offsetX: img.left - rx,
+      offsetY: img.top - ry
     }
     canvas.defaultCursor = 'grabbing'
     canvas.requestRenderAll()
     notify()
   }
 
-  // Click sets it down: snap to the master grid so the bake is 1:1, lock
-  // the gesture into the record, and the hand is free for the next take.
+  // Click stamps it down: snap to the master grid so the bake is 1:1 (a copy
+  // hanging past an edge crops there), lock the gesture into the record, and
+  // the hand is free for the next take.
   function setDown() {
-    const { img, hole, src, pixels } = carry
+    const { img, pixels } = carry
     const dest = { x: Math.round(img.left * S), y: Math.round(img.top * S) }
     img.set({ left: dest.x / S, top: dest.y / S })
     img.setCoords()
-    gestures.push({ src, dest, pixels, hole, img })
+    gestures.push({ dest, pixels, img })
     redoStack = []
     carry = null
     canvas.defaultCursor = 'crosshair'
@@ -223,20 +214,26 @@ export function createLiftSession(canvas, master, { onStateChange }) {
   notify()
 
   return {
-    // Esc while a piece is in hand: it returns to its place — the hole
-    // closes with it. Returns false when there is nothing to return, so the
-    // key can pass along to the global back-out.
+    // Esc backs out the take in progress: a copy in hand is discarded, or a
+    // marquee mid-drag is cleared. Returns false when there is nothing to
+    // back out, so the key can pass along to the global back-out.
     cancelCarry() {
-      if (!carry) return false
-      canvas.remove(carry.hole, carry.img)
-      carry = null
-      canvas.defaultCursor = 'crosshair'
-      canvas.requestRenderAll()
-      notify()
-      return true
+      if (carry) {
+        canvas.remove(carry.img)
+        carry = null
+        canvas.defaultCursor = 'crosshair'
+        canvas.requestRenderAll()
+        notify()
+        return true
+      }
+      if (marquee) {
+        removeMarquee()
+        return true
+      }
+      return false
     },
 
-    // End mid-carry: the piece settles where it hangs.
+    // End mid-carry: the copy settles where it hangs.
     settle() {
       if (carry) setDown()
       removeMarquee()
@@ -245,7 +242,7 @@ export function createLiftSession(canvas, master, { onStateChange }) {
     undo() {
       if (carry || gestures.length === 0) return
       const g = gestures.pop()
-      canvas.remove(g.hole, g.img)
+      canvas.remove(g.img)
       redoStack.push(g)
       canvas.requestRenderAll()
       notify()
@@ -254,24 +251,23 @@ export function createLiftSession(canvas, master, { onStateChange }) {
     redo() {
       if (carry || redoStack.length === 0) return
       const g = redoStack.pop()
-      canvas.add(g.hole)
       canvas.add(g.img)
       gestures.push(g)
       canvas.requestRenderAll()
       notify()
     },
 
-    // keepObjects: true on commit (the holes + set-downs stay for the
-    // universal bake), false on cleanup (Restart leaves nothing behind).
+    // keepObjects: true on commit (the stamped copies stay for the universal
+    // bake), false on cleanup (Restart leaves nothing behind).
     dispose({ keepObjects }) {
       canvas.off('mouse:down', onMouseDown)
       canvas.off('mouse:move', onMouseMove)
       canvas.off('mouse:up', onMouseUp)
       removeMarquee()
       if (!keepObjects) {
-        if (carry) canvas.remove(carry.hole, carry.img)
-        for (const g of gestures) canvas.remove(g.hole, g.img)
-        for (const g of redoStack) canvas.remove(g.hole, g.img)
+        if (carry) canvas.remove(carry.img)
+        for (const g of gestures) canvas.remove(g.img)
+        for (const g of redoStack) canvas.remove(g.img)
       }
       carry = null
       canvas.selection = saved.selection

@@ -135,6 +135,14 @@ move, drop.*
   **Built 2026-07-10 (issue #13) as Lift, id `lift`** — the register
   reading's own lean, adopted as the suggested answer. The name stays
   free to drift (one `uiText.json` edit); the id is cut.
+  **Pivoted during PR review (2026-07-10): the truck became a clone
+  stamp.** Rather than lifting a rectangle free and leaving a white hole,
+  the gesture now *copies* the rectangle and stamps the copy elsewhere —
+  the source is untouched, nothing is removed. Off-edge placement crops
+  the copy on commit (the source is preserved, so no unique pixel is
+  lost). The white-hole "lift" and its inpaint/excavation variants above
+  are now unbuilt design space, not the shipped card. The name "Lift" may
+  want to follow the concept (clone/print/twin register); Stew's call.
 
 ---
 

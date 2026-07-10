@@ -103,17 +103,20 @@ panel at the Coda; `Plinth.jsx`, lazy-loaded), and the state cache (every
 bake keeps a captioned full-res JPEG in memory; **C** leafs the plinth
 face through the states; Restart clears it; capture-and-view only).
 
-**The lift brush — Lift (card line Wave 2, issue #13) — built 2026-07-10
+**The clone stamp — Lift (card line Wave 2, issue #13) — built 2026-07-10
 on branch `claude/brush-engine-size-l-pd4q7t`, awaiting Stew's browser
-verification.** Name locked from the plan's register reading: **Lift**
-(the printmaking term), id `lift`, 1 copy. New primitive: the *lift
-session* (`editor/liftSession.js`, sibling to brushCore's stroke engines)
-— press-drag a marquee, on release the region's master pixels lift free
-and follow the cursor, click sets them down; the vacancy fills white
-(hole v1 per the plan; hole variants are a future card, not a control).
-Multiple lifts per round, per-gesture undo/redo, Esc returns a carried
-piece. Everything snaps to the master grid so the bake is 1:1. The
-fracture exemplar (#15) inherits this machinery.
+verification.** Id `lift`, 1 copy (name still "Lift"; may drift now the
+truck concept is gone — copy's Stew's). **Pivoted from the truck brush to
+a clone stamp during the PR review (2026-07-10):** the gesture now *copies*
+a rectangle rather than lifting it — the source stays untouched, no white
+hole, a second impression is added. Interaction unchanged (marquee → a copy
+follows the cursor → click stamps it down). New primitive: the clone session
+(`editor/liftSession.js`, sibling to brushCore's stroke engines). Off-edge
+placement crops on commit by design — because the source is preserved,
+nothing unique is ever lost (this pivot is what closed the review's
+data-loss finding). Multiple stamps per round, per-gesture undo/redo, Esc
+discards a copy in hand. Everything snaps to the master grid so the bake is
+1:1. The fracture exemplar (#15) inherits this machinery.
 
 **Awaiting Stew's browser verification: Cull + Skim (Wave 2, built
 2026-07-06)**, one copy each. Cull: remains face up, take one
