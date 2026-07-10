@@ -81,6 +81,27 @@ app.post('/api/config', async (req, res) => {
   res.json({ ok: true, ...saved })
 })
 
+// Saved decks (the deck editor's persistence). The whole list is replaced
+// on every save — decks are tiny and the room always holds the full set.
+// Only the stored shape survives ([{ name, cards: [{ id, copies }] }]),
+// mirroring the copy editor's discipline: a client can change values,
+// never smuggle in structure. Ids are NOT validated against the card pool
+// here — the pool is frontend knowledge; deck.js drops unknown ids itself.
+app.post('/api/decks', async (req, res) => {
+  const { decks } = req.body ?? {}
+  if (!Array.isArray(decks)) {
+    return res.status(400).json({ ok: false, error: 'decks must be an array.' })
+  }
+  const clean = decks.slice(0, 50).map((d) => ({
+    name: String(d?.name ?? '').trim().slice(0, 60),
+    cards: (Array.isArray(d?.cards) ? d.cards : [])
+      .filter((c) => c && typeof c.id === 'string' && Number.isInteger(c.copies) && c.copies > 0)
+      .map((c) => ({ id: c.id, copies: Math.min(c.copies, 9) }))
+  })).filter((d) => d.name && d.cards.length > 0)
+  const saved = await saveConfig({ decks: clean })
+  res.json({ ok: true, decks: saved.decks })
+})
+
 app.get('/api/images', async (req, res) => {
   const { inputFolder } = await loadConfig()
   if (!inputFolder) {
