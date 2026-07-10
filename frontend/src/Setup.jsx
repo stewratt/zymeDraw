@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react'
 import { UI, fmt } from './copy/uiText.js'
 import { rich } from './copy/rich.jsx'
 import { loadCardSets, setActiveCardSet, useActiveCardSet, useCardSets } from './editor/cardArt.js'
+import { MOD_CARDS } from './editor/deck.js'
 
 const T = UI.setup
 
-function Setup({ initial, onContinue }) {
+function Setup({ initial, deckName, deckSpec, onOpenDeckEditor, onContinue }) {
   const [inputFolder, setInputFolder] = useState(initial.inputFolder || '')
   const [outputFolder, setOutputFolder] = useState(initial.outputFolder || '')
   const [errors, setErrors] = useState({ inputFolder: null, outputFolder: null })
@@ -223,6 +224,21 @@ function Setup({ initial, onContinue }) {
           </div>
         )}
       </label>
+
+      <div className="field">
+        <span className="field-label">{T.deckLabel}</span>
+        <div className="field-row deck-row">
+          <span className="deck-name">
+            {fmt(T.deckLine, {
+              name: deckName,
+              count: (deckSpec ?? MOD_CARDS).reduce((sum, c) => sum + c.copies, 0)
+            })}
+          </span>
+          <button type="button" className="browse" onClick={onOpenDeckEditor}>
+            {T.deckEditorButton}
+          </button>
+        </div>
+      </div>
 
       <button type="submit" disabled={!canSubmit}>
         {submitting ? T.continueChecking : T.continue}

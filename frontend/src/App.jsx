@@ -1,22 +1,25 @@
 import { useEffect, useState } from 'react'
 import Setup from './Setup.jsx'
+import DeckEditor from './DeckEditor.jsx'
 import Editor from './editor/Editor.jsx'
 import { UI } from './copy/uiText.js'
 import { loadCardSets } from './editor/cardArt.js'
 
-// Top-level router. Phase 2: setup → editor.
-// (The Phase 1 "Ready" screen has been removed; it was only ever a temporary
-// confirmation that folders worked.)
+// Top-level router: setup → editor, with the deck editor as a room off
+// setup. The chosen deck lives here (spec: null = the house deck) and is
+// handed to Editor, which seeds the reducer with it — App never holds deck
+// logic, just the choice.
 function App() {
-  const [stage, setStage] = useState('loading') // loading | setup | editor
-  const [config, setConfig] = useState({ inputFolder: '', outputFolder: '', homedir: '' })
+  const [stage, setStage] = useState('loading') // loading | setup | deckEditor | editor
+  const [config, setConfig] = useState({ inputFolder: '', outputFolder: '', homedir: '', decks: [] })
+  const [deck, setDeck] = useState({ spec: null, name: UI.deckEditor.houseDeckName })
 
   useEffect(() => {
     loadCardSets() // populate the card-set store; faces resolve before Setup
     fetch('/api/config')
       .then((r) => r.json())
       .then((data) => {
-        setConfig(data)
+        setConfig({ decks: [], ...data })
         setStage('setup')
       })
       .catch(() => setStage('setup'))
@@ -30,6 +33,9 @@ function App() {
     return (
       <Setup
         initial={config}
+        deckName={deck.name}
+        deckSpec={deck.spec}
+        onOpenDeckEditor={() => setStage('deckEditor')}
         onContinue={(saved) => {
           setConfig({ ...config, ...saved })
           setStage('editor')
@@ -38,7 +44,22 @@ function App() {
     )
   }
 
-  return <Editor config={config} onBackToSetup={() => setStage('setup')} />
+  if (stage === 'deckEditor') {
+    return (
+      <DeckEditor
+        decks={config.decks ?? []}
+        active={deck}
+        onUse={(spec, name) => {
+          setDeck({ spec, name })
+          setStage('setup')
+        }}
+        onBack={() => setStage('setup')}
+        onDecksSaved={(decks) => setConfig((c) => ({ ...c, decks }))}
+      />
+    )
+  }
+
+  return <Editor config={config} deckSpec={deck.spec} onBackToSetup={() => setStage('setup')} />
 }
 
 export default App

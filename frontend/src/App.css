@@ -197,6 +197,213 @@ button.link:hover {
   text-align: center;
 }
 
+/* The deck line on setup: current deck name + the door to the editor. */
+.deck-row {
+  align-items: center;
+}
+.deck-name {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+/* ---------- Deck editor ---------- */
+
+.deck-editor {
+  max-width: 640px;
+  margin: 48px auto;
+  padding: 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.deck-editor header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.deck-editor header .link {
+  align-self: flex-start;
+  padding: 0;
+}
+.deck-editor h1 {
+  margin: 0;
+  font-weight: 200;
+  letter-spacing: 0.2em;
+  font-size: 1.5rem;
+}
+.deck-editor .muted {
+  color: var(--text-dim);
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+/* The running count — the cap made visible. Sticks while the pool scrolls. */
+.deck-count {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
+  padding: 8px 0;
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+}
+.deck-count.illegal {
+  color: var(--text);
+  border-bottom-color: var(--sel-border);
+}
+.deck-count-note {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.deck-starting-points {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.deck-editor button:not(.link) {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--sel-border);
+  border-radius: var(--radius);
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.deck-editor button:not(.link):hover:not(:disabled) {
+  background: var(--sel-bg);
+}
+.deck-editor button:not(.link):disabled {
+  color: var(--text-mute);
+  border-color: var(--border);
+  cursor: not-allowed;
+}
+
+.deck-pool {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.deck-pool li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+.deck-pool li.excluded {
+  opacity: 0.45;
+}
+.deck-pool-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.deck-pool-name {
+  font-size: 0.9rem;
+}
+.deck-pool-tag {
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1px 6px;
+}
+.deck-pool-stepper {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.deck-pool-stepper button {
+  width: 28px;
+  padding: 2px 0;
+  text-align: center;
+}
+.deck-pool-copies {
+  min-width: 28px;
+  text-align: center;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.deck-saved {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.deck-saved ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.deck-saved li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.deck-saved-name {
+  flex: 1;
+  font-size: 0.9rem;
+}
+.deck-saved-name .muted {
+  color: var(--text-dim);
+}
+.deck-editor input[type="text"] {
+  font: inherit;
+  font-size: 0.9rem;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+}
+.deck-editor input[type="text"]:focus {
+  outline: none;
+  border-color: var(--border-strong);
+}
+
+.deck-editor button.deck-use {
+  align-self: stretch;
+  padding: 12px;
+  background: var(--fill);
+  color: var(--text);
+  border: none;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.deck-editor button.deck-use:hover:not(:disabled) {
+  background: var(--fill-hover);
+}
+.deck-editor button.deck-use:disabled {
+  background: var(--border);
+  color: var(--text-mute);
+  cursor: not-allowed;
+}
+
 /* ---------- Ready (Phase 1 confirmation) view ---------- */
 
 .ready {

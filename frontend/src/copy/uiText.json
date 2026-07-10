@@ -287,7 +287,30 @@
     "cardSetsPlaceholder": "absolute path to your card faces folder",
     "cardSetsSetLabel": "Active set",
     "cardSetsBuiltin": "Built-in faces",
-    "cardSetsEmpty": "No sets in that folder yet — add a subfolder of card PNGs."
+    "cardSetsEmpty": "No sets in that folder yet — add a subfolder of card PNGs.",
+    "deckLabel": "Deck",
+    "deckLine": "{name} · {count} cards",
+    "deckEditorButton": "Deck editor…"
+  },
+  "deckEditor": {
+    "title": "Deck editor",
+    "subtitle": "Assemble the deck the next session deals from. Codas are never edited here — three are always shuffled in late.",
+    "countLine": "{count} of {cap} cards · minimum {floor}",
+    "tooFew": "Too few — add cards to reach the minimum.",
+    "tooMany": "Over the cap — remove cards.",
+    "startingPointsLabel": "Starting points",
+    "houseDeckName": "House deck",
+    "customDeckName": "Custom deck",
+    "savedLabel": "Saved decks (this machine)",
+    "savedEmpty": "No saved decks yet.",
+    "load": "Load",
+    "delete": "Delete",
+    "namePlaceholder": "name this deck to save it",
+    "save": "Save deck",
+    "saveFailed": "Could not save: {message}",
+    "use": "Use this deck",
+    "back": "← back",
+    "deckCardTag": "deck card"
   },
   "editor": {
     "backToSetup": "← setup",
