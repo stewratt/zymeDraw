@@ -10,12 +10,13 @@ const T = UI.deckEditor
 // These numbers only gate what the room will hand it.
 //
 // The cap is the whole point: set-knowledge is free only while the set fits
-// in your head. It sits at the house deck's current size — zero headroom
-// today; the pool's growth (the Kid Pix cards) is what creates choices.
-// The floor keeps a lean deck honest: acts consume actOneRounds +
-// actTwoRounds = 6 cards before the death shuffle, so 12 leaves a real
-// late game rather than an instant Coda.
-export const DECK_CAP = 22
+// in your head. 20 was the rule before the pool grew and it holds (Stew,
+// 2026-07-10) — the house deck was thinned to fit it exactly; the pool's
+// growth (the Kid Pix cards) is what creates choices. The floor keeps a
+// lean deck honest: acts consume actOneRounds + actTwoRounds = 6 cards
+// before the death shuffle, so 12 leaves a real late game rather than an
+// instant Coda.
+export const DECK_CAP = 20
 export const DECK_FLOOR = 12
 export const MAX_COPIES = 3
 

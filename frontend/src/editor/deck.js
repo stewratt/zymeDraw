@@ -34,8 +34,11 @@ export const TUNING = {
 // live in cardText.js — labels are derived from it below, so a rename
 // happens there, never here.
 export const MOD_CARDS = [
-  { id: 'ghost', copies: 2 }, // Graft × Rise
-  { id: 'stain', copies: 2 }, // Graft × Sink
+  // House deck thinned to the 20-card cap (2026-07-10, Stew's cuts):
+  // Ghost 2→1, Stain 2→1, Blur 1→2. The pool is unchanged — a built deck
+  // may still run any design up to the deck editor's max copies.
+  { id: 'ghost', copies: 1 }, // Graft × Rise
+  { id: 'stain', copies: 1 }, // Graft × Sink
   { id: 'stamp', copies: 2 }, // Graft (cutout)
   { id: 'rails', copies: 1 }, // Stencil × solid
   { id: 'char', copies: 1 }, // Stencil × Sink
@@ -46,7 +49,7 @@ export const MOD_CARDS = [
   // { id: 'rack', copies: 1 }, // Re-frame, neutral
   { id: 'dust', copies: 2 }, // Reveal × deposit
   { id: 'bruise', copies: 1 }, // Reveal × Bruise
-  { id: 'blur', copies: 1 }, // Reveal × blur — provisional (§6.3)
+  { id: 'blur', copies: 2 }, // Reveal × blur — provisional (§6.3)
   { id: 'steep', copies: 1 }, // Wash × Sink
   { id: 'hue', copies: 1 }, // Wash (hue)
   { id: 'cure', copies: 1 }, // Wash × Cure

@@ -41,7 +41,7 @@ Built ahead of the remaining Kid Pix cards (Stew's call: the room exists
 *before* the pool bloats, reversing the plan's original ordering). A room
 off the setup screen — plainly named **Deck editor** per the new §1
 legibility clause — where the next session's deck is assembled from the
-pool (= all active `MOD_CARDS` designs) under a cap. Rules (cap 22 /
+pool (= all active `MOD_CARDS` designs) under a cap. Rules (cap 20 /
 floor 12 / max 3 copies per design) live in `DeckEditor.jsx`, NOT
 `deck.js`: the reducer never learns about the room; its entire output is
 a `[{ id, copies }]` spec handed to `initialState(deckSpec)` (rides
@@ -49,10 +49,12 @@ a `[{ id, copies }]` spec handed to `initialState(deckSpec)` (rides
 unknown ids are dropped in `resolveSpec`, empty falls back to house).
 Saved decks persist per machine in `~/.deck-config.json` (`decks` key,
 whole-list replace via `POST /api/decks`). Starting points: House deck
-only until the pool grows (archetypes are one-line data entries). NOTE:
-the cap is 22 because the house deck is *already* 21 (22 once Lift
-merges) — Stew's approved "cap 20" needs a deliberate deck-thinning
-pass or a cap retune; flagged, one-number edit either way.
+only until the pool grows (archetypes are one-line data entries). The
+20-card cap held (Stew, 2026-07-10: "just because 22 cards exist doesn't
+mean it needs to be that size") and the house deck was thinned to fit it
+exactly: Ghost 2→1, Stain 2→1, Blur 1→2. OPEN at the Lift merge (#33):
+Lift's `MOD_CARDS` line takes the house deck to 21 — either one more
+cut lands with it or Lift enters pool-only; decide there.
 
 **`main` holds the complete v1 → v4 tool, verified by Stew** — v4 merged
 (fast-forward) 2026-07-07. The version story lives in the design docs

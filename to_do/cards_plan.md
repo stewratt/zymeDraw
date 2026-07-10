@@ -245,12 +245,15 @@ ordering. What shipped, against the proposal below:
   legibly than creatively for the sake of UX. Now a standing clause in
   CLAUDE.md §1 (tone). The *case/drawer/tray/press bed* riffs were
   passed over for exactly this reason.
-- **Cap 22 · floor 12 · max 3 copies per design**, constants in
+- **Cap 20 · floor 12 · max 3 copies per design**, constants in
   `DeckEditor.jsx` — deliberately NOT in `deck.js` (the reducer never
-  learned about the room, per the architecture stance below). Stew
-  approved "cap 20, floor 12," but the house deck is *already* 21 (22
-  once Lift merges) — the cap sits at 22 so the house deck stays legal;
-  bringing it down to 20 means a deliberate thinning pass. Flagged.
+  learned about the room, per the architecture stance below). The cap
+  briefly shipped as 22 (the house deck had crept to 21); Stew held the
+  line — "just because 22 cards exist doesn't mean it needs to be that
+  size" — and cut the house deck to fit: **Ghost 2→1, Stain 2→1,
+  Blur 1→2 = 20 exactly**. Open at the Lift merge (#33): Lift's line
+  takes the house deck to 21, so one more cut lands with it or Lift
+  enters pool-only. Decide there.
 - **Pool = all active `MOD_CARDS` designs** (Stew: current designs
   only — Rack and the transfers stay comment-lines until deliberately
   promoted; when a line is uncommented the pool grows by itself).
@@ -334,9 +337,9 @@ Parallel as ever: the inherited backlog (§0, now under `archive/`) and the
    CLAUDE.md §1.
 6. **The cap** (Wave 5): is N = 20 right, and may a built deck go
    *under* the cap (a lean 12-card deck as a legal, faster session)?
-   **Answered 2026-07-10: cap with a floor of 12** — a lean deck is a
+   **Answered 2026-07-10: cap 20, floor 12** — a lean deck is a
    legal, faster session; the floor keeps the death-shuffle honest
-   (acts consume 6 cards). Stew said cap 20, but the house deck is
-   already 21 (22 with Lift), so the build ships cap 22 — **still owed:
-   thin the house deck to 20, or bless 22** (one number either way,
-   `DECK_CAP` in `DeckEditor.jsx`).
+   (acts consume 6 cards). The house deck was thinned the same day to
+   fit the cap exactly (Ghost 2→1, Stain 2→1, Blur 1→2; §6). The one
+   remainder: at the Lift merge the house deck hits 21 again — one
+   more cut or Lift goes pool-only, decided there.
