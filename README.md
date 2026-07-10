@@ -1,4 +1,4 @@
-# Deck
+# ZYME
 
 A card-constrained, destructive image editor. The workflow is driven by drawing
 cards from a deck — each card constrains the UI to exactly one tool, the user
