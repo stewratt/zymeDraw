@@ -103,6 +103,18 @@ panel at the Coda; `Plinth.jsx`, lazy-loaded), and the state cache (every
 bake keeps a captioned full-res JPEG in memory; **C** leafs the plinth
 face through the states; Restart clears it; capture-and-view only).
 
+**The lift brush — Lift (card line Wave 2, issue #13) — built 2026-07-10
+on branch `claude/brush-engine-size-l-pd4q7t`, awaiting Stew's browser
+verification.** Name locked from the plan's register reading: **Lift**
+(the printmaking term), id `lift`, 1 copy. New primitive: the *lift
+session* (`editor/liftSession.js`, sibling to brushCore's stroke engines)
+— press-drag a marquee, on release the region's master pixels lift free
+and follow the cursor, click sets them down; the vacancy fills white
+(hole v1 per the plan; hole variants are a future card, not a control).
+Multiple lifts per round, per-gesture undo/redo, Esc returns a carried
+piece. Everything snaps to the master grid so the bake is 1:1. The
+fracture exemplar (#15) inherits this machinery.
+
 **Awaiting Stew's browser verification: Cull + Skim (Wave 2, built
 2026-07-06)**, one copy each. Cull: remains face up, take one
 (`PICK_FROM_DECK`). Skim: turn the top card — sees everything, armed Coda

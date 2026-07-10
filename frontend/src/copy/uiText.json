@@ -28,6 +28,10 @@
       "name": "Rack",
       "description": "The piece is racked to a new vessel: drag, scale, rotate. What leaves the frame is gone; what the frame exposes stays white."
     },
+    "lift": {
+      "name": "Lift",
+      "description": "Cut a rectangle of the piece loose and set it down elsewhere. Nothing new enters — the pixels change address, and the vacancy stays white."
+    },
     "dust": {
       "name": "Dust",
       "description": "Paint where the dust should settle. Nothing changes until you paint."
@@ -121,6 +125,10 @@
     },
     "dust": {
       "preparing": "Preparing the dust…"
+    },
+    "lift": {
+      "takeHint": "Drag a rectangle over the piece — on release it lifts free and follows your hand. Take as many as the round wants.",
+      "carryHint": "Click to set it down where it hangs. Esc returns it to its place."
     },
     "etch": {
       "frameHint": "Drag the small frame to where the mark should hide. Its size is fixed — about a hundred pixels of the piece.",
@@ -373,7 +381,7 @@
       "Enter": "The primary action — End, Deal, begin again. Never confirms the opening pick.",
       "Space": "Deal.",
       "Shift+R": "Restart. It destroys the piece, so it takes two keys.",
-      "Esc": "Back out: deselect, put a grid pick back, close this."
+      "Esc": "Back out: deselect, put a grid pick back, return a lifted piece, close this."
     },
     "brush": {
       "title": "Brush in hand",

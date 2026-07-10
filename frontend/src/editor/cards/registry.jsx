@@ -52,6 +52,7 @@ import { graftControls } from './graftCardFactory.jsx'
 import { RailsTools, beginRails, cleanupRails, commitRails, updateRails } from './rails.jsx'
 import { CharTools, beginChar, cleanupChar, commitChar, updateChar } from './char.jsx'
 import { DeeperTools, beginDeeper, cleanupDeeper, commitDeeper } from './deeper.jsx'
+import { LiftTools, beginLift, cleanupLift, commitLift, liftHotkeys } from './lift.jsx'
 import { RackTools, beginRack, cleanupRack, rackHotkeys, updateRack } from './rack.jsx'
 import { EtchTools, beginEtch, cleanupEtch, commitEtch, etchHotkeys, updateEtch } from './etch.jsx'
 import {
@@ -145,6 +146,18 @@ export const cardRegistry = {
     begin: beginRack,
     update: updateRack,
     cleanup: cleanupRack
+  },
+
+  // ---- Lift (relocation only — the piece's pixels change address) ----
+
+  lift: {
+    controls: [],
+    defaultControls: {},
+    Tools: LiftTools,
+    hotkeys: liftHotkeys,
+    begin: beginLift,
+    commit: commitLift,
+    cleanup: cleanupLift
   },
 
   // ---- Reveal brushes (paint the effect where it belongs) ----

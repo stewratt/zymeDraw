@@ -44,6 +44,7 @@ export const MOD_CARDS = [
   // rounds never felt worth doing. Card + registry entry stay in place;
   // re-add this line to deal it again.
   // { id: 'rack', copies: 1 }, // Re-frame, neutral
+  { id: 'lift', copies: 1 }, // Lift session — pixels change address, not value
   { id: 'dust', copies: 2 }, // Reveal × deposit
   { id: 'bruise', copies: 1 }, // Reveal × Bruise
   { id: 'blur', copies: 1 }, // Reveal × blur — provisional (§6.3)

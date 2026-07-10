@@ -132,6 +132,9 @@ move, drop.*
   through, gold-leafing onto a surface). Register-fit process words to
   weigh alongside: **Lift** (a real printmaking/watercolor term — paint
   *lifted* off the sheet), *Haul*. Stew picks.
+  **Built 2026-07-10 (issue #13) as Lift, id `lift`** — the register
+  reading's own lean, adopted as the suggested answer. The name stays
+  free to drift (one `uiText.json` edit); the id is cut.
 
 ---
 
