@@ -9,8 +9,20 @@
 
 ## 0. Current state — resume here (updated 2026-07-11)
 
-**The merge, child A (infra Wave 1, issue #37) — built 2026-07-11 on
-`claude/foundry-shell-37`, awaiting Stew's browser verification.**
+**Dust's grain goes screen-referred (issue #40) — built 2026-07-11 on
+`claude/dust-grain-40`, awaiting Stew's browser verification.** Stew
+caught the export coming out far grainier than the editor showed:
+`applyDust` rolled ±90 per *master* pixel, the 1/3-scale preview
+averaged it to ~a third, the bake kept it 1:1. Fix: one grain per
+MASTER_SCALE×MASTER_SCALE block (per *display* pixel, Blur's
+scale-correction idea) — preview now matches the bake; exports keep
+the same amplitude but grain is 3-master-px specks. Audit found no
+other offender (Dust is the only per-pixel-random card; Blur already
+corrects; Bruise/Hue/Ghost commute with downscaling; Etch's master
+grain is intent).
+
+**The merge, child A (infra Wave 1, issue #37) — verified by Stew and
+merged to `main` 2026-07-11 (PR #39).**
 Parent #5's shape was decided (app_plan §8 Q1): **Setup is the shell** —
 it grew a second door (Begin session / Foundry, both run the same
 validate-and-persist submit), `App.jsx` gained a `foundry` stage
