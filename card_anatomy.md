@@ -90,12 +90,10 @@ know it exists — **never add per-card branches to `Editor.jsx` or
    is free to. That decoupling is the whole point: renaming a card is one
    `CARD_TEXT` edit, no code touched. If a name is genuinely *wrong* and
    settled, re-slugging the id is a legitimate move but a **deliberate
-   refactor commit**, never a copy-editor edit — it renames the behavior
-   file, the registry key, the `MOD_CARDS`/Foundry ids, the copy keys, the
-   `CARD_GLOSS` key, and the face `<id>.png`, plus any event/tag/CSS names
-   derived from it (the `dissolve→blur`, `silt→dust`, `turn→hue`,
-   `cull→searcher` pass is the worked example). The gloss keeps the copy
-   editor legible in the meantime, when a name has drifted from its id.
+   refactor commit**, never a copy-editor edit — walk §5.1, the rename
+   rite (the `dissolve→blur`, `silt→dust`, `turn→hue`, `cull→searcher`
+   pass is the worked example). The gloss keeps the copy editor legible
+   in the meantime, when a name has drifted from its id.
 1. **A `MOD_CARDS` line** (`editor/deck.js`) — deck presence:
    `{ id, copies }` (the label is derived from `CARD_TEXT`), plus
    `family: 'deck'` for deck cards, plus a comment naming its anatomy
@@ -122,6 +120,44 @@ know it exists — **never add per-card branches to `Editor.jsx` or
    overlay stays on the base face. Faces come out of Foundry as a run of
    impressions (`stain_i1_…`, `stain_i2_…`); curate them into a set as
    `stain.png` + `stain.2.png`.
+
+### 5.1 The rename rite — re-slugging an id
+
+An id rename is always **its own commit**, never folded into a feature
+or a copy pass. A stale id doesn't error — it deals a card whose copy,
+art, or reducer case has quietly stopped matching — so the rite ends
+with a grep, not a feeling. Walk the homes in this order (`old` → `new`):
+
+1. **The behavior file** — `editor/cards/old.jsx` → `new.jsx`, and the
+   exported symbols with it (`oldHooks` / `OldTools` → …).
+2. **The registry** (`editor/cards/registry.jsx`) — the import path, the
+   imported symbols, and the registry key.
+3. **The deck** (`editor/deck.js`) — the `MOD_CARDS` id, plus every
+   reducer case and selector that names the id in code: phase guards
+   (`currentCard?.id === 'old'`) and history branches (`spentCards`
+   mapping an event back to its card, e.g. `searched` → `searcher`).
+4. **Foundry** — the `foundry/foundryDeck.js` `MOD_CARDS` line and the
+   `foundry/foundryRegistry.jsx` `ROSTER` entry.
+5. **The copy keys** (`copy/uiText.json`) — the `cards.old` and
+   `cardHints.old` keys. This is a key move, not a wording edit: the
+   values travel untouched, and it cannot be done through the copy
+   editor, which writes only string leaves.
+6. **The gloss** (`tools/copy-editor.html`) — the `CARD_GLOSS` key.
+7. **The faces** — `frontend/src/assets/cards/old.png` and every
+   `old.n.png` variant. Then the homes no repo grep can see: every set
+   in the per-machine cardsets folder keys its faces by id, and Foundry
+   casts land as `old_iN_…`. Rename those by hand on each machine — a
+   missed one falls silently down the `cardArtSources` chain to the
+   text face.
+8. **The docs** — CLAUDE.md §0 and this file, where they name the id
+   as current. Historical mentions stay: worked examples, and the
+   one-line `// (id new, was Old.)` memorial at the top of the behavior
+   file (see `dust.jsx`).
+9. **The grep** — `grep -rn "old" frontend/src backend tools` must come
+   back empty before the commit (`.md` docs and the memorial comment
+   excepted).
+
+Commit message names the move: `rename: old → new`.
 
 ## 6. The registry contract
 
