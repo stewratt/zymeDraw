@@ -32,6 +32,10 @@
       "name": "Lift",
       "description": "Copy a rectangle of the piece and stamp it down elsewhere. The source stays where it is — a second impression, cropped where it runs off the edge."
     },
+    "fracture": {
+      "name": "Fracture",
+      "description": "The whole piece breaks into chunks and slides apart. Seed the distribution, size the chunks, then erase the fracture back wherever the piece should stay whole."
+    },
     "dust": {
       "name": "Dust",
       "description": "Paint where the dust should settle. Nothing changes until you paint."
