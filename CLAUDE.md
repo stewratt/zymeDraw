@@ -7,7 +7,7 @@
 
 ---
 
-## 0. Current state — resume here (updated 2026-07-09)
+## 0. Current state — resume here (updated 2026-07-10)
 
 **Version numbers are retired.** Work is now organized as two named
 **lines** — pickable in any order, no dependency between them, only the
@@ -35,8 +35,8 @@ Stew still owes before each wave opens. The old line-branch convention
 (`v5` as the card line's standing branch) is retired in favor of the
 per-issue branches above; `v5` remains only as history.
 
-**The deck editor (card line Wave 5, issue #16) — built 2026-07-10 on
-branch `claude/deck-editor-16`, awaiting Stew's browser verification.**
+**The deck editor (card line Wave 5, issue #16) — verified by Stew and
+merged to `main` 2026-07-10 (PR #34).**
 Built ahead of the remaining Kid Pix cards (Stew's call: the room exists
 *before* the pool bloats, reversing the plan's original ordering). A room
 off the setup screen — plainly named **Deck editor** per the new §1
@@ -52,9 +52,10 @@ whole-list replace via `POST /api/decks`). Starting points: House deck
 only until the pool grows (archetypes are one-line data entries). The
 20-card cap held (Stew, 2026-07-10: "just because 22 cards exist doesn't
 mean it needs to be that size") and the house deck was thinned to fit it
-exactly: Ghost 2→1, Stain 2→1, Blur 1→2. OPEN at the Lift merge (#33):
-Lift's `MOD_CARDS` line takes the house deck to 21 — either one more
-cut lands with it or Lift enters pool-only; decide there.
+exactly: Ghost 2→1, Stain 2→1, Blur 1→2. The #33 open question (Lift's
+line took the house deck to 21) was decided post-merge: **Lift is
+pool-only** — 0 house copies in `MOD_CARDS`, still in the editor's pool,
+so built decks may run it while the house deck stays at the cap.
 
 **`main` holds the complete v1 → v4 tool, verified by Stew** — v4 merged
 (fast-forward) 2026-07-07. The version story lives in the design docs
@@ -71,7 +72,9 @@ merges into one application shell, packaging (Electron, eventually) and
 the image-server stream get real plans, and the codebase gets
 overhaul-ready for the design-language project. Its §7 waves are the
 checkpoint map for infrastructure work; §8 lists the questions Stew still
-owes answers on before each wave opens. Nothing in it is built yet.
+owes answers on before each wave opens. First infra work landed
+2026-07-10: the ZYME rename + the rename rite in `card_anatomy.md`
+(issues #1 + #2, PR #32).
 
 **Card-design work continues in parallel — read `to_do/cards_plan.md`**
 (the card line: the Kid Pix cards + the deck builder). Its §0 also carries
@@ -124,9 +127,10 @@ panel at the Coda; `Plinth.jsx`, lazy-loaded), and the state cache (every
 bake keeps a captioned full-res JPEG in memory; **C** leafs the plinth
 face through the states; Restart clears it; capture-and-view only).
 
-**The clone stamp — Lift (card line Wave 2, issue #13) — built 2026-07-10
-on branch `claude/brush-engine-size-l-pd4q7t`, awaiting Stew's browser
-verification.** Id `lift`, 1 copy (name still "Lift"; may drift now the
+**The clone stamp — Lift (card line Wave 2, issue #13) — verified by
+Stew and merged to `main` 2026-07-10 (PR #33).** Id `lift`, **pool-only:
+0 house copies** (the #33 open question's answer; built decks may still
+run it). Name still "Lift"; may drift now the
 truck concept is gone — copy's Stew's). **Pivoted from the truck brush to
 a clone stamp during the PR review (2026-07-10):** the gesture now *copies*
 a rectangle rather than lifting it — the source stays untouched, no white

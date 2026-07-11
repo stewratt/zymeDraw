@@ -47,7 +47,10 @@ export const MOD_CARDS = [
   // rounds never felt worth doing. Card + registry entry stay in place;
   // re-add this line to deal it again.
   // { id: 'rack', copies: 1 }, // Re-frame, neutral
-  { id: 'lift', copies: 1 }, // Lift session — pixels change address, not value
+  // Lift is pool-only (Stew, deciding #33's open question at the merge):
+  // 0 house copies keeps the cap at 20; the Deck editor's pool lists every
+  // entry here, so built decks may still run it.
+  { id: 'lift', copies: 0 }, // Lift session — pixels change address, not value
   { id: 'dust', copies: 2 }, // Reveal × deposit
   { id: 'bruise', copies: 1 }, // Reveal × Bruise
   { id: 'blur', copies: 2 }, // Reveal × blur — provisional (§6.3)
