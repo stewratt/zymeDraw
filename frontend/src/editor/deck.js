@@ -34,8 +34,11 @@ export const TUNING = {
 // live in cardText.js — labels are derived from it below, so a rename
 // happens there, never here.
 export const MOD_CARDS = [
-  { id: 'ghost', copies: 2 }, // Graft × Rise
-  { id: 'stain', copies: 2 }, // Graft × Sink
+  // House deck thinned to the 20-card cap (2026-07-10, Stew's cuts):
+  // Ghost 2→1, Stain 2→1, Blur 1→2. The pool is unchanged — a built deck
+  // may still run any design up to the deck editor's max copies.
+  { id: 'ghost', copies: 1 }, // Graft × Rise
+  { id: 'stain', copies: 1 }, // Graft × Sink
   { id: 'stamp', copies: 2 }, // Graft (cutout)
   { id: 'rails', copies: 1 }, // Stencil × solid
   { id: 'char', copies: 1 }, // Stencil × Sink
@@ -46,7 +49,7 @@ export const MOD_CARDS = [
   // { id: 'rack', copies: 1 }, // Re-frame, neutral
   { id: 'dust', copies: 2 }, // Reveal × deposit
   { id: 'bruise', copies: 1 }, // Reveal × Bruise
-  { id: 'blur', copies: 1 }, // Reveal × blur — provisional (§6.3)
+  { id: 'blur', copies: 2 }, // Reveal × blur — provisional (§6.3)
   { id: 'steep', copies: 1 }, // Wash × Sink
   { id: 'hue', copies: 1 }, // Wash (hue)
   { id: 'cure', copies: 1 }, // Wash × Cure
@@ -67,6 +70,24 @@ export const MOD_CARDS = [
 
 export const DEATH_CARD = { id: 'coda', label: CARD_TEXT.coda.name }
 
+// A deck spec is the deck editor's entire output: [{ id, copies }], nothing
+// more (cards_plan.md §6 — the room is UI; this reducer never learns about
+// it). Labels and families are re-derived here from MOD_CARDS, so a spec
+// can't spoof them, and a saved deck naming a since-retired id degrades by
+// dropping that line, never by crashing. An empty/unknown spec falls back
+// to the house deck (MOD_CARDS verbatim).
+const MOD_CARD_INDEX = new Map(MOD_CARDS.map((c) => [c.id, c]))
+
+function resolveSpec(deckSpec) {
+  if (!deckSpec?.length) return MOD_CARDS
+  const out = []
+  for (const { id, copies } of deckSpec) {
+    const base = MOD_CARD_INDEX.get(id)
+    if (base && copies > 0) out.push({ ...base, copies })
+  }
+  return out.length ? out : MOD_CARDS
+}
+
 // Fisher–Yates on a copy.
 function shuffle(cards) {
   const out = [...cards]
@@ -77,9 +98,9 @@ function shuffle(cards) {
   return out
 }
 
-function buildDeck() {
+function buildDeck(modCards) {
   const cards = []
-  for (const { copies, ...card } of MOD_CARDS) {
+  for (const { copies, ...card } of modCards) {
     // `variant` (1-based) is which of the card's copies this is — a card in
     // two copies may carry two distinct faces (see cardArt.js). It travels
     // with the card through the shuffle; the dealt card renders its own face.
@@ -95,14 +116,15 @@ function deathCards() {
   }))
 }
 
-export function initialState() {
+export function initialState(deckSpec = null) {
   return {
     phase: 'OPENING_PICK',
+    deckSpec, // the spec this session was built from; RESTART rebuilds from it
     grid: [], // filenames offered in the opening pick (Editor samples them
     //           and reports back via SET_GRID — fetching is not deck logic)
     toPlace: [], // filenames being arranged in the current placement session
     stash: [], // filenames held back for the stash return
-    deck: buildDeck(), // the literal shuffled deck, dealt from the front
+    deck: buildDeck(resolveSpec(deckSpec)), // the literal shuffled deck, dealt from the front
     roundsDealt: 0,
     stashReturned: false,
     deathShuffled: false,
@@ -339,7 +361,7 @@ export function deckReducer(state, action) {
     }
 
     case 'RESTART':
-      return initialState()
+      return initialState(state.deckSpec)
 
     default:
       return state

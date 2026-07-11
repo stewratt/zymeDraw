@@ -234,13 +234,46 @@ overlay's whole legibility project (v4) collapses. Pacing also lives in
 death-shuffle odds into mush. The cap *is* the constraint, and
 constraint is the product.
 
-What the built deck concretely means (proposal, to refine before its
-wave — **nothing here is being built yet**):
+**Built 2026-07-10 (issue #16, branch `claude/deck-editor-16`), awaiting
+Stew's browser verification.** Stew pulled Wave 5 forward — the room
+exists *before* the remaining Kid Pix cards bloat the deck, reversing
+this section's original "opens only after the pool exceeds the deck"
+ordering. What shipped, against the proposal below:
+
+- **The name is the Deck editor** — plainly, on screen. Stew's ruling:
+  the register is not a totalizing rule; some things are better named
+  legibly than creatively for the sake of UX. Now a standing clause in
+  CLAUDE.md §1 (tone). The *case/drawer/tray/press bed* riffs were
+  passed over for exactly this reason.
+- **Cap 20 · floor 12 · max 3 copies per design**, constants in
+  `DeckEditor.jsx` — deliberately NOT in `deck.js` (the reducer never
+  learned about the room, per the architecture stance below). The cap
+  briefly shipped as 22 (the house deck had crept to 21); Stew held the
+  line — "just because 22 cards exist doesn't mean it needs to be that
+  size" — and cut the house deck to fit: **Ghost 2→1, Stain 2→1,
+  Blur 1→2 = 20 exactly**. Open at the Lift merge (#33): Lift's line
+  takes the house deck to 21, so one more cut lands with it or Lift
+  enters pool-only. Decide there.
+- **Pool = all active `MOD_CARDS` designs** (Stew: current designs
+  only — Rack and the transfers stay comment-lines until deliberately
+  promoted; when a line is uncommented the pool grows by itself).
+- **Starting points: House deck only** — the pool can't yet support
+  wash-heavy/graft-heavy/fracture-legal with character. `ARCHETYPES` in
+  `DeckEditor.jsx` is the list; each future archetype is one data entry.
+- **Persistence: `decks` key in `~/.deck-config.json`** (Stew's pick),
+  whole-list replace through `POST /api/decks`; saved decks are
+  per-machine like folders are.
+- **The seam**: `initialState(deckSpec)` takes `[{ id, copies }]` (null
+  = house deck); the spec rides `state.deckSpec` so Restart rebuilds
+  the same deck; `resolveSpec` re-derives labels/family from
+  `MOD_CARDS` and drops unknown ids, so a stale saved deck degrades
+  instead of crashing.
+
+The original proposal, kept for the rationale:
 
 - **A home-screen door.** A button beside the session start — a room
-  where the playable deck is assembled. Register name needed (§8): not
-  "deck builder" on screen — this is a studio; candidates to riff on:
-  *the case*, *the drawer*, *the tray*, *the press bed*.
+  where the playable deck is assembled. ~~Register name needed (§8): not
+  "deck builder" on screen~~ → named the **Deck editor**, see above.
 - **A size cap** — the deck is N mod cards (N ≈ today's 20, tunable),
   chosen from the pool. Codas stay 3 and stay out of the builder
   entirely; the arc's pacing knobs remain `TUNING`'s, untouched.
@@ -249,16 +282,11 @@ wave — **nothing here is being built yet**):
   house deck = today's 20). An archetype is a *starting point* you can
   play as-is or adjust under the cap. Family laws live here too — "at
   most one fracture" is an archetype/builder rule, not reducer law.
-- **Architecture stance** (the part to hold even before building):
-  `deck.js` stays pure and doesn't learn about the builder. `buildDeck`
+- **Architecture stance** (held in the build): `deck.js` stays pure and
+  doesn't learn about the builder. `buildDeck`
   already just expands a card list — the builder's entire output is
   **a `MOD_CARDS`-shaped array handed to `initialState`**. The menu is
-  UI; persistence of custom decks is a config-file question
-  (`~/.deck-config.json` or a sibling); no deck logic anywhere new.
-- **Until the builder exists**: the pool grows, the dealt deck is
-  curated by hand in `MOD_CARDS` (comment lines in/out — Rack and the
-  transfers are the precedent). That's the interim archetype mechanism
-  and it's fine for the next several cards.
+  UI; no deck logic anywhere new.
 
 ---
 
@@ -277,8 +305,10 @@ verification before commit.
 - **Wave 4 — the fracture exemplar.** One card: geometric fragments,
   hand-seeded, hand-landed, 1 copy. Play it before designing siblings.
 - **Wave 5 — the deck builder.** The home-screen room, the cap, the
-  archetype list. Opens only after the pool actually exceeds the deck —
-  Waves 1–4 are what create that pressure.
+  archetype list. ~~Opens only after the pool actually exceeds the deck —
+  Waves 1–4 are what create that pressure.~~ Pulled forward by Stew and
+  built 2026-07-10 (§6) so the deck can't bloat while new card variants
+  are tested; awaiting browser verification.
 
 Parallel as ever: the inherited backlog (§0, now under `archive/`) and the
 `app_plan.md` infrastructure waves run on their own clocks.
@@ -302,5 +332,14 @@ Parallel as ever: the inherited backlog (§0, now under `archive/`) and the
    which one(s) make the exemplar? (At least one is mandatory; the
    slot-machine shape is banned.)
 5. **The builder's register name** (Wave 5): what is the room called?
+   **Answered 2026-07-10: the Deck editor** — legibility over register
+   for utility surfaces; the ruling is now the legibility clause in
+   CLAUDE.md §1.
 6. **The cap** (Wave 5): is N = 20 right, and may a built deck go
    *under* the cap (a lean 12-card deck as a legal, faster session)?
+   **Answered 2026-07-10: cap 20, floor 12** — a lean deck is a
+   legal, faster session; the floor keeps the death-shuffle honest
+   (acts consume 6 cards). The house deck was thinned the same day to
+   fit the cap exactly (Ghost 2→1, Stain 2→1, Blur 1→2; §6). The one
+   remainder: at the Lift merge the house deck hits 21 again — one
+   more cut or Lift goes pool-only, decided there.

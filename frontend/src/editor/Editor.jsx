@@ -32,8 +32,10 @@ const Plinth = lazy(() => import('./Plinth.jsx'))
 // (pick → placement → acts → Coda) lives in deck.js; Editor's only
 // arc-specific jobs are the impure work the reducer can't do: sampling the
 // opening grid, the universal bake on every End, and exporting on COMPLETE.
-function Editor({ config, onBackToSetup }) {
-  const [state, dispatch] = useReducer(deckReducer, undefined, initialState)
+function Editor({ config, deckSpec, onBackToSetup }) {
+  // deckSpec is the deck editor's output (null = the house deck); it seeds
+  // the session and rides state.deckSpec so Restart rebuilds the same deck.
+  const [state, dispatch] = useReducer(deckReducer, deckSpec ?? null, initialState)
 
   const canvasStageRef = useRef(null)
   const cardSessionRef = useRef(null) // opaque per-card data the registry owns
