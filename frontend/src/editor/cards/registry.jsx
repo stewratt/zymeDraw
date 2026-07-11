@@ -53,6 +53,7 @@ import { RailsTools, beginRails, cleanupRails, commitRails, updateRails } from '
 import { CharTools, beginChar, cleanupChar, commitChar, updateChar } from './char.jsx'
 import { DeeperTools, beginDeeper, cleanupDeeper, commitDeeper } from './deeper.jsx'
 import { LiftTools, beginLift, cleanupLift, commitLift, liftHotkeys } from './lift.jsx'
+import { FractureTools, beginFracture, cleanupFracture, commitFracture, updateFracture } from './fracture.jsx'
 import { RackTools, beginRack, cleanupRack, rackHotkeys, updateRack } from './rack.jsx'
 import { EtchTools, beginEtch, cleanupEtch, commitEtch, etchHotkeys, updateEtch } from './etch.jsx'
 import {
@@ -158,6 +159,21 @@ export const cardRegistry = {
     begin: beginLift,
     commit: commitLift,
     cleanup: cleanupLift
+  },
+
+  // ---- Fracture (all-over voronoi displacement + the standing mask brush) ----
+
+  fracture: {
+    controls: ['seed', 'scale', 'opacity', 'mode', 'size', 'hardness', 'softness', 'strength'],
+    // The erase brush opens in hand (conceal), like Transfer — no arrange.
+    defaultControls: { seed: 0, scale: 300, opacity: 1, mode: 'conceal', size: 60, hardness: 'soft', softness: 0.5, strength: 1 },
+    // Open on a random distribution so no two deals fracture the same way.
+    randomize: (d) => ({ ...d, seed: Math.floor(Math.random() * 100) }),
+    Tools: FractureTools,
+    begin: beginFracture,
+    update: updateFracture,
+    commit: commitFracture,
+    cleanup: cleanupFracture
   },
 
   // ---- Reveal brushes (paint the effect where it belongs) ----

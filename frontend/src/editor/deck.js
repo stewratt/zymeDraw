@@ -51,6 +51,10 @@ export const MOD_CARDS = [
   // 0 house copies keeps the cap at 20; the Deck editor's pool lists every
   // entry here, so built decks may still run it.
   { id: 'lift', copies: 0 }, // Lift session — pixels change address, not value
+  // The fracture family's exemplar (cards_plan §4): geometric tiles of the
+  // piece strewn by a scatter brush. Medium rarity on the weirdness dial —
+  // 1 is a suggested balance, not a cap; the Deck editor may run more.
+  { id: 'fracture', copies: 1 }, // Voronoi displacement × mask brush — the piece slides apart
   { id: 'dust', copies: 2 }, // Reveal × deposit
   { id: 'bruise', copies: 1 }, // Reveal × Bruise
   { id: 'blur', copies: 2 }, // Reveal × blur — provisional (§6.3)
