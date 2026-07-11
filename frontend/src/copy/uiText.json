@@ -181,13 +181,7 @@
     }
   },
   "foundry": {
-    "app": {
-      "noOutputPre": "No output folder configured — open",
-      "noOutputLink": "Deck",
-      "noOutputPost": "once and set your folders in Setup, then reload Foundry."
-    },
     "header": {
-      "backToDeck": "← deck",
       "title": "FOUNDRY",
       "casting": "casting",
       "impressionNote": "· impression {i} of {n}"
@@ -284,8 +278,9 @@
     "outputPlaceholderNoHome": "absolute path to your output folder",
     "browse": "Browse…",
     "browseOpening": "Opening…",
-    "continue": "Continue",
+    "continue": "Begin session",
     "continueChecking": "Checking…",
+    "foundryDoor": "Foundry",
     "pickerFailed": "Could not open a folder picker.",
     "pickerFailedDetail": "Could not open a folder picker: {message}",
     "networkError": "Network error: {message}",

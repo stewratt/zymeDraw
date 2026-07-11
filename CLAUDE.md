@@ -7,7 +7,22 @@
 
 ---
 
-## 0. Current state — resume here (updated 2026-07-10)
+## 0. Current state — resume here (updated 2026-07-11)
+
+**The merge, child A (infra Wave 1, issue #37) — built 2026-07-11 on
+`claude/foundry-shell-37`, awaiting Stew's browser verification.**
+Parent #5's shape was decided (app_plan §8 Q1): **Setup is the shell** —
+it grew a second door (Begin session / Foundry, both run the same
+validate-and-persist submit), `App.jsx` gained a `foundry` stage
+(FoundryEditor as a lazy chunk, Plinth-style), FoundryEditor takes
+`onBackToSetup` (reuses `editor.backToSetup` copy — one edit rewords
+both wings), and the second Vite entry is retired (`foundry.html`,
+`foundry/main.jsx`, `FoundryApp.jsx` deleted; vite.config back to the
+default entry; dead `foundry.app` copy keys pruned; card_maker.md §1.1
+records the amendment). Both wings return to Setup between sessions —
+no mid-session crossing. Child B is #38, the **Set editor** (curation
+room name decided — legibility clause, over bindery/drawer): place
+casts into a set as card faces; opens after #37 merges.
 
 **Version numbers are retired.** Work is now organized as two named
 **lines** — pickable in any order, no dependency between them, only the

@@ -170,8 +170,12 @@ button.link:hover {
   padding-left: 8px;
 }
 
-.setup button[type="submit"] {
-  align-self: stretch;
+/* The two doors out of Setup: the studio session (primary) and the foundry. */
+.setup-doors {
+  display: flex;
+  gap: 10px;
+}
+.setup-doors button {
   padding: 12px;
   background: var(--fill);
   color: var(--text);
@@ -181,10 +185,16 @@ button.link:hover {
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
-.setup button[type="submit"]:hover:not(:disabled) {
+.setup-doors button[type="submit"] {
+  flex: 2;
+}
+.setup-doors .door-foundry {
+  flex: 1;
+}
+.setup-doors button:hover:not(:disabled) {
   background: var(--fill-hover);
 }
-.setup button[type="submit"]:disabled {
+.setup-doors button:disabled {
   background: var(--border);
   color: var(--text-mute);
   cursor: not-allowed;

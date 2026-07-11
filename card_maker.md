@@ -91,6 +91,15 @@ cast, commission*. All Foundry copy obeys the zyme register.
 
 ### 1.1 Adjustments (Stew, 2026-07-07) — these override §1 where they conflict
 
+- **The merge — one entry, two wings (2026-07-10, amends #1; the
+  app_plan.md §2 Wave 1 work, issue #37).** The second Vite entry is
+  retired: `foundry.html`, `src/foundry/main.jsx`, and `FoundryApp.jsx`
+  are gone. Foundry is now a wing of ZYME behind Setup's **Foundry**
+  door (both doors run the same validate-and-persist submit);
+  `FoundryEditor` is a lazy chunk mounted by `App.jsx` with an
+  `onBackToSetup` prop, mirroring the studio's Editor. Both wings
+  return to Setup between sessions — no mid-session crossing. Phase-0
+  references to the second entry below are history.
 - **The print run — impressions deviate from the sealed base.** A
   commission's copy count is a *run size*: a 2-copy card is cast as
   **2 impressions of one base**. Phase 1 (plate + panel art + type) is
