@@ -10,7 +10,7 @@ function Setup({ initial, deckName, deckSpec, onOpenDeckEditor, onContinue }) {
   const [inputFolder, setInputFolder] = useState(initial.inputFolder || '')
   const [outputFolder, setOutputFolder] = useState(initial.outputFolder || '')
   const [errors, setErrors] = useState({ inputFolder: null, outputFolder: null })
-  const [submitting, setSubmitting] = useState(false)
+  const [submitting, setSubmitting] = useState(null) // 'editor' | 'foundry' | null
   // Which field's native folder dialog is currently open (disables both Browse
   // buttons meanwhile), plus a per-field note if the picker isn't available.
   const [picking, setPicking] = useState(null) // 'input' | 'output' | 'cards' | null
@@ -98,9 +98,10 @@ function Setup({ initial, deckName, deckSpec, onOpenDeckEditor, onContinue }) {
   const inputHint = homedir ? fmt(T.inputPlaceholder, { home: homedir }) : T.inputPlaceholderNoHome
   const outputHint = homedir ? fmt(T.outputPlaceholder, { home: homedir }) : T.outputPlaceholderNoHome
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    setSubmitting(true)
+  // Both doors — the studio session and the foundry — run the same
+  // validate-and-persist submit; only the destination wing differs.
+  async function submit(wing) {
+    setSubmitting(wing)
     setErrors({ inputFolder: null, outputFolder: null })
     try {
       const res = await fetch('/api/config', {
@@ -116,24 +117,33 @@ function Setup({ initial, deckName, deckSpec, onOpenDeckEditor, onContinue }) {
         })
         return
       }
-      onContinue({
-        inputFolder: data.inputFolder,
-        outputFolder: data.outputFolder
-      })
+      onContinue(
+        {
+          inputFolder: data.inputFolder,
+          outputFolder: data.outputFolder
+        },
+        wing
+      )
     } catch (err) {
       setErrors({
         inputFolder: fmt(T.networkError, { message: err.message }),
         outputFolder: null
       })
     } finally {
-      setSubmitting(false)
+      setSubmitting(null)
     }
   }
 
   const canSubmit = !submitting && inputFolder.trim() && outputFolder.trim()
 
   return (
-    <form className="setup" onSubmit={handleSubmit}>
+    <form
+      className="setup"
+      onSubmit={(e) => {
+        e.preventDefault()
+        submit('editor')
+      }}
+    >
       <h1>{T.title}</h1>
       <p className="muted">{T.subtitle}</p>
 
@@ -240,9 +250,14 @@ function Setup({ initial, deckName, deckSpec, onOpenDeckEditor, onContinue }) {
         </div>
       </div>
 
-      <button type="submit" disabled={!canSubmit}>
-        {submitting ? T.continueChecking : T.continue}
-      </button>
+      <div className="setup-doors">
+        <button type="submit" disabled={!canSubmit}>
+          {submitting === 'editor' ? T.continueChecking : T.continue}
+        </button>
+        <button type="button" className="door-foundry" disabled={!canSubmit} onClick={() => submit('foundry')}>
+          {submitting === 'foundry' ? T.continueChecking : T.foundryDoor}
+        </button>
+      </div>
 
       <p className="footnote">{rich(T.footnote)}</p>
     </form>

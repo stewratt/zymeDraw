@@ -41,7 +41,7 @@ export const FACE_MASTER_HEIGHT = FACE_HEIGHT * 3 // 3120
 // itself lives in foundryDeck.js. Its only arc-specific jobs are the impure
 // work the reducer can't do: the bake on every End, the Press's seal, and
 // exporting on COMPLETE.
-function FoundryEditor() {
+function FoundryEditor({ onBackToSetup }) {
   const [state, dispatch] = useReducer(foundryReducer, undefined, initialFoundryState)
 
   const canvasStageRef = useRef(null)
@@ -749,9 +749,9 @@ function FoundryEditor() {
   return (
     <div className="editor foundry">
       <header className="editor-header">
-        <a className="link" href="/">
-          {F.header.backToDeck}
-        </a>
+        <button type="button" className="link" onClick={onBackToSetup}>
+          {UI.editor.backToSetup}
+        </button>
         <h1>{F.header.title}</h1>
         <div className="header-actions">
           {state.commission && (
