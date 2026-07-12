@@ -66,6 +66,9 @@ canvas itself is the richest source image you have. Two consequences:
 
 ## 2. Card: the stamp brush
 
+*Built 2026-07-12 as **Reverberate** (issue #14) — pool-only at 0
+copies, verified in the browser. The section stays as the design record.*
+
 *Kid Pix reference: the stamp used as a brush — a chosen sprite laid
 down in repeated impressions along the stroke path (see the cactus
 screenshot: one stamp, dragged, becomes a braided rope of copies).*
@@ -95,6 +98,7 @@ screenshot: one stamp, dragged, becomes a braided rope of copies).*
   real process word meaning "scatter loosely over a surface," one
   letter from Straw and dead-center in the zyme register. Also in the
   register's key: *Sow*. Stew picks; the id follows the pick.
+  **Picked 2026-07-12: Reverberate** (id `reverberate`).
 
 ---
 
@@ -313,6 +317,10 @@ verification before commit.
   (or a sibling module); the truck card ships on it. White hole v1.
 - **Wave 3 — the stamp brush.** The stamp session (impressions along a
   path); the card reuses Stamp's pick-and-cutout chain in front of it.
+  Built 2026-07-12 as **Reverberate** (issue #14): the stamp session is
+  the third built-in consumer in `brushCore.js`; the card entered the
+  pool at `copies: 0` (the new-cards rule — adopted via the Deck
+  editor, never the starter deck). Verified in the browser and closed.
 - **Wave 4 — the fracture exemplar.** One card: geometric fragments,
   hand-seeded, hand-landed, 1 copy. Play it before designing siblings.
 - **Wave 5 — the deck builder.** The home-screen room, the cap, the
@@ -332,9 +340,12 @@ Parallel as ever: the inherited backlog (§0, now under `archive/`) and the
    Straw/Reverberate/Strew/Sow; §3 Trucker/Leaf/Displacer/Lift/Haul;
    §4 at exemplar time; §5 Closer looks settled). The id is cut from
    the chosen name at creation and then never drifts.
+   **§2 answered 2026-07-12: Reverberate** (id `reverberate`).
 2. **Stamp source** (Wave 3): confirm the outward-facing version (grid
    pick + cutout, like Stamp) — the piece-as-stamp version is parked in
    the fracture family, yes?
+   **Answered 2026-07-12: outward-facing confirmed** — the
+   piece-as-stamp version stays parked with the fracture family.
 3. **Closer's copies** (Wave 1): Deeper 2 / Closer 1? 2/2 with a thin
    elsewhere? And should Closer pixelate crisply (smoothing off past
    some zoom) or stay soft?
