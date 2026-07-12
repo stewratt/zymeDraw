@@ -12,7 +12,7 @@
   text-decoration: underline;
 }
 .editor-header a.link:hover {
-  color: #ffffff;
+  color: var(--text-bright);
 }
 
 /* The workspace reads as a CARD: round the canvas container to the same
@@ -115,7 +115,7 @@
   cursor: pointer;
   /* White behind the plate: its transparent window reads exactly as it
      will on the face — the empty master showing through the hole. */
-  background: #ffffff;
+  background: var(--paper);
 }
 .foundry-plate:hover {
   outline: 2px solid var(--sel-border);

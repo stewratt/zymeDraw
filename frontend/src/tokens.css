@@ -1,0 +1,83 @@
+/* Design tokens — the one style authority (issue #8). Every color the UI
+   chrome uses is named here; the stylesheets only ever write var(--…), so
+   the Wave 3 overhaul starts by re-valuing this file, not hunting hex
+   codes. Loaded first (main.jsx) so every sheet sees the same vocabulary.
+
+   NOT here, on purpose: artwork values. The bake white (masterRaster.js),
+   brush mask blacks (brushCore.js), marquee ants (liftSession.js), card
+   default paints (registry.jsx) and Foundry's ink are pixels in the work,
+   not chrome around it — they live with their code.
+
+   Values are carried over exactly as found — this file documents the
+   palette that exists; rationalizing it is the redesign's job. */
+:root {
+  /* -- the greyscale core -- */
+  --bg: #141414;            /* app background        */
+  --surface: #1a1a1a;       /* panels / header       */
+  --surface-2: #0e0e0e;     /* insets / fields       */
+  --border: #2a2a2a;        /* default hairline      */
+  --border-strong: #4a4a4a; /* emphasis (Coda, focus)*/
+  --text: #e6e6e6;
+  --text-dim: #888;
+  --text-mute: #666;
+  --fill: #333333;          /* primary button fill   */
+  --fill-hover: #444444;
+  --sel-bg: rgba(255, 255, 255, 0.06); /* selected/active rows */
+  --sel-border: #6a6a6a;
+  --radius: 0;              /* hard edges everywhere */
+
+  /* -- the rest of the text ladder (brightest to faintest) -- */
+  --text-bright: #ffffff;   /* link hover peak       */
+  --text-title: #eee;       /* card labels & names   */
+  --text-value: #ddd;       /* control readouts, layer labels */
+  --text-heading: #ccc;     /* section headings, field labels, captions */
+  --text-label: #aaa;       /* minor labels, mono filenames */
+  --text-hint: #777;        /* bare hints (panels override to --text-dim) */
+  --text-faint: #555;       /* drag handles, disabled secondary */
+  --text-disabled: #444;    /* disabled toggle buttons */
+
+  /* -- surface variants -- */
+  --surface-raised: #232323; /* code chips           */
+  --surface-hover: #1f1f1f;  /* hover fills, thumb placeholders */
+  --surface-drop: #171717;   /* drag drop-target rows */
+
+  /* -- the pick pair: the one deliberate exception to the greyscale UI
+        (editor.css, grid picker). Muted green = goes on now; muted
+        amber = held back. The -ink values are their badge text. -- */
+  --pick-place: #7da869;
+  --pick-place-ink: #10130e;
+  --pick-stash: #c9a15a;
+  --pick-stash-ink: #17120a;
+
+  /* -- overlay scrims -- */
+  --scrim: rgba(0, 0, 0, 0.55);        /* full-screen sheets (keys, deck) */
+  --scrim-badge: rgba(0, 0, 0, 0.65);  /* card-count chip   */
+  --scrim-strong: rgba(0, 0, 0, 0.7);  /* thumb badges, card zoom */
+
+  /* -- shadows -- */
+  --shadow-canvas: 0 4px 24px rgba(0, 0, 0, 0.4);  /* the working canvas */
+  --shadow-lift: 0 6px 18px rgba(0, 0, 0, 0.6);    /* card mid-flip      */
+  --shadow-rest: 0 2px 6px rgba(0, 0, 0, 0.2);     /* card landed        */
+  --shadow-zoom: 0 12px 48px rgba(0, 0, 0, 0.6);   /* the enlarged card  */
+
+  /* -- the two mod-card family tints (text faces until designed art) -- */
+  --family-image-bg: linear-gradient(165deg, #2d2520, #221c18); /* warm */
+  --family-image-ink: #a58a68;
+  --family-deck-bg: linear-gradient(165deg, #202b36, #191f27);  /* cool */
+  --family-deck-ink: #7e96b4;
+
+  /* -- paper: the empty master showing through. Mirrors the bake white in
+        masterRaster.js — if that ever changes, change this with it. -- */
+  --paper: #ffffff;
+
+  /* -- transparency checker behind layer thumbs -- */
+  --checker: repeating-conic-gradient(#2a2a2a 0% 25%, #1a1a1a 0% 50%) 0 / 12px 12px;
+
+  /* -- brush cursor: white line + dark halo reads on any pixels -- */
+  --cursor-line: rgba(255, 255, 255, 0.9);
+  --cursor-halo: rgba(0, 0, 0, 0.5);
+
+  /* -- the two typefaces -- */
+  --font-ui: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}

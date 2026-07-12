@@ -8,36 +8,20 @@
   box-sizing: border-box;
 }
 
-/* Greyscale design tokens — the whole palette lives here so tuning the look
-   is a single edit. Loaded globally (main.jsx imports App.css); editor.css
-   reads the same variables. Fully monochrome, hard-edged (--radius: 0). */
-:root {
-  --bg: #141414;            /* app background        */
-  --surface: #1a1a1a;       /* panels / header       */
-  --surface-2: #0e0e0e;     /* insets / fields       */
-  --border: #2a2a2a;        /* default hairline      */
-  --border-strong: #4a4a4a; /* emphasis (Coda, focus)*/
-  --text: #e6e6e6;
-  --text-dim: #888;
-  --text-mute: #666;
-  --fill: #333333;          /* primary button fill   */
-  --fill-hover: #444444;
-  --sel-bg: rgba(255, 255, 255, 0.06); /* selected/active rows */
-  --sel-border: #6a6a6a;
-  --radius: 0;              /* hard edges everywhere */
-}
+/* The palette lives in tokens.css (imported before this file in main.jsx);
+   every sheet writes var(--…) and nothing else. */
 
 body {
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-ui);
   margin: 0;
   background: var(--bg);
   color: var(--text);
 }
 
 code {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.875em;
-  background: #232323;
+  background: var(--surface-raised);
   padding: 1px 6px;
   border-radius: var(--radius);
 }
@@ -56,7 +40,7 @@ button.link {
   font-size: 0.875rem;
 }
 button.link:hover {
-  color: #ffffff;
+  color: var(--text-bright);
 }
 
 .loading {
@@ -104,7 +88,7 @@ button.link:hover {
 
 .field-label {
   font-size: 0.875rem;
-  color: #ccc;
+  color: var(--text-heading);
 }
 
 /* Text field + Browse button share a row; the input takes the slack. */
@@ -141,7 +125,7 @@ button.link:hover {
 
 .setup input[type="text"] {
   font: inherit;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.9rem;
   background: var(--surface-2);
   color: var(--text);
@@ -158,7 +142,7 @@ button.link:hover {
 }
 
 .hint {
-  color: #777;
+  color: var(--text-hint);
   font-size: 0.75rem;
 }
 /* Monochrome error: no hue — a left rule + full-strength text sets it apart
@@ -502,7 +486,7 @@ button.link:hover {
 .thumb-grid span {
   font-size: 0.75rem;
   padding: 6px 8px;
-  color: #ccc;
+  color: var(--text-heading);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
