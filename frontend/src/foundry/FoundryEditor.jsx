@@ -4,7 +4,7 @@ import CanvasStage from '../editor/CanvasStage.jsx'
 import Card from '../editor/Card.jsx'
 import { CardGridPicker } from '../editor/GridPicker.jsx'
 import FoundryPanel from './FoundryPanel.jsx'
-import { foundryReducer, initialFoundryState, COMMISSIONS, FOUNDRY_TUNING, runSize } from './foundryDeck.js'
+import { foundryReducer, initialFoundryState, COMMISSIONS, FOUNDRY_TUNING } from './foundryDeck.js'
 import { foundryRegistry } from './foundryRegistry.jsx'
 import { fetchPlateList, mountPlate, plateEntries, plateUrl, tintPlate } from './plates.js'
 import { dealPanelGrid, fetchArtSources, mountPanelArt, panelArtUrl } from './panelArt.js'
@@ -813,6 +813,7 @@ function FoundryEditor({ onBackToSetup }) {
             committing={committing}
             plateReady={plateReady}
             plateTint={plateTint}
+            onSetRunSize={(size) => dispatch({ type: 'SET_RUN_SIZE', size })}
             onPlateTint={(patch) => setPlateTint((prev) => ({ ...prev, ...patch }))}
             artReady={artReady}
             artSources={artSources}
@@ -848,10 +849,9 @@ function FoundryEditor({ onBackToSetup }) {
 
 // ---- arc overlays (session structure, not card behavior) ----
 
-// The commission grid: every real Deck design as a card tile, each showing
-// its run size (its copy count in a real deck) — ×2 means this design gets
-// a second impression to deviate. Rendered over the canvas area like the
-// opening pick — the faces ARE the decision.
+// The commission grid: every real Deck design as a card tile. Rendered over
+// the canvas area like the opening pick — the faces ARE the decision. (The
+// run size is no tile property: it's commissioned later, at the plate.)
 function CommissionPick({ onChoose, onDeal }) {
   return (
     <div className="grid-picker">
@@ -869,9 +869,7 @@ function CommissionPick({ onChoose, onDeal }) {
                 onClick={() => onChoose(c.id)}
                 title={`Cast ${c.label}`}
               />
-              <span className="deck-cell-name">
-                {c.label} <span className="foundry-run-count">×{runSize(c)}</span>
-              </span>
+              <span className="deck-cell-name">{c.label}</span>
             </div>
           ))}
         </div>

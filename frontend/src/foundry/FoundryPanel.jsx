@@ -29,6 +29,7 @@ function FoundryPanel({
   plateReady,
   plateTint,
   onPlateTint,
+  onSetRunSize,
   artReady,
   artSources,
   onRedealGrid,
@@ -67,6 +68,7 @@ function FoundryPanel({
         <aside className="deck-panel">
           <h2>{F.plate.title}</h2>
           <p className="hint">{rich(fmt(F.plate.panelHint, { label: state.commission.label }))}</p>
+          <RunSizeControl value={state.copiesTotal} onChange={onSetRunSize} />
         </aside>
       )
 
@@ -216,6 +218,39 @@ function FoundryPanel({
     default:
       return null
   }
+}
+
+// The print run is set up here, at the plate (issue #36): an explicit
+// choice, not inherited from anywhere. Reducer-owned — the stepper
+// dispatches SET_RUN_SIZE and reads state.copiesTotal back; taking the
+// plate fixes it. Plain "Run", per the legibility clause.
+function RunSizeControl({ value, onChange }) {
+  return (
+    <div className="foundry-run">
+      <span className="ctrl-label">{F.plate.runLabel}</span>
+      <div className="foundry-run-stepper">
+        <button
+          type="button"
+          className="secondary"
+          disabled={value <= 1}
+          onClick={() => onChange(value - 1)}
+          title="One impression fewer"
+        >
+          −
+        </button>
+        <span className="foundry-run-value mono">{value}</span>
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => onChange(value + 1)}
+          title="One impression more"
+        >
+          +
+        </button>
+      </div>
+      <p className="hint">{F.plate.runHint}</p>
+    </div>
+  )
 }
 
 // The plate's own bath (plates.tintPlate): hue and saturation, live from
