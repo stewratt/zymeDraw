@@ -73,8 +73,8 @@
   width: 100% !important;
   height: 100% !important;
   border: 1px solid var(--border);
-  background: white;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  background: var(--paper);
+  box-shadow: var(--shadow-canvas);
 }
 .canvas-wrap canvas {
   width: 100% !important;
@@ -163,7 +163,7 @@
   font-size: 0.75rem;
   font-weight: 400;
   letter-spacing: 0.2em;
-  color: #ccc;
+  color: var(--text-heading);
   margin: 0;
 }
 .grid-picker .hint {
@@ -225,10 +225,10 @@
    more here than the palette rule. Muted green = goes on now; muted
    amber = held back. */
 .grid-thumb.place {
-  border-color: #7da869;
+  border-color: var(--pick-place);
 }
 .grid-thumb.stash {
-  border-color: #c9a15a;
+  border-color: var(--pick-stash);
 }
 .thumb-badge {
   position: absolute;
@@ -238,16 +238,16 @@
   letter-spacing: 0.15em;
   padding: 2px 6px;
   border-radius: var(--radius);
-  background: rgba(0, 0, 0, 0.7);
+  background: var(--scrim-strong);
   color: var(--text);
 }
 .grid-thumb.place .thumb-badge {
-  background: #7da869;
-  color: #10130e;
+  background: var(--pick-place);
+  color: var(--pick-place-ink);
 }
 .grid-thumb.stash .thumb-badge {
-  background: #c9a15a;
-  color: #17120a;
+  background: var(--pick-stash);
+  color: var(--pick-stash-ink);
 }
 
 .grid-picker-foot {
@@ -300,7 +300,7 @@
   cursor: pointer; /* a take, not a zoom */
 }
 .searcher-row .deck-cell.chosen .card {
-  border-color: #7da869;
+  border-color: var(--pick-place);
 }
 
 /* Skim (the scry): one card, center stage, one choice — the work beside. */
@@ -330,7 +330,7 @@
   font-size: 0.75rem;
   font-weight: 400;
   letter-spacing: 0.2em;
-  color: #ccc;
+  color: var(--text-heading);
   margin: 0;
 }
 
@@ -416,7 +416,7 @@
   0% {
     transform: rotateY(90deg) scale(0.85);
     opacity: 0;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+    box-shadow: var(--shadow-lift);
   }
   60% {
     opacity: 1;
@@ -424,7 +424,7 @@
   100% {
     transform: rotateY(0deg) scale(1);
     opacity: 1;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-rest);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -460,7 +460,7 @@
   font-size: 1.3rem;
   font-weight: 300;
   letter-spacing: 0.05em;
-  color: #eee;
+  color: var(--text-title);
 }
 .card--tile .card-text-face .card-kind {
   font-size: 0.5rem;
@@ -472,16 +472,16 @@
    carry the distinction: image cards warm, deck cards (Searcher, Skim, Delay)
    cool. Tints live on the text face so real art simply covers them. */
 .card--family-image .card-text-face {
-  background: linear-gradient(165deg, #2d2520, #221c18);
+  background: var(--family-image-bg);
 }
 .card--family-image .card-text-face .card-kind {
-  color: #a58a68;
+  color: var(--family-image-ink);
 }
 .card--family-deck .card-text-face {
-  background: linear-gradient(165deg, #202b36, #191f27);
+  background: var(--family-deck-bg);
 }
 .card--family-deck .card-text-face .card-kind {
-  color: #7e96b4;
+  color: var(--family-deck-ink);
 }
 /* Stash-return tone sliders (hue/saturation), under the brush tools. */
 .stash-tone {
@@ -506,7 +506,7 @@
   bottom: 6px;
   font-size: 0.7rem;
   color: var(--text);
-  background: rgba(0, 0, 0, 0.65);
+  background: var(--scrim-badge);
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 1px 6px;
@@ -519,7 +519,7 @@
   font-size: 0.95rem;
   font-weight: 300;
   letter-spacing: 0.12em;
-  color: #eee;
+  color: var(--text-title);
 }
 
 .tool-area {
@@ -550,7 +550,7 @@
 .placed-files li {
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.72rem;
-  color: #aaa;
+  color: var(--text-label);
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -589,22 +589,21 @@
 }
 .layer-row.drop-target {
   border-color: var(--sel-border);
-  background: #171717;
+  background: var(--surface-drop);
 }
 .layer-thumb {
   width: 32px;
   height: 32px;
   flex-shrink: 0;
   object-fit: contain;
-  background:
-    repeating-conic-gradient(#2a2a2a 0% 25%, #1a1a1a 0% 50%) 0 / 12px 12px;
+  background: var(--checker);
   border: 1px solid var(--border);
   border-radius: var(--radius);
 }
 .layer-name {
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.72rem;
-  color: #aaa;
+  color: var(--text-label);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -634,13 +633,13 @@
   font-size: 0.75rem;
 }
 .ctrl-label {
-  color: #aaa;
+  color: var(--text-label);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-size: 0.65rem;
 }
 .ctrl-value {
-  color: #ddd;
+  color: var(--text-value);
   font-size: 0.75rem;
   text-align: right;
 }
@@ -679,7 +678,7 @@
   font-size: 0.7rem;
   font-weight: 400;
   letter-spacing: 0.2em;
-  color: #ccc;
+  color: var(--text-heading);
 }
 .layers-panel .hint {
   margin: 0;
@@ -722,7 +721,7 @@
   box-shadow: inset 0 2px 0 var(--sel-border);
 }
 .drag-handle {
-  color: #555;
+  color: var(--text-faint);
   font-size: 0.9rem;
   line-height: 1;
   letter-spacing: -2px;
@@ -745,7 +744,7 @@
   transition: background 0.15s, border-color 0.15s;
 }
 .slot-chip:hover {
-  background: #1f1f1f;
+  background: var(--surface-hover);
   border-color: var(--border-strong);
 }
 .slot-chip.selected {
@@ -786,7 +785,7 @@
 .thumb-placeholder {
   width: 28px;
   height: 28px;
-  background: #1f1f1f;
+  background: var(--surface-hover);
   border-radius: var(--radius);
 }
 .layer-label {
@@ -794,7 +793,7 @@
   flex-direction: column;
   gap: 2px;
   font-size: 0.72rem;
-  color: #ddd;
+  color: var(--text-value);
   overflow: hidden;
 }
 .layer-label .kind {
@@ -824,7 +823,7 @@
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  color: #ddd;
+  color: var(--text-value);
   font-size: 0.72rem;
   cursor: pointer;
   text-align: left;
@@ -875,7 +874,7 @@
   color: var(--text);
 }
 .mode-toggle button:disabled {
-  color: #444;
+  color: var(--text-disabled);
   cursor: not-allowed;
 }
 .mode-toggle.small button {
@@ -911,7 +910,7 @@
 }
 .deck-panel button.secondary:disabled {
   border-color: var(--border);
-  color: #555;
+  color: var(--text-faint);
   cursor: not-allowed;
   background: transparent;
 }
@@ -926,7 +925,7 @@
   padding: 6px 8px;
   margin: 0;
   word-break: break-all;
-  color: #ddd;
+  color: var(--text-value);
 }
 /* Cap the finished thumbnail so a tall portrait can't overflow the panel and
    push the buttons out of view — object-fit keeps it undistorted. */
@@ -970,10 +969,10 @@
   position: absolute;
   display: none;
   pointer-events: none;
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--cursor-line);
   box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.5),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.5);
+    0 0 0 1px var(--cursor-halo),
+    inset 0 0 0 1px var(--cursor-halo);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   z-index: 5;
@@ -992,7 +991,7 @@
 .keys-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--scrim);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1014,7 +1013,7 @@
   font-size: 0.75rem;
   font-weight: 400;
   letter-spacing: 0.2em;
-  color: #ccc;
+  color: var(--text-heading);
   margin: 0;
 }
 .keys-section h3 {
@@ -1057,7 +1056,7 @@
 .deck-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--scrim);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1079,7 +1078,7 @@
   font-size: 0.75rem;
   font-weight: 400;
   letter-spacing: 0.2em;
-  color: #ccc;
+  color: var(--text-heading);
   margin: 0;
 }
 .deck-section h3 {
@@ -1129,7 +1128,7 @@
 .card-zoom-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: var(--scrim-strong);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1143,5 +1142,5 @@
   gap: 14px;
 }
 .card-zoom .card {
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--shadow-zoom);
 }
