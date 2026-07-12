@@ -72,11 +72,28 @@
   cursor: pointer;
 }
 
-/* The run size on a commission tile: the card's deck presence (×1 / ×2 —
-   how many impressions its cast will run). */
-.foundry-run-count {
-  color: var(--text-dim);
-  font-size: 0.75rem;
+/* The run chooser on the plate panel (issue #36): how many impressions
+   this cast pulls from the one sealed base. */
+.foundry-run {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.foundry-run-stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.foundry-run-stepper button {
+  width: 32px;
+  padding: 4px 0;
+}
+.foundry-run-value {
+  min-width: 2ch;
+  text-align: center;
 }
 
 /* The commission grid: more tiles than fit the overlay, so unlike the image

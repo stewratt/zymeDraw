@@ -64,14 +64,6 @@ export const COMMISSIONS = [
   { ...DEATH_CARD, copies: 0, family: 'coda' }
 ]
 
-// How many impressions a commission runs: its real deck presence. The Coda
-// is singular by definition. Exported so the commission grid can show the
-// run size on every tile (×1 / ×2 — which design gets a second iteration).
-export function runSize(commission) {
-  if (commission.family === 'coda') return 1
-  return Math.max(1, commission.copies ?? 1)
-}
-
 // Fisher–Yates on a copy.
 function shuffle(cards) {
   const out = [...cards]
@@ -113,10 +105,10 @@ export function initialFoundryState() {
     //                 font descriptors (ids + urls), dealt by FoundryEditor
     //                 from fonts.js and reported via SET_TYPE_FONTS
     deck: buildFoundryDeck(), // the literal shuffled working deck
-    // The print run (Stew, 2026-07-07): a commission with 2 copies in the
-    // Deck yields 2 impressions — the SAME sealed base, degraded twice,
-    // deviating only after the Press. copiesTotal is fixed at commission;
-    // copyIndex advances via NEXT_IMPRESSION.
+    // The print run: N impressions of the SAME sealed base, deviating only
+    // after the Press. Its size is commissioned at the plate (issue #36 —
+    // an explicit SET_RUN_SIZE choice, not inherited from deck copies) and
+    // fixes when the plate is taken; copyIndex advances via NEXT_IMPRESSION.
     copiesTotal: 1,
     copyIndex: 1,
     roundsDone: 0,
@@ -138,7 +130,7 @@ export function foundryReducer(state, action) {
         ...state,
         phase: 'PLATE_DEAL',
         commission,
-        copiesTotal: runSize(commission),
+        copiesTotal: 1,
         history: [
           ...state.history,
           { event: 'commission', cardId: commission.id, ts: Date.now() }
@@ -155,7 +147,7 @@ export function foundryReducer(state, action) {
         ...state,
         phase: 'PLATE_DEAL',
         commission,
-        copiesTotal: runSize(commission),
+        copiesTotal: 1,
         history: [
           ...state.history,
           { event: 'commission', cardId: commission.id, dealt: true, ts: Date.now() }
@@ -166,6 +158,15 @@ export function foundryReducer(state, action) {
     case 'SET_PLATE_OFFER': {
       if (state.phase !== 'PLATE_DEAL') return state
       return { ...state, plateOffer: action.plates }
+    }
+
+    // The run is commissioned here, while the plates are on the table —
+    // taking the plate fixes it. Any whole number ≥ 1.
+    case 'SET_RUN_SIZE': {
+      if (state.phase !== 'PLATE_DEAL') return state
+      const size = Math.floor(action.size)
+      if (!Number.isFinite(size) || size < 1) return state
+      return { ...state, copiesTotal: size }
     }
 
     case 'TAKE_PLATE': {

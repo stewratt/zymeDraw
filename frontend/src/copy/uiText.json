@@ -193,7 +193,7 @@
     "commission": {
       "title": "THE COMMISSION",
       "panelHint": "A cast is one session for one face. Pick the card from the grid — its name and type line will follow it onto the plate.",
-      "pickHint": "Every cast opens on a commission — the card this face is for. Choose one, or let the deck decide. The ×count is the card's presence in a deck: a ×2 design runs two impressions from one base.",
+      "pickHint": "Every cast opens on a commission — the card this face is for. Choose one, or let the deck decide.",
       "dealButton": "Deal me a commission"
     },
     "plate": {
@@ -201,7 +201,9 @@
       "panelHint": "Casting **{label}**. Take one of the dealt plates from the table.",
       "readingFolder": "Reading the plates folder…",
       "chooseFolder": "Choose plates folder",
-      "setHint": "The full set of {count} plate{plural} — choose the one this face calls for. Its frame is the card's convention layer; the white window is the punched image panel, waiting for art."
+      "setHint": "The full set of {count} plate{plural} — choose the one this face calls for. Its frame is the card's convention layer; the white window is the punched image panel, waiting for art.",
+      "runLabel": "Run",
+      "runHint": "Impressions this cast will pull — the same sealed base, deviating only after the Press. Taking the plate fixes the run."
     },
     "panel": {
       "title": "THE PANEL",
