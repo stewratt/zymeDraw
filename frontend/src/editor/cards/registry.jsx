@@ -64,6 +64,14 @@ import {
   commitStamp,
   updateStamp
 } from './stamp.jsx'
+import {
+  ReverberateOverlay,
+  ReverberateTools,
+  beginReverberate,
+  cleanupReverberate,
+  commitReverberate,
+  updateReverberate
+} from './reverberate.jsx'
 import { SearcherOverlay, SearcherTools, beginSearcher } from './searcher.jsx'
 import { SkimOverlay, SkimTools, beginSkim } from './skim.jsx'
 import { DelayTools } from './delay.jsx'
@@ -104,6 +112,19 @@ export const cardRegistry = {
     update: updateStamp,
     commit: commitStamp,
     cleanup: cleanupStamp
+  },
+
+  // ---- Stamp brush (Stamp's cutout front × the stamp session) ----
+
+  reverberate: {
+    controls: ['size', 'spacing', 'opacity', 'jitter'],
+    defaultControls: { size: 120, spacing: 0.6, opacity: 1, jitter: 0.3 },
+    Tools: ReverberateTools,
+    Overlay: ReverberateOverlay,
+    begin: beginReverberate,
+    update: updateReverberate,
+    commit: commitReverberate,
+    cleanup: cleanupReverberate
   },
 
   // ---- Stencil (image read as an alpha cutout of itself) ----

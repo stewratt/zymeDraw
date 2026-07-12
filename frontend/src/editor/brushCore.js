@@ -12,7 +12,7 @@
 // touches what's already painted. Layer up as many settings as you like in
 // one pass.
 //
-// One stroke engine, two built-in consumers (plus card-owned ones —
+// One stroke engine, three built-in consumers (plus card-owned ones —
 // createStrokeEngine is exported for cards whose composite the built-ins
 // can't express, e.g. Shattered Transfer's styled-window overlay):
 //   - MASK mode  (placement sessions): the standing mask brush. Each stroke
@@ -27,6 +27,12 @@
 //     effect computed FROM THE MASTER at that stroke's own settings — into
 //     an accumulation layer at that stroke's influence. Strokes are agnostic
 //     of each other: blur over blur covers, it doesn't compound.
+//   - STAMP mode (Reverberate): each stroke lays impressions of a source
+//     bitmap at spacing intervals along the path, at master resolution —
+//     the Kid Pix stamp-as-brush. Unlike reveal, impressions DO stack:
+//     each one is a discrete deposit, and overlaps braid. Per-impression
+//     jitter draws from a seed snapshot into the stroke record, so undo's
+//     replay lays the exact rope the user saw.
 //
 // While a brush is active, a thin circle follows the pointer at the brush's
 // on-screen size, so coverage is visible before and during a stroke.
@@ -642,6 +648,181 @@ export function createRevealSession(canvas, { applyEffect, master, getControls, 
   // Warm the cache at the default settings so the first stroke doesn't pay
   // the effect compute (Noise's pixel loop is the slow one) at mouse-down.
   effectedFor(effectParams(getControls()))
+
+  return {
+    ...engine,
+    overlay,
+    // Restart abandons the card: take the overlay with us.
+    removeOverlay() {
+      canvas.remove(overlay)
+      canvas.requestRenderAll()
+    }
+  }
+}
+
+// ---------- stamp mode (impressions along the path) ----------
+
+// Jitter must survive undo: rebuild replays a stroke record, and a wobble
+// re-rolled at replay would repaint a DIFFERENT rope than the one the user
+// chose to keep. So each stroke snapshots a seed, and every impression takes
+// its wobble from this deterministic stream, in landing order.
+function mulberry32(seed) {
+  let a = seed >>> 0
+  return function () {
+    a = (a + 0x6d2b79f5) | 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+// Size wobble at full jitter: ±35% of the stamp size; rotation: ±30°.
+const JITTER_SIZE = 0.35
+const JITTER_ANGLE = Math.PI / 6
+
+// Walk a stroke's polyline and place one impression per arc-length interval
+// — position, size, angle, all in master pixels. Pure function of the stroke
+// record, so live preview, the release bake, and undo's replay all lay the
+// identical impressions. The first impression lands at the press point: a
+// plain click stamps exactly once.
+function impressionsFor(stroke) {
+  const { spacing, jitter, seed } = stroke.settings
+  const rand = mulberry32(seed)
+  const wobble = () => (rand() * 2 - 1) * jitter
+  const size = stroke.radiusX * 2
+  const interval = Math.max(4, size * spacing)
+  const out = []
+  let need = 0 // arc length at which the next impression lands
+  let walked = 0
+  for (let i = 0; i < stroke.points.length; i++) {
+    const from = stroke.points[Math.max(0, i - 1)]
+    const to = stroke.points[i]
+    const seg = Math.hypot(to.x - from.x, to.y - from.y)
+    while (walked + seg >= need) {
+      const t = seg === 0 ? 0 : (need - walked) / seg
+      out.push({
+        x: from.x + (to.x - from.x) * t,
+        y: from.y + (to.y - from.y) * t,
+        size: size * (1 + wobble() * JITTER_SIZE),
+        angle: wobble() * JITTER_ANGLE
+      })
+      need += interval
+    }
+    walked += seg
+  }
+  return out
+}
+
+// Draw impressions[from..] — the source scaled so its longer side matches
+// the impression size, centered and rotated on the landing point. Opacity is
+// per impression: overlaps within one stroke stack, and the braid darkens
+// where copies cross — a deposit, not a reveal.
+function drawImpressions(ctx, stampEl, impressions, from, opacity) {
+  const w = stampEl.naturalWidth || stampEl.width
+  const h = stampEl.naturalHeight || stampEl.height
+  for (let i = from; i < impressions.length; i++) {
+    const imp = impressions[i]
+    const fit = imp.size / Math.max(w, h)
+    ctx.save()
+    ctx.globalAlpha = clampAlpha(opacity)
+    ctx.translate(imp.x, imp.y)
+    ctx.rotate(imp.angle)
+    ctx.drawImage(stampEl, (-w * fit) / 2, (-h * fit) / 2, w * fit, h * fit)
+    ctx.restore()
+  }
+}
+
+// `stampEl` is the source bitmap (the cutout — an image or canvas element);
+// `master` supplies the working resolution. Same overlay shape as the
+// reveal session: a full-canvas Fabric image whose pixels live at master
+// size, left in place at End for the universal bake.
+export function createStampSession(canvas, { stampEl, master, getControls, onHistoryChange, onSizeChange }) {
+  const accumulated = makeLayer(master.width, master.height) // locked strokes
+  const strokeMask = makeLayer(master.width, master.height) // engine scratch; impressions never read it
+  const liveLayer = makeLayer(master.width, master.height) // the in-progress stroke
+  const composite = makeLayer(master.width, master.height)
+
+  const overlay = new fabric.FabricImage(composite, {
+    left: 0,
+    top: 0,
+    originX: 'left',
+    originY: 'top',
+    scaleX: canvas.getWidth() / composite.width,
+    scaleY: canvas.getHeight() / composite.height,
+    selectable: false,
+    evented: false
+  })
+  canvas.add(overlay)
+
+  let live = null // { stroke, drawn } — impressions already on liveLayer
+
+  function redraw() {
+    const ctx = composite.getContext('2d')
+    ctx.clearRect(0, 0, composite.width, composite.height)
+    ctx.drawImage(accumulated, 0, 0)
+    ctx.drawImage(liveLayer, 0, 0)
+    overlay.dirty = true
+    canvas.requestRenderAll()
+  }
+
+  const state = {
+    strokeMask,
+    strokes: [],
+    bakeStroke(stroke) {
+      // Deterministic re-lay of the whole stroke — identical to what the
+      // live preview showed, impression for impression.
+      drawImpressions(
+        accumulated.getContext('2d'),
+        stampEl,
+        impressionsFor(stroke),
+        0,
+        stroke.settings.opacity
+      )
+    },
+    clearCommitted() {
+      clearLayer(accumulated)
+    },
+    recomposite(liveStroke) {
+      if (!liveStroke) {
+        live = null
+        clearLayer(liveLayer)
+      } else {
+        // Incremental: only the impressions the path just crossed are new —
+        // the seeded stream makes the full list stable, so drawing the tail
+        // is safe.
+        if (live?.stroke !== liveStroke) {
+          live = { stroke: liveStroke, drawn: 0 }
+          clearLayer(liveLayer)
+        }
+        const imps = impressionsFor(liveStroke)
+        drawImpressions(
+          liveLayer.getContext('2d'),
+          stampEl,
+          imps,
+          live.drawn,
+          liveStroke.settings.opacity
+        )
+        live.drawn = imps.length
+      }
+      redraw()
+    }
+  }
+
+  const engine = createStrokeEngine(canvas, {
+    states: new Map([[overlay, state]]),
+    // The overlay covers the whole canvas; every stroke belongs to it.
+    resolveTarget: () => overlay,
+    getControls,
+    snapshotSettings: (c) => ({
+      opacity: c.opacity ?? 1,
+      spacing: c.spacing ?? 0.6,
+      jitter: c.jitter ?? 0,
+      seed: Math.floor(Math.random() * 4294967296)
+    }),
+    onHistoryChange,
+    onSizeChange
+  })
+  engine.setActive(true)
 
   return {
     ...engine,

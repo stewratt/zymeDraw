@@ -12,6 +12,10 @@
       "name": "Stamp",
       "description": "Cut out an image and stamp it onto the canvas."
     },
+    "reverberate": {
+      "name": "Reverberate",
+      "description": "One subject, struck again and again — every stroke lays it down in echoes."
+    },
     "rails": {
       "name": "Rails",
       "description": "Adds a fractured monochromatic shard onto the canvas."
@@ -126,6 +130,13 @@
       "cutting": "Cutting out the subject… on a machine's first cutout this downloads the model and can take a minute.",
       "degraded": "The cutout service is unavailable, so the whole image was placed — the erase brush is your scissors.",
       "subject": "the stamp"
+    },
+    "reverberate": {
+      "pickTitle": "REVERBERATE",
+      "pickHint": "Six images. Take one — its subject becomes the stamp your strokes repeat.",
+      "confirm": "Continue — cut it out",
+      "cutting": "Cutting out the subject… on a machine's first cutout this downloads the model and can take a minute.",
+      "degraded": "The cutout service is unavailable, so the whole image is the stamp."
     },
     "dust": {
       "preparing": "Preparing the dust…"

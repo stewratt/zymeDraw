@@ -40,6 +40,9 @@ export const MOD_CARDS = [
   { id: 'ghost', copies: 1 }, // Graft × Rise
   { id: 'stain', copies: 1 }, // Graft × Sink
   { id: 'stamp', copies: 2 }, // Graft (cutout)
+  // Pool-only (Stew's standing rule, 2026-07-12: new cards never join the
+  // starter deck — they wait in the Deck editor's pool to be swapped in).
+  { id: 'reverberate', copies: 0 }, // Graft (cutout) × stamp brush — impressions along the stroke
   { id: 'rails', copies: 1 }, // Stencil × solid
   { id: 'char', copies: 1 }, // Stencil × Sink
   { id: 'deeper', copies: 2 }, // Re-frame, inward
@@ -61,7 +64,7 @@ export const MOD_CARDS = [
   { id: 'steep', copies: 1 }, // Wash × Sink
   { id: 'hue', copies: 1 }, // Wash (hue)
   { id: 'cure', copies: 1 }, // Wash × Cure
-  { id: 'etch', copies: 1 }, // Pixel glyph, hidden at the grain
+  { id: 'etch', copies: 0 }, // Pixel glyph, hidden at the grain — pool-only
   // The deck itself (v4 notes §5.1–5.2, §5.9): deck modifications, dealt
   // by chance. `family: 'deck'` color-codes their faces apart from the
   // image cards (cardFamily below).

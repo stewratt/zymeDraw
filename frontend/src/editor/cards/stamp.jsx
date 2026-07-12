@@ -24,7 +24,9 @@ const GRID_SIZE = 6
 
 // The chosen image's bytes → the sidecar → PNG-with-alpha object URL.
 // Any failure throws; the caller falls back to the original image.
-async function fetchCutoutUrl(filename) {
+// Exported: Reverberate runs the same chain in front of its stamp brush
+// (a third consumer would earn this a shared module).
+export async function fetchCutoutUrl(filename) {
   const health = await fetch('/api/ml/health').then((r) => r.json())
   if (!health.ok) throw new Error('sidecar down')
   const src = await fetch(`/api/images/${encodeURIComponent(filename)}`)
