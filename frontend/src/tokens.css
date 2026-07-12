@@ -76,4 +76,8 @@
   /* -- brush cursor: white line + dark halo reads on any pixels -- */
   --cursor-line: rgba(255, 255, 255, 0.9);
   --cursor-halo: rgba(0, 0, 0, 0.5);
+
+  /* -- the two typefaces -- */
+  --font-ui: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }

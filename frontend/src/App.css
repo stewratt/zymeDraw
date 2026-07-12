@@ -12,14 +12,14 @@
    every sheet writes var(--…) and nothing else. */
 
 body {
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-ui);
   margin: 0;
   background: var(--bg);
   color: var(--text);
 }
 
 code {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.875em;
   background: var(--surface-raised);
   padding: 1px 6px;
@@ -125,7 +125,7 @@ button.link:hover {
 
 .setup input[type="text"] {
   font: inherit;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.9rem;
   background: var(--surface-2);
   color: var(--text);
