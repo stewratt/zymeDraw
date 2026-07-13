@@ -12,8 +12,23 @@
    palette that exists; rationalizing it is the redesign's job. */
 :root {
   /* -- the greyscale core -- */
-  --bg: #141414;            /* app background        */
+  --bg: #252527;            /* app background — UI experiment: warm near-black */
+
+  /* -- background texture layer (UI experiment, ui-bg-experiment branch) --
+        A fixed full-screen grain sits behind all app chrome (App.css,
+        body::before) and blends against --bg. Driven live by the dev
+        switcher; these are the SETTLED defaults (ui_design_notes.md) and are
+        mirrored by the switcher's load-time state. Remove this block and the
+        body::before rule to revert. */
+  --bg-texture: url('/textures/black-paper.png');
+  --bg-texture-blend: multiply;       /* mix-blend-mode of the grain vs --bg */
+  --bg-texture-opacity: 0.7;          /* 0 = off, 1 = full grain             */
   --surface: #1a1a1a;       /* panels / header       */
+  /* UI experiment (ui-bg-experiment): big chrome panels use this translucent
+     surface so the bg texture reads through them. Small boxes/chips, buttons
+     (--fill) and inset fields (--surface-2) stay fully opaque. Revert by
+     pointing the panel selectors back at --surface. */
+  --surface-panel: rgba(26, 26, 26, 0.5); /* = --surface #1a1a1a @ 50% */
   --surface-2: #0e0e0e;     /* insets / fields       */
   --border: #2a2a2a;        /* default hairline      */
   --border-strong: #4a4a4a; /* emphasis (Coda, focus)*/

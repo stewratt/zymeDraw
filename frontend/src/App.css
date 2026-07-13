@@ -18,6 +18,24 @@ body {
   color: var(--text);
 }
 
+/* Background texture layer (UI experiment, ui-bg-experiment branch). A fixed
+   full-screen tile sits behind all app content (#root) but above the body's
+   solid --bg fill, and blends against it via mix-blend-mode. Transparent dark
+   tiles (dark-dot, graphy-dark…) read at 'normal'; light-gray grain tiles
+   (fabric, black-paper…) want 'soft-light'/'overlay'. Driven by the dev
+   switcher; delete this rule + the tokens block to revert. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--bg-texture);
+  background-repeat: repeat;
+  mix-blend-mode: var(--bg-texture-blend);
+  opacity: var(--bg-texture-opacity);
+}
+
 code {
   font-family: var(--font-mono);
   font-size: 0.875em;
@@ -57,7 +75,7 @@ button.link:hover {
   padding: 32px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--surface);
+  background: var(--surface-panel);
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -69,6 +87,20 @@ button.link:hover {
   letter-spacing: 0.3em;
   font-size: 2.5rem;
   text-align: center;
+}
+
+/* UI experiment (ui-bg-experiment): the ZYME wordmark logo replaces the text
+   title. Sized to roughly the old text's header presence (~56px tall); the
+   art is dark-on-transparent, so it reads against the panel. Bump `height`
+   to resize. Falls back to the styled alt text above if the PNG 404s. */
+.setup h1.setup-logo img {
+  display: block;
+  margin: 0 auto;
+  height: 56px;
+  width: auto;
+  /* drop-shadow (not box-shadow) so the shadow follows the letterforms'
+     alpha, not the PNG's rectangle. Kept very subtle. */
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
 }
 
 .setup .muted {
@@ -209,7 +241,7 @@ button.link:hover {
   padding: 32px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--surface);
+  background: var(--surface-panel);
   display: flex;
   flex-direction: column;
   gap: 20px;

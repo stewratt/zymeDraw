@@ -597,7 +597,9 @@ function Editor({ config, deckSpec, onBackToSetup }) {
         <button type="button" className="link" onClick={onBackToSetup}>
           {UI.editor.backToSetup}
         </button>
-        <h1>{UI.editor.title}</h1>
+        <h1 className="editor-brand">
+          <img src="/logo/zyme.png" alt={UI.editor.title} />
+        </h1>
         <div className="header-actions">
           <button type="button" className="link keys-button" onClick={() => setHistoryOpen(true)}>
             {UI.editor.deckButton}

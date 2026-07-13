@@ -144,7 +144,9 @@ function Setup({ initial, deckName, deckSpec, onOpenDeckEditor, onContinue }) {
         submit('editor')
       }}
     >
-      <h1>{T.title}</h1>
+      <h1 className="setup-logo">
+        <img src="/logo/zyme.png" alt={T.title} />
+      </h1>
       <p className="muted">{T.subtitle}</p>
 
       <label className="field">
