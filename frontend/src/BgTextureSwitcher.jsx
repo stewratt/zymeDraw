@@ -1,11 +1,18 @@
-// Dev-only background auditioning tool (UI experiment, ui-bg-experiment
-// branch). A small fixed panel that drives the --bg / --bg-texture* CSS
-// variables live, so the deep-purple base and the UItextures grain can be
-// felt out in the real app without editing files. Not part of the product —
-// delete this file, its import in main.jsx, and the texture block in
-// tokens.css + App.css to revert the whole experiment.
+// Dev-only UI auditioning tool (UI experiment, ui-bg-experiment branch). A
+// small fixed panel that drives the --bg / --bg-texture* / --font-ui /
+// --font-mono CSS variables live, so the base color, the UItextures grain and
+// the UI typefaces can be felt out in the real app without editing files.
+// Fonts come from fontsCatalog.js (+ public/fonts/). Not part of the product —
+// delete this file, its import in main.jsx, fontsCatalog.js, and the token
+// blocks in tokens.css + App.css to revert the whole experiment.
 
 import { useEffect, useState } from 'react'
+import { FONT_CATALOG, fontStack, ensureFontFaces } from './fontsCatalog.js'
+
+// The two picker lists, derived from the catalog (index 0 in each = the
+// shipped default, so a fresh load changes nothing).
+const UI_FONTS = FONT_CATALOG.filter((f) => f.slot === 'ui')
+const MONO_FONTS = FONT_CATALOG.filter((f) => f.slot === 'mono')
 
 // Each tile carries the blend mode it reads best at: the light-gray grain
 // scans (fabric/paper/speckle) want soft-light against the dark base; the
@@ -43,9 +50,18 @@ export default function BgTextureSwitcher() {
   const [texIdx, setTexIdx] = useState(saved.texIdx ?? 2) // default: black-paper
   const [blend, setBlend] = useState(saved.blend ?? TEXTURES[saved.texIdx ?? 2].blend)
   const [opacity, setOpacity] = useState(saved.opacity ?? 0.7)
+  const [uiIdx, setUiIdx] = useState(saved.uiIdx ?? 0) // default: System Sans
+  const [monoIdx, setMonoIdx] = useState(saved.monoIdx ?? 0) // default: System Mono
   const [open, setOpen] = useState(true)
 
   const tex = TEXTURES[texIdx]
+  const uiFont = UI_FONTS[uiIdx] ?? UI_FONTS[0]
+  const monoFont = MONO_FONTS[monoIdx] ?? MONO_FONTS[0]
+
+  // Load @font-face rules for any custom catalog entries, once.
+  useEffect(() => {
+    ensureFontFaces()
+  }, [])
 
   // Push the current look onto the document root, where tokens.css declared
   // the variables — every stylesheet reads them from :root.
@@ -55,8 +71,10 @@ export default function BgTextureSwitcher() {
     root.setProperty('--bg-texture', tex.name === 'none' ? 'none' : `url('/textures/${tex.name}.png')`)
     root.setProperty('--bg-texture-blend', blend)
     root.setProperty('--bg-texture-opacity', String(opacity))
-    localStorage.setItem(LS_KEY, JSON.stringify({ bg, texIdx, blend, opacity }))
-  }, [bg, texIdx, blend, opacity, tex.name])
+    root.setProperty('--font-ui', fontStack(uiFont))
+    root.setProperty('--font-mono', fontStack(monoFont))
+    localStorage.setItem(LS_KEY, JSON.stringify({ bg, texIdx, blend, opacity, uiIdx, monoIdx }))
+  }, [bg, texIdx, blend, opacity, tex.name, uiFont, monoFont, uiIdx, monoIdx])
 
   // Stepping to a new texture snaps blend to that tile's recommended mode; the
   // blend arrows below still let you override afterward.
@@ -69,6 +87,7 @@ export default function BgTextureSwitcher() {
     const i = BLENDS.indexOf(blend)
     setBlend(BLENDS[(i + dir + BLENDS.length) % BLENDS.length])
   }
+  const stepIdx = (setter, idx, len, dir) => setter((idx + dir + len) % len)
 
   const panel = {
     position: 'fixed',
@@ -139,6 +158,22 @@ export default function BgTextureSwitcher() {
         <span style={label}>opacity</span>
         <input type="range" min="0" max="1" step="0.05" value={opacity} onChange={(e) => setOpacity(Number(e.target.value))} style={{ flex: 1 }} />
         <span style={{ width: 28, textAlign: 'right' }}>{opacity.toFixed(2)}</span>
+      </div>
+
+      <div style={{ borderTop: '1px solid #2c2740', marginTop: 8, paddingTop: 2 }} />
+
+      <div style={row}>
+        <span style={label}>ui font</span>
+        <button style={arrow} onClick={() => stepIdx(setUiIdx, uiIdx, UI_FONTS.length, -1)}>◀</button>
+        <span style={{ ...val, textAlign: 'center' }}>{uiFont.label}</span>
+        <button style={arrow} onClick={() => stepIdx(setUiIdx, uiIdx, UI_FONTS.length, 1)}>▶</button>
+      </div>
+
+      <div style={row}>
+        <span style={label}>mono font</span>
+        <button style={arrow} onClick={() => stepIdx(setMonoIdx, monoIdx, MONO_FONTS.length, -1)}>◀</button>
+        <span style={{ ...val, textAlign: 'center' }}>{monoFont.label}</span>
+        <button style={arrow} onClick={() => stepIdx(setMonoIdx, monoIdx, MONO_FONTS.length, 1)}>▶</button>
       </div>
     </div>
   )

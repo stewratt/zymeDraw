@@ -48,7 +48,15 @@ texture reads through the big panels.
   wordmark — not yet swapped.
 - **The dev switcher** — `frontend/src/BgTextureSwitcher.jsx`, mounted as a
   sibling of `<App/>` in `frontend/src/main.jsx`. Dev-only; drives the CSS
-  variables live and remembers your last look.
+  variables live (base/texture/blend/opacity + `--font-ui`/`--font-mono`)
+  and remembers your last look.
+- **Fonts** — the picker's `ui font` / `mono font` cyclers read
+  `frontend/src/fontsCatalog.js`. Custom fonts live in
+  `frontend/public/fonts/<family-slug>/` (served at `/fonts/…`, `@font-face`
+  loaded from the catalog); see that folder's README. This is separate from
+  `frontend/src/assets/fonts/` (reserved for Foundry OFL card-art fonts). The
+  UI ships only two system stacks (`--font-ui`, `--font-mono`, tokens.css);
+  the picker defaults to those (index 0 in each list).
 - **The texture tiles** — `frontend/public/textures/` (copied from
   `UItextures/`). Two families: transparent dark patterns (dark-dot,
   graphy-dark, hixs-evolution, subtle-dots, dark-matter, blizzard) that
