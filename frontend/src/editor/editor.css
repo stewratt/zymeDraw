@@ -403,6 +403,11 @@
 .card--tile {
   width: 104px;
 }
+/* A postage-stamp face beside a list entry (the deck editor's card pool). */
+.card--icon {
+  width: 38px;
+  border-radius: 6px;
+}
 /* The enlarged view (CardZoom): as big as the viewport comfortably allows,
    height-led — the name below still fits on screen. */
 .card--zoom {

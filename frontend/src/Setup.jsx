@@ -239,14 +239,14 @@ function Setup({ initial, deckName, deckSpec, onOpenDeckEditor, onContinue }) {
 
       <div className="field">
         <span className="field-label">{T.deckLabel}</span>
-        <div className="field-row deck-row">
+        <div className="field-row setup-deck-row">
           <span className="deck-name">
             {fmt(T.deckLine, {
               name: deckName,
               count: (deckSpec ?? MOD_CARDS).reduce((sum, c) => sum + c.copies, 0)
             })}
           </span>
-          <button type="button" className="browse" onClick={onOpenDeckEditor}>
+          <button type="button" className="browse deck-editor-door" onClick={onOpenDeckEditor}>
             {T.deckEditorButton}
           </button>
         </div>
