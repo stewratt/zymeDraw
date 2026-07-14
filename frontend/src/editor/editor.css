@@ -2,7 +2,11 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--bg);
+  /* UI experiment (ui-bg-experiment): transparent so body's --bg + the
+     body::before texture layer show through the editor's --bg gaps. Overlays
+     (.plinth, .grid-picker) keep their opaque --bg mask. Revert to
+     `background: var(--bg)` to undo. */
+  background: transparent;
 }
 
 /* ---------- header ---------- */
@@ -13,13 +17,26 @@
   gap: 16px;
   padding: 10px 16px;
   border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  background: var(--surface-panel);
 }
 .editor-header h1 {
   margin: 0;
   font-weight: 200;
   letter-spacing: 0.3em;
   font-size: 1.1rem;
+}
+
+/* UI experiment (ui-bg-experiment): ZYME wordmark logo in the header, sized to
+   the old text's ~1.1rem presence. drop-shadow (not box-shadow) hugs the
+   letterforms' alpha. Falls back to the styled alt text if the PNG 404s. */
+.editor-header h1.editor-brand {
+  display: flex;
+  align-items: center;
+}
+.editor-header h1.editor-brand img {
+  height: 22px;
+  width: auto;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
 }
 
 /* ---------- main area ---------- */
@@ -113,7 +130,7 @@
 /* ---------- deck panel ---------- */
 
 .deck-panel {
-  background: var(--surface);
+  background: var(--surface-panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 24px;
@@ -385,6 +402,11 @@
 }
 .card--tile {
   width: 104px;
+}
+/* A postage-stamp face beside a list entry (the deck editor's card pool). */
+.card--icon {
+  width: 38px;
+  border-radius: 6px;
 }
 /* The enlarged view (CardZoom): as big as the viewport comfortably allows,
    height-led — the name below still fits on screen. */
@@ -660,7 +682,7 @@
 /* ---------- layers panel ---------- */
 
 .layers-panel {
-  background: var(--surface);
+  background: var(--surface-panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px;
@@ -999,7 +1021,7 @@
   cursor: pointer; /* the whole sheet closes on click */
 }
 .keys-panel {
-  background: var(--surface);
+  background: var(--surface-panel);
   border: 1px solid var(--border-strong);
   width: min(560px, calc(100vw - 48px));
   max-height: calc(100vh - 80px);
@@ -1064,7 +1086,7 @@
   cursor: pointer; /* the whole sheet closes on click, like the Keys sheet */
 }
 .deck-sheet {
-  background: var(--surface);
+  background: var(--surface-panel);
   border: 1px solid var(--border-strong);
   width: min(820px, calc(100vw - 48px));
   max-height: calc(100vh - 80px);

@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
 import { MOD_CARDS } from './editor/deck.js'
 import { CARD_TEXT } from './editor/cardText.js'
+import Card from './editor/Card.jsx'
+import CardZoom from './editor/CardZoom.jsx'
+import './editor/editor.css' // base .card styles for the pool's face icons
 import { UI, fmt } from './copy/uiText.js'
 
 const T = UI.deckEditor
@@ -58,6 +61,7 @@ function DeckEditor({ decks, active, onUse, onBack, onDecksSaved }) {
   const [name, setName] = useState(active?.name && active.spec ? active.name : '')
   const [saveError, setSaveError] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [zoom, setZoom] = useState(null) // the card whose face is open in the overlay
 
   const total = useMemo(
     () => Object.values(counts).reduce((sum, n) => sum + n, 0),
@@ -134,30 +138,38 @@ function DeckEditor({ decks, active, onUse, onBack, onDecksSaved }) {
       <ul className="deck-pool">
         {MOD_CARDS.map((card) => (
           <li key={card.id} className={counts[card.id] === 0 ? 'excluded' : ''}>
-            <div className="deck-pool-head">
-              <span className="deck-pool-name">{card.label}</span>
-              {card.family === 'deck' && <span className="deck-pool-tag">{T.deckCardTag}</span>}
-              <span className="deck-pool-stepper">
-                <button
-                  type="button"
-                  onClick={() => step(card.id, -1)}
-                  disabled={counts[card.id] === 0}
-                  aria-label={`${card.label} −`}
-                >
-                  −
-                </button>
-                <span className="deck-pool-copies">×{counts[card.id]}</span>
-                <button
-                  type="button"
-                  onClick={() => step(card.id, 1)}
-                  disabled={counts[card.id] >= MAX_COPIES}
-                  aria-label={`${card.label} +`}
-                >
-                  +
-                </button>
-              </span>
+            <Card
+              id={card.id}
+              label={card.label}
+              size="icon"
+              onClick={() => setZoom(card)}
+            />
+            <div className="deck-pool-body">
+              <div className="deck-pool-head">
+                <span className="deck-pool-name">{card.label}</span>
+                {card.family === 'deck' && <span className="deck-pool-tag">{T.deckCardTag}</span>}
+                <span className="deck-pool-stepper">
+                  <button
+                    type="button"
+                    onClick={() => step(card.id, -1)}
+                    disabled={counts[card.id] === 0}
+                    aria-label={`${card.label} −`}
+                  >
+                    −
+                  </button>
+                  <span className="deck-pool-copies">×{counts[card.id]}</span>
+                  <button
+                    type="button"
+                    onClick={() => step(card.id, 1)}
+                    disabled={counts[card.id] >= MAX_COPIES}
+                    aria-label={`${card.label} +`}
+                  >
+                    +
+                  </button>
+                </span>
+              </div>
+              <small className="hint">{CARD_TEXT[card.id]?.description}</small>
             </div>
-            <small className="hint">{CARD_TEXT[card.id]?.description}</small>
           </li>
         ))}
       </ul>
@@ -213,6 +225,10 @@ function DeckEditor({ decks, active, onUse, onBack, onDecksSaved }) {
       <button type="button" className="deck-use" onClick={useDeck} disabled={!legal}>
         {T.use}
       </button>
+
+      {zoom && (
+        <CardZoom id={zoom.id} label={zoom.label} onClose={() => setZoom(null)} />
+      )}
     </div>
   )
 }

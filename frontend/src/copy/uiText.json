@@ -310,7 +310,7 @@
     "cardSetsEmpty": "No sets in that folder yet — add a subfolder of card PNGs.",
     "deckLabel": "Deck",
     "deckLine": "{name} · {count} cards",
-    "deckEditorButton": "Deck editor…"
+    "deckEditorButton": "Deck editor"
   },
   "deckEditor": {
     "title": "Deck editor",

@@ -11,11 +11,41 @@
 /* The palette lives in tokens.css (imported before this file in main.jsx);
    every sheet writes var(--…) and nothing else. */
 
+/* The two shipped typefaces (ui-bg-experiment defaults), loaded permanently so
+   they no longer depend on the dev BG EXPERIMENT switcher being mounted. Only
+   these two families ship — the rest of the audition library in fontsCatalog.js
+   is still @font-face-loaded on demand when that switcher is re-enabled
+   (main.jsx). Files: frontend/public/fonts/<slug>/. --font-ui / --font-mono in
+   tokens.css name these; change both together. */
+@font-face { font-family: 'Work Sans'; font-weight: 200; font-display: swap; src: url('/fonts/work-sans/work-sans-200.woff2') format('woff2'); }
+@font-face { font-family: 'Work Sans'; font-weight: 300; font-display: swap; src: url('/fonts/work-sans/work-sans-300.woff2') format('woff2'); }
+@font-face { font-family: 'Work Sans'; font-weight: 400; font-display: swap; src: url('/fonts/work-sans/work-sans-400.woff2') format('woff2'); }
+@font-face { font-family: 'DM Mono'; font-weight: 300; font-display: swap; src: url('/fonts/dm-mono/dm-mono-300.woff2') format('woff2'); }
+@font-face { font-family: 'DM Mono'; font-weight: 400; font-display: swap; src: url('/fonts/dm-mono/dm-mono-400.woff2') format('woff2'); }
+
 body {
   font-family: var(--font-ui);
   margin: 0;
   background: var(--bg);
   color: var(--text);
+}
+
+/* Background texture layer (UI experiment, ui-bg-experiment branch). A fixed
+   full-screen tile sits behind all app content (#root) but above the body's
+   solid --bg fill, and blends against it via mix-blend-mode. Transparent dark
+   tiles (dark-dot, graphy-dark…) read at 'normal'; light-gray grain tiles
+   (fabric, black-paper…) want 'soft-light'/'overlay'. Driven by the dev
+   switcher; delete this rule + the tokens block to revert. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--bg-texture);
+  background-repeat: repeat;
+  mix-blend-mode: var(--bg-texture-blend);
+  opacity: var(--bg-texture-opacity);
 }
 
 code {
@@ -57,7 +87,7 @@ button.link:hover {
   padding: 32px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--surface);
+  background: var(--surface-panel);
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -69,6 +99,20 @@ button.link:hover {
   letter-spacing: 0.3em;
   font-size: 2.5rem;
   text-align: center;
+}
+
+/* UI experiment (ui-bg-experiment): the ZYME wordmark logo replaces the text
+   title. Sized to roughly the old text's header presence (~56px tall); the
+   art is dark-on-transparent, so it reads against the panel. Bump `height`
+   to resize. Falls back to the styled alt text above if the PNG 404s. */
+.setup h1.setup-logo img {
+  display: block;
+  margin: 0 auto;
+  height: 56px;
+  width: auto;
+  /* drop-shadow (not box-shadow) so the shadow follows the letterforms'
+     alpha, not the PNG's rectangle. Kept very subtle. */
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
 }
 
 .setup .muted {
@@ -154,9 +198,13 @@ button.link:hover {
   padding-left: 8px;
 }
 
-/* The two doors out of Setup: the studio session (primary) and the foundry. */
+/* The two doors out of Setup: the studio session (primary) and the foundry.
+   A 2:1 grid — the primary session door twice the foundry's width. Grid (not
+   flex) so the split is a true fraction; the deck-editor button above mirrors
+   these exact columns to line up with the foundry door. */
 .setup-doors {
-  display: flex;
+  display: grid;
+  grid-template-columns: 2fr minmax(0, 1fr);
   gap: 10px;
 }
 .setup-doors button {
@@ -168,12 +216,6 @@ button.link:hover {
   font-size: 0.9rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-}
-.setup-doors button[type="submit"] {
-  flex: 2;
-}
-.setup-doors .door-foundry {
-  flex: 1;
 }
 .setup-doors button:hover:not(:disabled) {
   background: var(--fill-hover);
@@ -191,14 +233,25 @@ button.link:hover {
   text-align: center;
 }
 
-/* The deck line on setup: current deck name + the door to the editor. */
-.deck-row {
+/* The deck line on setup: current deck name + the door to the editor. Same
+   2:1 grid as the FOUNDRY doors below, so the editor button sits in an
+   identical right-hand column — its edges line up exactly with the FOUNDRY
+   door. It keeps the outlined (secondary) treatment; only the box matches.
+   Named `setup-deck-row`, NOT `deck-row`: the latter is editor.css's
+   flex-wrap card grid (deck overlay / foundry commission), and sharing the
+   name made this grid clobber that grid whenever load order flipped. */
+.setup-deck-row {
+  display: grid;
+  grid-template-columns: 2fr minmax(0, 1fr);
+  gap: 10px;
   align-items: center;
 }
 .deck-name {
-  flex: 1;
   font-size: 0.9rem;
   color: var(--text);
+}
+.setup .deck-editor-door {
+  padding: 12px;
 }
 
 /* ---------- Deck editor ---------- */
@@ -209,7 +262,7 @@ button.link:hover {
   padding: 32px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--surface);
+  background: var(--surface-panel);
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -294,8 +347,9 @@ button.link:hover {
 }
 .deck-pool li {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
   padding: 8px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -303,6 +357,14 @@ button.link:hover {
 }
 .deck-pool li.excluded {
   opacity: 0.45;
+}
+/* The name/stepper row + description, stacked to the right of the face icon. */
+.deck-pool-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
 }
 .deck-pool-head {
   display: flex;
