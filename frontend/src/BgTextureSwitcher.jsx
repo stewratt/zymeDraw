@@ -9,10 +9,13 @@
 import { useEffect, useState } from 'react'
 import { FONT_CATALOG, fontStack, ensureFontFaces } from './fontsCatalog.js'
 
-// The two picker lists, derived from the catalog (index 0 in each = the
-// shipped default, so a fresh load changes nothing).
+// The two picker lists, derived from the catalog. The committed defaults are
+// Work Sans (ui) / DM Mono (mono) — found by label so reordering the catalog
+// can't silently change them; localStorage still overrides once you pick.
 const UI_FONTS = FONT_CATALOG.filter((f) => f.slot === 'ui')
 const MONO_FONTS = FONT_CATALOG.filter((f) => f.slot === 'mono')
+const DEFAULT_UI_IDX = Math.max(0, UI_FONTS.findIndex((f) => f.label === 'Work Sans'))
+const DEFAULT_MONO_IDX = Math.max(0, MONO_FONTS.findIndex((f) => f.label === 'DM Mono'))
 
 // Each tile carries the blend mode it reads best at: the light-gray grain
 // scans (fabric/paper/speckle) want soft-light against the dark base; the
@@ -50,8 +53,8 @@ export default function BgTextureSwitcher() {
   const [texIdx, setTexIdx] = useState(saved.texIdx ?? 2) // default: black-paper
   const [blend, setBlend] = useState(saved.blend ?? TEXTURES[saved.texIdx ?? 2].blend)
   const [opacity, setOpacity] = useState(saved.opacity ?? 0.7)
-  const [uiIdx, setUiIdx] = useState(saved.uiIdx ?? 0) // default: System Sans
-  const [monoIdx, setMonoIdx] = useState(saved.monoIdx ?? 0) // default: System Mono
+  const [uiIdx, setUiIdx] = useState(saved.uiIdx ?? DEFAULT_UI_IDX) // default: Work Sans
+  const [monoIdx, setMonoIdx] = useState(saved.monoIdx ?? DEFAULT_MONO_IDX) // default: DM Mono
   const [open, setOpen] = useState(true)
 
   const tex = TEXTURES[texIdx]

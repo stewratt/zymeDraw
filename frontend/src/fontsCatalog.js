@@ -19,11 +19,12 @@ const font = (label, slug, slot, weights, fallback) => ({
 })
 
 export const FONT_CATALOG = [
-  // --- always-available system stacks (index 0 in each slot = shipped
-  //     default, so a fresh load changes nothing) ---
-  { label: 'System Sans (default)', slot: 'ui', family: 'system-ui, -apple-system, "Segoe UI", sans-serif' },
+  // --- always-available system stacks (no files needed). The shipped
+  //     defaults are Work Sans / DM Mono, chosen by label in
+  //     BgTextureSwitcher.jsx — not by position here. ---
+  { label: 'System Sans', slot: 'ui', family: 'system-ui, -apple-system, "Segoe UI", sans-serif' },
   { label: 'Georgia (serif)', slot: 'ui', family: 'Georgia, "Times New Roman", serif' },
-  { label: 'System Mono (default)', slot: 'mono', family: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace' },
+  { label: 'System Mono', slot: 'mono', family: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace' },
 
   // --- UI sans (public/fonts/) ---
   font('Inter', 'inter', 'ui', [200, 300, 400], SANS_FB),
