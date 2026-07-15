@@ -28,6 +28,10 @@
       "name": "Deeper",
       "description": "The frame is the piece’s next edge. Move it, scale it from the corners, rotate it — whatever it holds becomes the whole canvas."
     },
+    "closer": {
+      "name": "Closer",
+      "description": "The same frame, but honest — whatever it magnifies keeps only the pixels it started with. Zoom in and the grain shows."
+    },
     "rack": {
       "name": "Rack",
       "description": "The piece is racked to a new vessel: drag, scale, rotate. What leaves the frame is gone; what the frame exposes stays white."
@@ -176,6 +180,9 @@
     },
     "deeper": {
       "commitNote": "End commits the re-frame and restores detail into the enlargement; that takes a few seconds."
+    },
+    "closer": {
+      "commitNote": "End commits the re-frame as it stands — no restoration, no waiting."
     },
     "char": {
       "subject": "the char"

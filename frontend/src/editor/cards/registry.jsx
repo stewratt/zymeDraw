@@ -52,6 +52,7 @@ import { graftControls } from './graftCardFactory.jsx'
 import { RailsTools, beginRails, cleanupRails, commitRails, updateRails } from './rails.jsx'
 import { CharTools, beginChar, cleanupChar, commitChar, updateChar } from './char.jsx'
 import { DeeperTools, beginDeeper, cleanupDeeper, commitDeeper } from './deeper.jsx'
+import { CloserTools, beginCloser, cleanupCloser, commitCloser } from './closer.jsx'
 import { LiftTools, beginLift, cleanupLift, commitLift, liftHotkeys } from './lift.jsx'
 import { FractureTools, beginFracture, cleanupFracture, commitFracture, updateFracture } from './fracture.jsx'
 import { RackTools, beginRack, cleanupRack, rackHotkeys, updateRack } from './rack.jsx'
@@ -158,6 +159,15 @@ export const cardRegistry = {
     begin: beginDeeper,
     commit: commitDeeper,
     cleanup: cleanupDeeper
+  },
+
+  closer: {
+    controls: [],
+    defaultControls: {},
+    Tools: CloserTools,
+    begin: beginCloser,
+    commit: commitCloser,
+    cleanup: cleanupCloser
   },
 
   rack: {
