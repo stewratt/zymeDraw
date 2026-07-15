@@ -42,14 +42,14 @@ export const MOD_CARDS = [
   { id: 'stamp', copies: 2 }, // Graft (cutout)
   // Pool-only (Stew's standing rule, 2026-07-12: new cards never join the
   // starter deck — they wait in the Deck editor's pool to be swapped in).
-  { id: 'reverberate', copies: 0 }, // Graft (cutout) × stamp brush — impressions along the stroke
+  { id: 'reverberate', copies: 1 }, // Graft (cutout) × stamp brush — impressions along the stroke
   { id: 'rails', copies: 1 }, // Stencil × solid
   { id: 'char', copies: 1 }, // Stencil × Sink
-  { id: 'deeper', copies: 2 }, // Re-frame, inward
-  // Pool-only per the new-cards rule: Deeper's honest sibling — no detail
-  // restore, enlargement keeps its grain. Re-frame balance (Deeper 2 /
-  // Closer 1?) is a Deck-editor decision, not made here.
-  { id: 'closer', copies: 0 }, // Re-frame, inward, no restoration
+  { id: 'deeper', copies: 0 }, // Re-frame, inward
+  // Re-frame swap (2026-07-15, Stew): Deeper out of the house deck, Closer
+  // in — the honest sibling (no detail restore, enlargement keeps its grain)
+  // is now the default re-frame. Both stay in the pool.
+  { id: 'closer', copies: 1 }, // Re-frame, inward, no restoration
   // Rack retired (2026-07-05): flipping a piece you've worked several
   // rounds never felt worth doing. Card + registry entry stay in place;
   // re-add this line to deal it again.
@@ -61,7 +61,7 @@ export const MOD_CARDS = [
   // The fracture family's exemplar (cards_plan §4): geometric tiles of the
   // piece strewn by a scatter brush. Medium rarity on the weirdness dial —
   // 1 is a suggested balance, not a cap; the Deck editor may run more.
-  { id: 'fracture', copies: 1 }, // Voronoi displacement × mask brush — the piece slides apart
+  { id: 'fracture', copies: 0 }, // Voronoi displacement × mask brush — the piece slides apart
   { id: 'dust', copies: 2 }, // Reveal × deposit
   { id: 'bruise', copies: 1 }, // Reveal × Bruise
   { id: 'blur', copies: 2 }, // Reveal × blur — provisional (§6.3)
@@ -73,7 +73,7 @@ export const MOD_CARDS = [
   // by chance. `family: 'deck'` color-codes their faces apart from the
   // image cards (cardFamily below).
   { id: 'searcher', copies: 1, family: 'deck' }, // Tutor: the remains open, take one
-  { id: 'skim', copies: 1, family: 'deck' }, // Scry: see the top, keep or bury
+  { id: 'skim', copies: 2, family: 'deck' }, // Scry: see the top, keep or bury
   { id: 'delay', copies: 1, family: 'deck' } // The right to set the first Coda aside
   // Stashed until Stew trains his own style model — the demo ONNX styles
   // don't look good enough to ship. Card files, registry entries, and the
