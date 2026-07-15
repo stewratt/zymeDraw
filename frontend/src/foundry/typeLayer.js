@@ -14,6 +14,7 @@ import * as fabric from 'fabric'
 import { CARD_TEXT } from '../editor/cardText.js'
 import { ensureFontLoaded } from './fonts.js'
 import { makeRarityMark } from './rarity.js'
+import { DEFAULT_HOMES, loadSlotHomes } from './slotHomes.js'
 
 const INK = '#141414'
 
@@ -29,29 +30,26 @@ function slotText(text, fontFamily, options) {
 // Mount all slots above whatever the canvas holds (the plate is already
 // there — added later means stacked higher). Fonts are awaited first: an
 // unloaded face would render serif and measure wrong.
-export async function mountTypeLayer(canvas, commission, fonts) {
+export async function mountTypeLayer(canvas, commission, fonts, plateFile) {
   await Promise.all([ensureFontLoaded(fonts.title), ensureFontLoaded(fonts.body)])
 
-  const name = slotText(commission.label, fonts.title.name, {
-    left: 50,
-    top: 48,
-    fontSize: 40
-  })
+  // Where each slot spawns: the plate's learned home (slotHomes.js) if it
+  // has ever been sealed, else the neutral default. originX/fonts below
+  // stay creation-time identity — only spawn geometry is remembered.
+  const learned = loadSlotHomes(plateFile)
+  const home = (slot) => ({ ...DEFAULT_HOMES[slot], ...learned?.[slot] })
+
+  const name = slotText(commission.label, fonts.title.name, home('name'))
   const typeLine = slotText(commission.family, fonts.title.name, {
     originX: 'right',
-    left: 695,
-    top: 56,
-    fontSize: 24
+    ...home('typeLine')
   })
   // The description mirrors what Deck's card panel says (cardText.js is
   // the single source for both apps); still fully editable on the face.
   const descriptionText =
     CARD_TEXT[commission.id]?.description ?? 'Double-click to set the description.'
   const description = new fabric.Textbox(descriptionText, {
-    left: 50,
-    top: 660,
-    width: 645,
-    fontSize: 26,
+    ...home('description'),
     lineHeight: 1.25,
     fontFamily: fonts.body.name,
     fill: INK,

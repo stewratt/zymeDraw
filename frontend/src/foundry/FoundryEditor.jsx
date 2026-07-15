@@ -11,6 +11,7 @@ import { dealPanelGrid, fetchArtSources, mountPanelArt, panelArtUrl } from './pa
 import { dealTypeFonts, fetchFontCatalog } from './fonts.js'
 import { roundCorners, roundedCopy } from './cardCorners.js'
 import { applyTypeFonts, inkSlot, mountTypeLayer } from './typeLayer.js'
+import { saveSlotHomes } from './slotHomes.js'
 import { createMaskSession } from '../editor/brushCore.js'
 import { dispatchKey } from '../editor/keymap.js'
 import { arrangeBindings, brushBindings } from '../editor/sessionBindings.js'
@@ -212,7 +213,7 @@ function FoundryEditor({ onBackToSetup }) {
       return
     }
     setTypeReady(false)
-    mountTypeLayer(canvas, state.commission, state.typeFonts)
+    mountTypeLayer(canvas, state.commission, state.typeFonts, state.plate?.file)
       .then((slots) => {
         if (cancelled) {
           canvas.remove(...Object.values(slots))
@@ -484,6 +485,9 @@ function FoundryEditor({ onBackToSetup }) {
       masterRef.current = bake(canvas)
       baseMasterRef.current = masterRef.current
     }
+    // Train this plate's slot homes from the sealed layout (issue #43): the
+    // next card on the same plate spawns where this one finished.
+    saveSlotHomes(state.plate?.file, typeSlotsRef.current)
     plateObjRef.current = null
     panelImgRef.current = null
     typeSlotsRef.current = null
