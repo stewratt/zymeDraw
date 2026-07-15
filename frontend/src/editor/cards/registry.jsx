@@ -197,7 +197,7 @@ export const cardRegistry = {
   fracture: {
     controls: ['seed', 'scale', 'opacity', 'mode', 'size', 'hardness', 'softness', 'strength'],
     // The erase brush opens in hand (conceal), like Transfer — no arrange.
-    defaultControls: { seed: 0, scale: 300, opacity: 1, mode: 'conceal', size: 60, hardness: 'soft', softness: 0.5, strength: 1 },
+    defaultControls: { seed: 0, scale: 600, opacity: 1, mode: 'conceal', size: 60, hardness: 'soft', softness: 0.5, strength: 1 },
     // Open on a random distribution so no two deals fracture the same way.
     randomize: (d) => ({ ...d, seed: Math.floor(Math.random() * 100) }),
     Tools: FractureTools,

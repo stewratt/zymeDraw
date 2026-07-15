@@ -61,7 +61,7 @@ export const MOD_CARDS = [
   // The fracture family's exemplar (cards_plan §4): geometric tiles of the
   // piece strewn by a scatter brush. Medium rarity on the weirdness dial —
   // 1 is a suggested balance, not a cap; the Deck editor may run more.
-  { id: 'fracture', copies: 0 }, // Voronoi displacement × mask brush — the piece slides apart
+  { id: 'fracture', copies: 0 }, // Grid displacement × mask brush — the piece slides apart
   { id: 'dust', copies: 2 }, // Reveal × deposit
   { id: 'bruise', copies: 1 }, // Reveal × Bruise
   { id: 'blur', copies: 2 }, // Reveal × blur — provisional (§6.3)

@@ -1,5 +1,6 @@
 // Fracture — the fracture family's exemplar (cards_plan.md §4): the whole
-// piece breaks into voronoi chunks that each slide as a rigid block, an
+// piece breaks into a jittered rectangular grid whose tiles each slide as a
+// rigid block (full-span 90° seams — see fractureField.js), an
 // all-over displacement you then compose by carving it back. Structure is
 // Transfer's (full-canvas overlay + the standing mask brush + an influence
 // slider) with the sidecar style model swapped for a local displacement
