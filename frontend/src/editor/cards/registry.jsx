@@ -141,8 +141,8 @@ export const cardRegistry = {
   },
 
   char: {
-    controls: ['depth', 'opacity', 'mode', 'size', 'hardness', 'softness', 'strength'],
-    defaultControls: { depth: 0.7, opacity: 1, mode: 'arrange', size: 40, hardness: 'soft', softness: 0.5, strength: 1 },
+    controls: ['darken', 'saturation', 'opacity', 'mode', 'size', 'hardness', 'softness', 'strength'],
+    defaultControls: { darken: 0.5, saturation: 0.5, opacity: 1, mode: 'arrange', size: 40, hardness: 'soft', softness: 0.5, strength: 1 },
     Tools: CharTools,
     begin: beginChar,
     update: updateChar,
