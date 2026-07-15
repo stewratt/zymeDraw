@@ -1,18 +1,8 @@
-// Deeper — re-frame the piece. A 4:5 frame appears over the canvas; move,
-// scale and rotate it to choose the piece's new framing. End maps that
-// region onto the whole canvas — what's outside the frame is gone — and,
-// because zooming in means fewer true pixels, the sidecar's Real-ESRGAN
-// model restores detail into the enlargement. This is the card the master
-// raster was built for.
-//
-// The frame keeps the canvas's 4:5 shape by construction: it's a
-// canvas-proportioned Rect whose side handles are hidden, and the session
-// turns on Fabric's uniform scaling so corner drags scale both axes together
-// — the opposite corner stays pinned and the frame can only shrink/grow, not
-// squash into a different ratio. (The canvas is created with
-// uniformScaling:false, which placement images want, so we flip it on for
-// this card and restore it on commit/cleanup.) Rotation stays free.
-// Orientation stays portrait — a live invariant (CLAUDE.md §8).
+// Deeper — re-frame the piece, inward with restoration. The frame session
+// and the 2d re-frame live in frameCardFactory.jsx (shared with Closer);
+// what's Deeper's own is the detail restore: because zooming in means fewer
+// true pixels, the sidecar's Real-ESRGAN model restores detail into the
+// enlargement. This is the card the master raster was built for.
 //
 // Detail restore: the re-framed master is drawn by 2d transform at master
 // resolution first (that alone is a correct, if soft, result — and is the
@@ -21,91 +11,17 @@
 // (master/zoom, clamped 600–1200 px wide to bound CPU time), sent through
 // /api/ml/upscale (fixed x4), and the result is drawn back at master size.
 
-import * as fabric from 'fabric'
 import { CARD_TEXT } from '../cardText.js'
 import { UI } from '../../copy/uiText.js'
-import { showMaster } from '../masterRaster.js'
+import { makeFrameCardHooks } from './frameCardFactory.jsx'
 
-export function beginDeeper(ctx) {
-  const rect = new fabric.Rect({
-    width: ctx.canvasWidth,
-    height: ctx.canvasHeight,
-    scaleX: 0.7,
-    scaleY: 0.7,
-    originX: 'center',
-    originY: 'center',
-    left: ctx.canvasWidth / 2,
-    top: ctx.canvasHeight / 2,
-    fill: 'rgba(0, 0, 0, 0)',
-    stroke: '#ffffff',
-    strokeWidth: 1.5,
-    strokeDashArray: [6, 4],
-    strokeUniform: true
-  })
-  // Corners only, no side handles.
-  rect.setControlsVisibility({ ml: false, mr: false, mt: false, mb: false })
-  // Turn on native uniform scaling so corners keep the 4:5 ratio and pin the
-  // opposite corner. Also disable the uniScaleKey so Shift can't opt out of
-  // it. Both are restored when the card ends.
-  const prev = { uniformScaling: ctx.canvas.uniformScaling, uniScaleKey: ctx.canvas.uniScaleKey }
-  ctx.canvas.uniformScaling = true
-  ctx.canvas.uniScaleKey = null
-  ctx.canvas.add(rect)
-  ctx.canvas.setActiveObject(rect)
-  ctx.canvas.requestRenderAll()
-  return { rect, master: ctx.master, prev }
-}
+const hooks = makeFrameCardHooks({
+  restore: (reframed, zoom) => (zoom > 1.05 ? restoreDetail(reframed, zoom) : reframed)
+})
 
-function restoreScaling(canvas, prev) {
-  if (!prev) return
-  canvas.uniformScaling = prev.uniformScaling
-  canvas.uniScaleKey = prev.uniScaleKey
-}
-
-export async function commitDeeper(ctx) {
-  const s = ctx.session
-  if (!s) return
-  const { rect, master } = s
-  ctx.canvas.discardActiveObject()
-  ctx.canvas.remove(rect)
-  restoreScaling(ctx.canvas, s.prev)
-  ctx.canvas.requestRenderAll()
-
-  const proxyScale = master.width / ctx.canvas.getWidth() // display px → master px
-  const zoom = master.width / (rect.getScaledWidth() * proxyScale)
-
-  // Map the frame region onto the full master: center it, undo its
-  // rotation, blow it up to full size.
-  const reframed = document.createElement('canvas')
-  reframed.width = master.width
-  reframed.height = master.height
-  const g = reframed.getContext('2d')
-  g.imageSmoothingQuality = 'high'
-  g.fillStyle = '#ffffff'
-  g.fillRect(0, 0, reframed.width, reframed.height)
-  g.translate(reframed.width / 2, reframed.height / 2)
-  g.scale(zoom, zoom)
-  g.rotate((-rect.angle * Math.PI) / 180)
-  g.translate(-rect.left * proxyScale, -rect.top * proxyScale)
-  g.drawImage(master, 0, 0)
-
-  let next = reframed
-  if (zoom > 1.05) {
-    try {
-      next = await restoreDetail(reframed, zoom)
-    } catch {
-      // sidecar down or upscale failed: the plain resample stands
-    }
-  }
-  showMaster(ctx.canvas, next)
-}
-
-export function cleanupDeeper(ctx) {
-  if (!ctx.session) return
-  ctx.canvas.remove(ctx.session.rect)
-  restoreScaling(ctx.canvas, ctx.session.prev)
-  ctx.canvas.requestRenderAll()
-}
+export const beginDeeper = hooks.begin
+export const commitDeeper = hooks.commit
+export const cleanupDeeper = hooks.cleanup
 
 async function restoreDetail(reframed, zoom) {
   const health = await fetch('/api/ml/health').then((r) => r.json())

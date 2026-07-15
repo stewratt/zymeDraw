@@ -46,6 +46,10 @@ export const MOD_CARDS = [
   { id: 'rails', copies: 1 }, // Stencil × solid
   { id: 'char', copies: 1 }, // Stencil × Sink
   { id: 'deeper', copies: 2 }, // Re-frame, inward
+  // Pool-only per the new-cards rule: Deeper's honest sibling — no detail
+  // restore, enlargement keeps its grain. Re-frame balance (Deeper 2 /
+  // Closer 1?) is a Deck-editor decision, not made here.
+  { id: 'closer', copies: 0 }, // Re-frame, inward, no restoration
   // Rack retired (2026-07-05): flipping a piece you've worked several
   // rounds never felt worth doing. Card + registry entry stay in place;
   // re-add this line to deal it again.
