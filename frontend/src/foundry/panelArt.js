@@ -73,9 +73,10 @@ export async function mountPanelArt(canvas, id) {
   const img = await fabric.FabricImage.fromURL(panelArtUrl(id))
   const W = canvas.getWidth()
   const H = canvas.getHeight()
-  // Cover the whole face by default — the window sits large in the plate,
-  // and scaling DOWN from cover is rarer than dragging to reframe.
-  const scale = Math.max(W / img.width, H / img.height)
+  // Fit the whole image inside the face by default (contain) — the entire
+  // image reads at a glance in the plate window, and scaling UP to reframe a
+  // detail is rarer than always having to shrink a cover-sized image down.
+  const scale = Math.min(W / img.width, H / img.height)
   img.set({
     originX: 'center',
     originY: 'center',

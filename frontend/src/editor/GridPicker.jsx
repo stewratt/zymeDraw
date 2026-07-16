@@ -120,16 +120,27 @@ function gridShape(n) {
 // confirm. `fileUrl` maps an entry to its image URL — Deck's default is the
 // input folder; Foundry's panel pick passes its own (mixed input/output
 // sources, panelArt.js).
+//
+// Two confirm shapes: pass `confirmLabel` for a self-owned foot button, OR
+// pass `onChoose` to lift the selection out (Foundry drives the take from
+// its side panel instead). Either way Enter still confirms via `onConfirm`.
 export function CardGridPicker({
   title,
   hint,
   files,
   confirmLabel,
   onConfirm,
+  onChoose,
   fileUrl = (f) => `/api/images/${encodeURIComponent(f)}`
 }) {
   const [chosen, setChosen] = useState(null)
   const shape = gridShape(files.length)
+
+  // Report the live selection up (fires on mount/reset with null too, so an
+  // external owner always tracks the current pick).
+  useEffect(() => {
+    onChoose?.(chosen)
+  }, [chosen, onChoose])
 
   // Enter confirms once an image is taken — a card grid is a smaller
   // decision than the opening, which keeps its no-Enter rule (hotkeys.md
@@ -175,9 +186,11 @@ export function CardGridPicker({
       )}
       <div className="grid-picker-foot">
         <span className="hint">{chosen ? T.footTaken : T.footTakeOne}</span>
-        <button type="button" className="primary" title="Enter" disabled={!chosen} onClick={() => onConfirm(chosen)}>
-          {confirmLabel}
-        </button>
+        {confirmLabel && (
+          <button type="button" className="primary" title="Enter" disabled={!chosen} onClick={() => onConfirm(chosen)}>
+            {confirmLabel}
+          </button>
+        )}
       </div>
     </div>
   )

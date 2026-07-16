@@ -45,6 +45,8 @@ function FoundryPanel({
   onMaskUndo,
   onMaskRedo,
   onRepick,
+  panelChoice,
+  onTakePanel,
   exportState,
   onControlChange,
   onEndPanel,
@@ -75,7 +77,21 @@ function FoundryPanel({
     case 'PANEL_PICK': {
       const hasArt = !!state.panelArt
       const brushing = maskControls.mode !== 'arrange'
-      const canContinue = plateReady && artReady
+      // The far-right primary is the progression button in both states: before
+      // art it TAKES the grid pick (there is always an image for the window —
+      // no artless skip); after art it advances to the type. Enter mirrors it
+      // (the grid overlay's own listener confirms the pick pre-art).
+      const nextBtn = hasArt
+        ? {
+            label: !plateReady ? F.panel.mounting : !artReady ? F.panel.placingArt : F.panel.continueType,
+            disabled: !(plateReady && artReady),
+            onClick: onEndPanel
+          }
+        : {
+            label: !plateReady ? F.panel.mounting : F.panel.gridConfirm,
+            disabled: !(plateReady && panelChoice),
+            onClick: onTakePanel
+          }
       return (
         <aside className="deck-panel">
           <div className="panel-scroll">
@@ -126,17 +142,11 @@ function FoundryPanel({
           <button
             type="button"
             className="primary"
-            title={hasArt ? 'Enter' : undefined}
-            disabled={!canContinue}
-            onClick={onEndPanel}
+            title="Enter"
+            disabled={nextBtn.disabled}
+            onClick={nextBtn.onClick}
           >
-            {!plateReady
-              ? F.panel.mounting
-              : !artReady
-                ? F.panel.placingArt
-                : hasArt
-                  ? F.panel.continueType
-                  : F.panel.continueEmpty}
+            {nextBtn.label}
           </button>
         </aside>
       )

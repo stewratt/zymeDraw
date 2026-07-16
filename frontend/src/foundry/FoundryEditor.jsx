@@ -89,6 +89,11 @@ function FoundryEditor({ onBackToSetup }) {
   const panelImgRef = useRef(null)
   const [artReady, setArtReady] = useState(true) // false only while art is in flight
 
+  // The image selected in the panel grid, lifted out of CardGridPicker so
+  // the side panel's primary button is the one that takes it (Stew: the
+  // progression button people reach for should place the pick, not skip it).
+  const [panelChoice, setPanelChoice] = useState(null)
+
   // The standing mask brush over the panel art (brushCore.js) — same
   // machinery as Deck's placement sessions. Controls live in React; the
   // session reads them through a ref so mid-stroke changes don't rebuild.
@@ -99,8 +104,13 @@ function FoundryEditor({ onBackToSetup }) {
 
   useEffect(() => {
     maskControlsRef.current = maskControls
-    maskSessionRef.current?.setActive(maskControls.mode !== 'arrange')
-  }, [maskControls])
+    // The mask brush is a PANEL_PICK tool only. Gate it on the phase so
+    // crossing into TYPE_SETTING always releases the canvas — an erase left
+    // mid-stroke kept skipTargetFind on and the cursor at 'none', which
+    // blocked selecting/resizing the type (the brush-cursor-stuck bug).
+    const active = state.phase === 'PANEL_PICK' && maskControls.mode !== 'arrange'
+    maskSessionRef.current?.setActive(active)
+  }, [maskControls, state.phase])
 
   // Create the master once the Fabric canvas exists — card-face dimensions.
   useEffect(() => {
@@ -725,7 +735,7 @@ function FoundryEditor({ onBackToSetup }) {
     bindings.push({ key: 'Enter', run: handleCommit })
   } else if (state.phase === 'PANEL_PICK' && plateReady && artInHand) {
     // Before the pick, the grid overlay owns Enter (CardGridPicker's own
-    // listener confirms the taken image); artless Continue stays click-only.
+    // listener confirms the taken image); here Enter advances to the type.
     bindings.push({ key: 'Enter', run: () => dispatch({ type: 'END_PANEL' }) })
   } else if (state.phase === 'COMPLETE') {
     // Enter continues the run while impressions remain, then restarts.
@@ -802,7 +812,7 @@ function FoundryEditor({ onBackToSetup }) {
               hint={F.panel.gridHint}
               files={state.panelGrid}
               fileUrl={panelArtUrl}
-              confirmLabel={F.panel.gridConfirm}
+              onChoose={setPanelChoice}
               onConfirm={(file) => dispatch({ type: 'PICK_PANEL', file })}
             />
           )}
@@ -836,6 +846,8 @@ function FoundryEditor({ onBackToSetup }) {
             onMaskUndo={() => maskSessionRef.current?.undo()}
             onMaskRedo={() => maskSessionRef.current?.redo()}
             onRepick={() => dispatch({ type: 'REPICK_PANEL' })}
+            panelChoice={panelChoice}
+            onTakePanel={() => panelChoice && dispatch({ type: 'PICK_PANEL', file: panelChoice })}
             exportState={exportState}
             onControlChange={handleControlChange}
             onEndPanel={() => dispatch({ type: 'END_PANEL' })}

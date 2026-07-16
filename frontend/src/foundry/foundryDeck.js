@@ -212,8 +212,9 @@ export function foundryReducer(state, action) {
     }
 
     // Advancing PANEL_PICK → TYPE_SETTING is NOT a commit: the whole
-    // foundation stays live (re-pick, re-word, nudge) until the Press.
-    // Continuing artless is allowed — an empty window is a choice.
+    // foundation stays live (re-pick, re-word, nudge) until the Press. The UI
+    // only reaches here once an image is placed (the take is the progression);
+    // the reducer stays permissive rather than re-asserting that invariant.
     case 'END_PANEL': {
       if (state.phase !== 'PANEL_PICK') return state
       return { ...state, phase: 'TYPE_SETTING' }

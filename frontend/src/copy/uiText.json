@@ -225,7 +225,7 @@
     },
     "panel": {
       "title": "THE PANEL",
-      "pickPanelHint": "Take an image from the grid. Or continue with the window empty — the white shows, and the graffiti decides what it becomes.",
+      "pickPanelHint": "Take an image from the grid — it lands under the plate, and the window crops it.",
       "redealImages": "Re-deal the images",
       "artFromPrefix": "Panel art from",
       "artFromFallback": "Panel art from the input + export folders — point it at a dedicated folder to curate the card imagery apart from the main pool.",
@@ -237,9 +237,8 @@
       "mounting": "Mounting the plate…",
       "placingArt": "Placing the art…",
       "continueType": "Continue — to the type",
-      "continueEmpty": "Continue — window empty",
       "gridHint": "Take an image for the window — your finished pieces and raw inputs, dealt together. It lands under the plate; the window crops it.",
-      "gridConfirm": "Take — place under the window"
+      "gridConfirm": "Choose card image"
     },
     "type": {
       "title": "THE TYPE",

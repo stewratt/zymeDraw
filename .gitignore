@@ -11,6 +11,12 @@ output/
 !foundry_card_template.png
 !foundry_card_template@3x.png
 
+# Exception: card designs ship with the repo so a fresh clone is never blank
+# (main faces + default Foundry cardbacks). This is the ONE folder where PNGs
+# are tracked — keep exports, panel art, and WIP scratch out of it.
+!frontend/src/assets/cards/*.png
+!frontend/src/assets/cards/*.jpg
+
 # Foundry materials: local-only, never committed. The plates carry the same
 # trademark caution as card art, and the fonts folder mixes OFL zips with
 # proprietary faces (Beleren, MPlantin) that must not be redistributed.
