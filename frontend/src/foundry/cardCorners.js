@@ -1,6 +1,6 @@
 // The card corner law: every finished face is a rounded rectangle with
 // R = 5% of card width (~37px at 745, 112px at the 2235 master). The
-// plate PNGs in card_template/ already carry this exact alpha (punched by
+// shipped plate PNGs in assets/plates/ already carry this exact alpha (punched by
 // tools/round_card_corners.py — keep the two constants in sync); this
 // module re-applies it to the FINISHED pixels at export, because the
 // graffiti deck may have smeared opaque paint back into the corners.

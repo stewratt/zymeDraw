@@ -139,12 +139,13 @@ cast, commission*. All Foundry copy obeys the zyme register.
   `frontend/src/assets/cards/` file-for-file. Direct-to-Deck export
   moves to the §6 Phase-7 backlog — revisit if/when casts are reliably
   good enough to swap on the fly.
-- **Plates — Stew's 8 templates exist (amends #6).** `card_template/`
-  at repo root holds 8 blank plates, exactly 2235×3120 (3× master) RGBA
-  with the image window punched as real alpha; name/type plaques and
-  text box are opaque graphics. Untracked (repo-wide `*.png` ignore) —
-  local-only as planned; `platesFolder` defaults to the repo's
-  `card_template/`. Text working areas are uniform across plates, but
+- **Plates — Stew's 8 templates exist (amends #6).** The 8 blank plates
+  are exactly 2235×3120 (3× master) RGBA with the image window punched
+  as real alpha; name/type plaques and text box are opaque graphics.
+  They **ship with the repo**, pre-compressed (pngquant), in
+  `frontend/src/assets/plates/` — `platesFolder` defaults there; the
+  full-res masters stay local in `card_template/` (gitignored).
+  Text working areas are uniform across plates, but
   corner-box shapes vary — type slots stay nudgeable (§4) to fit them.
   The procedural plate generator is **deferred to the Phase-7 backlog**;
   8 real plates are enough of a deck to start.
@@ -338,7 +339,7 @@ distortion go* — a better fit for the north star, and less machinery.
   plate's text region per session. Micro-adjust until the copy sits.
 
 **Plate-authoring spec** (for the blank PNGs Stew makes — see also the
-`foundry_card_template.png` guide at repo root):
+`foundry_card_template.png` guide in `frontend/src/assets/plates/template/`):
 - 745×1040, or draw at 3× (2235×3120) for crisp edges; app downscales.
 - PNG with **real alpha**. The image window must be *transparent
   pixels* (alpha 0), never a white/colored fill. Feathered /
@@ -438,8 +439,8 @@ one is verified). Every phase ends with explicit test steps.
 
 ### Phase 2 — Plates (the alpha matte)
 - Backend: `platesFolder` config + `/api/plates` routes; defaults to
-  the repo's `card_template/` (§1.1), Setup-style folder pick to
-  override (persisted to `~/.deck-config.json`).
+  the repo's `frontend/src/assets/plates/` (§1.1), Setup-style folder
+  pick to override (persisted to `~/.deck-config.json`).
 - `plates.js`: folder plates only (§1.1 — the procedural generator is
   Phase-7 backlog); PLATE_DEAL becomes a real 3-up grid pick from the
   8 templates.

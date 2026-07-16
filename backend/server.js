@@ -262,11 +262,14 @@ app.post('/api/panel-art-folder', async (req, res) => {
 })
 
 // ---- Foundry: the plates (card_maker.md §1.1, Phase 2) ----
-// Blank card frames with the image window punched as alpha. Local-only
-// materials, never committed; the folder defaults to the repo's
-// card_template/ (resolved from this file's location, never hardcoded per
-// machine) and `platesFolder` in ~/.deck-config.json overrides it.
-const DEFAULT_PLATES_FOLDER = fileURLToPath(new URL('../card_template', import.meta.url))
+// Blank card frames with the image window punched as alpha. The default
+// set ships with the repo, pre-compressed, in frontend/src/assets/plates/
+// (resolved from this file's location, never hardcoded per machine);
+// `platesFolder` in ~/.deck-config.json overrides it. Full-res masters
+// stay local in card_template/ (gitignored). The listing below is
+// top-level files only, so plates/template/ (geometry reference) is
+// never dealt as a plate.
+const DEFAULT_PLATES_FOLDER = fileURLToPath(new URL('../frontend/src/assets/plates', import.meta.url))
 
 async function resolvePlatesFolder() {
   const { platesFolder } = await loadConfig()

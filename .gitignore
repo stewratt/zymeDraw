@@ -4,31 +4,36 @@ dist/
 .deck-config.json
 *.log
 output/
+
+# ---- Images ----
+# Ignored EVERYWHERE by default: Deck sessions work through large local
+# input/output folders that must never land in git. ONE exception rule:
+# an image is tracked iff the app is broken without it, and every such
+# image lives under frontend/ — assets/cards/ (starter faces),
+# assets/plates/ (blank Foundry plates + geometry template), public/
+# (textures, logo). Nothing lands in those folders unless it ships,
+# pre-compressed (pngquant — see CLAUDE.md §6).
 *.png
 *.jpg
+*.jpeg
+*.webp
+!frontend/src/assets/**/*.png
+!frontend/src/assets/**/*.jpg
+!frontend/public/**/*.png
+!frontend/public/**/*.jpg
 
-# Exception: the two Foundry card-design template images are tracked.
-!foundry_card_template.png
-!foundry_card_template@3x.png
-
-# Exception: card designs ship with the repo so a fresh clone is never blank
-# (main faces + default Foundry cardbacks). This is the ONE folder where PNGs
-# are tracked — keep exports, panel art, and WIP scratch out of it.
-!frontend/src/assets/cards/*.png
-!frontend/src/assets/cards/*.jpg
-
-# Foundry materials: local-only, never committed. The plates carry the same
-# trademark caution as card art, and the fonts folder mixes OFL zips with
-# proprietary faces (Beleren, MPlantin) that must not be redistributed.
-# OFL fonts get unzipped into frontend/src/assets/fonts/ (tracked) at
-# Phase 4; proprietary ones stay here as a local overlay.
+# Local workshop, never committed: full-res plate masters (originals/ +
+# the uncompressed punched set) and the fonts overlay, which mixes OFL
+# zips with proprietary faces (Beleren, MPlantin) that must not be
+# redistributed. The shipping plates live compressed in
+# frontend/src/assets/plates/.
 card_template/
 
 # Debug loop artifacts (binary screenshots; the findings .md stays tracked)
 debug_loop_screenshots/
 .gstack/
 
-# ML sidecar (Phase 7): per-machine Python env + caches. The .onnx model
-# in backend/ml/models/ IS tracked — it ships with the repo.
+# ML sidecar: per-machine Python env + caches. The .onnx model in
+# backend/ml/models/ IS tracked — it ships with the repo.
 backend/ml/.venv/
 __pycache__/

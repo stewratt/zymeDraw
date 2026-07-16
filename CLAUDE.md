@@ -107,6 +107,7 @@ zymeDraw/
 ├── frontend/src/                        # main.jsx · App.jsx (shell stages) · Setup.jsx (two doors)
 │   ├── copy/                            # uiText.json — the ONLY home for user-facing copy
 │   ├── assets/cards/                    # card faces <id>.png, 745×1040
+│   ├── assets/plates/                   # Foundry blank plates 01–08.png (+ template/ geometry ref)
 │   └── editor/
 │       ├── Editor.jsx                   # registry dispatcher (no per-card logic!)
 │       ├── DeckPanel.jsx                # right sidebar: phase panels + Tools + End
@@ -159,17 +160,22 @@ and build on the shared modules, not on Editor special cases.
   the identity transform in commit AND cleanup — a leaked zoom bakes wrong.
 - **Every card face renders through `Card.jsx`** at 745×1040 — nothing
   else may hardcode card geometry.
-- **Card art ships committed and pre-compressed.** `assets/cards/*.png` is
-  the ONE tracked image folder (gitignore `!` exception) so a fresh clone
-  is never blank. Before committing faces, quantize them **in place** with
+- **Shipped images: one rule.** An image is tracked iff the app is broken
+  without it, and every such image lives under `frontend/` — `assets/cards/`
+  (starter faces), `assets/plates/` (Foundry blanks + geometry template),
+  `public/` (textures, logo). The gitignore ignores images everywhere else
+  (`*.png`/`*.jpg` + big-folder rules); those are its ONLY `!` exceptions.
+  Before committing any shipped image, quantize it **in place** with
   `pngquant --quality=70-95 --speed 1 --strip --force` — PNG8 palette keeps
   the `.png` name AND alpha, so it's zero code change (the `cardArt.js` glob
-  and all `${id}.png` URLs are untouched). Typical result ~70% off (our set:
-  42M→12M). pngquant refuses to write a face it can't hit q70 on (gradient-
-  heavy ones like `searcher`); force those with a wider `--quality=40-95`
-  after a visual spot-check — never on faith, palette banding shows on
-  smooth gradients. Full-res masters that must NOT be redistributed
-  (`card_template/` plates — trademark) stay gitignored and uncompressed.
+  and all `${id}.png` URLs are untouched). Typical result ~70% off (faces
+  42M→12M, plates 77M→19M). pngquant refuses to write a file it can't hit
+  q70 on (gradient-heavy ones like `searcher`, plate `05`); force those with
+  a wider `--quality=40-95` after a visual spot-check — never on faith,
+  palette banding shows on smooth gradients. `card_template/` is the local
+  workshop — full-res plate masters (`originals/` + uncompressed punched
+  set) and the fonts overlay (proprietary faces, never redistributed) — and
+  stays gitignored wholesale; git is NOT its backup.
 - **Deck legibility**: set-knowledge is free; order-knowledge and
   order-control are never ambient (exceptions only as dealt/spent
   mechanics); the Coda never appears in REMAINS. `deck.js` enforces this.
