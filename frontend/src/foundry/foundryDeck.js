@@ -52,14 +52,17 @@ export const FOUNDRY_CARDS = [
 export const PROOF_CARD = { id: 'proof', label: UI.foundry.proof.cardLabel }
 
 // What may be commissioned: every real card design in the Deck, the Coda
-// included — it has a face to cast like any other. `copies` rides along for
-// rarity (Phase 6): 2 = common, 1 = scarce, the Coda its own class.
+// included — it has a face to cast like any other. `rarity` rides along
+// from the card descriptor (issue #42): a hardcoded weirdness tier, not
+// derived from copies. The Coda's 'singular' tier is set by family in
+// rarity.js, so it needs no rarity here.
 export const COMMISSIONS = [
-  ...MOD_CARDS.map(({ id, label, copies, family }) => ({
+  ...MOD_CARDS.map(({ id, label, copies, family, rarity }) => ({
     id,
     label,
     copies,
-    family: family ?? 'image'
+    family: family ?? 'image',
+    rarity
   })),
   { ...DEATH_CARD, copies: 0, family: 'coda' }
 ]

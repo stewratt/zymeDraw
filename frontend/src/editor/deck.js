@@ -37,19 +37,26 @@ export const MOD_CARDS = [
   // House deck thinned to the 20-card cap (2026-07-10, Stew's cuts):
   // Ghost 2→1, Stain 2→1, Blur 1→2. The pool is unchanged — a built deck
   // may still run any design up to the deck editor's max copies.
-  { id: 'ghost', copies: 1 }, // Graft × Rise
-  { id: 'stain', copies: 1 }, // Graft × Sink
-  { id: 'stamp', copies: 2 }, // Graft (cutout)
+  // `rarity` (issue #42, Stew's per-card call 2026-07-18) is a hardcoded
+  // statement of how weird/oblique a card's ACTION is — no relation to
+  // copies, deck presence, or print run. Two tiers for real cards:
+  // 'common' (legible, everyday — Blur) and 'scarce' (strange, oblique —
+  // Subliminal Etch). The Coda keeps its own 'singular' mark, set in
+  // rarity.js by family, never here. Foundry-only: the glyph prints on
+  // cast faces, not on in-session Card.jsx faces (issue #42, Q3).
+  { id: 'ghost', copies: 1, rarity: 'common' }, // Graft × Rise
+  { id: 'stain', copies: 1, rarity: 'common' }, // Graft × Sink
+  { id: 'stamp', copies: 2, rarity: 'common' }, // Graft (cutout)
   // Pool-only (Stew's standing rule, 2026-07-12: new cards never join the
   // starter deck — they wait in the Deck editor's pool to be swapped in).
-  { id: 'reverberate', copies: 1 }, // Graft (cutout) × stamp brush — impressions along the stroke
-  { id: 'rails', copies: 1 }, // Stencil × solid
-  { id: 'char', copies: 1 }, // Stencil × Sink
-  { id: 'deeper', copies: 0 }, // Re-frame, inward
+  { id: 'reverberate', copies: 1, rarity: 'scarce' }, // Graft (cutout) × stamp brush — impressions along the stroke
+  { id: 'rails', copies: 1, rarity: 'common' }, // Stencil × solid
+  { id: 'char', copies: 1, rarity: 'common' }, // Stencil × Sink
+  { id: 'deeper', copies: 0, rarity: 'common' }, // Re-frame, inward
   // Re-frame swap (2026-07-15, Stew): Deeper out of the house deck, Closer
   // in — the honest sibling (no detail restore, enlargement keeps its grain)
   // is now the default re-frame. Both stay in the pool.
-  { id: 'closer', copies: 1 }, // Re-frame, inward, no restoration
+  { id: 'closer', copies: 1, rarity: 'common' }, // Re-frame, inward, no restoration
   // Rack retired (2026-07-05): flipping a piece you've worked several
   // rounds never felt worth doing. Card + registry entry stay in place;
   // re-add this line to deal it again.
@@ -57,24 +64,25 @@ export const MOD_CARDS = [
   // Lift is pool-only (Stew, deciding #33's open question at the merge):
   // 0 house copies keeps the cap at 20; the Deck editor's pool lists every
   // entry here, so built decks may still run it.
-  { id: 'lift', copies: 0 }, // Lift session — pixels change address, not value
+  { id: 'lift', copies: 0, rarity: 'scarce' }, // Lift session — pixels change address, not value
   // The fracture family's exemplar (cards_plan §4): geometric tiles of the
   // piece strewn by a scatter brush. Medium rarity on the weirdness dial —
   // 1 is a suggested balance, not a cap; the Deck editor may run more.
-  { id: 'fracture', copies: 0 }, // Grid displacement × mask brush — the piece slides apart
-  { id: 'dust', copies: 2 }, // Reveal × deposit
-  { id: 'bruise', copies: 1 }, // Reveal × Bruise
-  { id: 'blur', copies: 2 }, // Reveal × blur — provisional (§6.3)
-  { id: 'steep', copies: 1 }, // Wash × Sink
-  { id: 'hue', copies: 1 }, // Wash (hue)
-  { id: 'cure', copies: 1 }, // Wash × Cure
-  { id: 'etch', copies: 0 }, // Pixel glyph, hidden at the grain — pool-only
+  { id: 'fracture', copies: 0, rarity: 'scarce' }, // Grid displacement × mask brush — the piece slides apart
+  { id: 'dust', copies: 2, rarity: 'common' }, // Reveal × deposit
+  { id: 'bruise', copies: 1, rarity: 'common' }, // Reveal × Bruise
+  { id: 'blur', copies: 2, rarity: 'common' }, // Reveal × blur — provisional (§6.3)
+  { id: 'steep', copies: 1, rarity: 'common' }, // Wash × Sink
+  { id: 'hue', copies: 1, rarity: 'common' }, // Wash (hue)
+  { id: 'cure', copies: 1, rarity: 'common' }, // Wash × Cure
+  { id: 'etch', copies: 0, rarity: 'scarce' }, // Pixel glyph, hidden at the grain — pool-only
   // The deck itself (v4 notes §5.1–5.2, §5.9): deck modifications, dealt
   // by chance. `family: 'deck'` color-codes their faces apart from the
-  // image cards (cardFamily below).
-  { id: 'searcher', copies: 1, family: 'deck' }, // Tutor: the remains open, take one
-  { id: 'skim', copies: 2, family: 'deck' }, // Scry: see the top, keep or bury
-  { id: 'delay', copies: 1, family: 'deck' } // The right to set the first Coda aside
+  // image cards (cardFamily below). Reaching into the deck itself is the
+  // most oblique thing a card does — all scarce.
+  { id: 'searcher', copies: 1, family: 'deck', rarity: 'scarce' }, // Tutor: the remains open, take one
+  { id: 'skim', copies: 2, family: 'deck', rarity: 'scarce' }, // Scry: see the top, keep or bury
+  { id: 'delay', copies: 1, family: 'deck', rarity: 'scarce' } // The right to set the first Coda aside
   // Stashed until Stew trains his own style model — the demo ONNX styles
   // don't look good enough to ship. Card files, registry entries, and the
   // /style sidecar endpoint all stay in place; re-add these lines to deal

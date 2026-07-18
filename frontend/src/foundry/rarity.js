@@ -1,13 +1,13 @@
-// Rarity (card_maker.md §5): the tier derives from the commission's real
-// deck presence — 2 copies = common, 1 = scarce, the Coda = singular
-// (tier names are code vocabulary; the mark itself is the only UI). Rarity
-// is stamped at casting time, like a print run: if a card's copies later
-// change in deck.js, the cast face doesn't retroactively lie.
+// Rarity (card_maker.md §5, issue #42): the tier is a hardcoded per-card
+// statement of how weird/oblique the card's ACTION is — set at design time
+// on the card descriptor (`rarity` in editor/deck.js), not derived from
+// copies, deck presence, or print run. The mark is stamped on the cast
+// face; the descriptor value rides through the commission as `rarity`.
 //
 // The mark is small and materially rendered — a punch, not a star rating:
-//   singular  a hard diamond punch (the Coda's own class)
-//   scarce    a filled blot, procedurally irregular per cast
-//   common    the same blot left open — an unfilled ring
+//   singular  a hard diamond punch (the Coda's own class, by family)
+//   scarce    a filled blot, procedurally irregular per cast (strange/oblique)
+//   common    the same blot left open — an unfilled ring (legible/everyday)
 // Vector Fabric objects, so the Press bakes them crisp at 3×.
 
 import * as fabric from 'fabric'
@@ -16,7 +16,7 @@ const INK = '#141414'
 
 export function rarityTier(commission) {
   if (commission.family === 'coda') return 'singular'
-  return commission.copies >= 2 ? 'common' : 'scarce'
+  return commission.rarity === 'scarce' ? 'scarce' : 'common'
 }
 
 // The template's rarity home (foundry_card_template.png): a 97×50 box at
