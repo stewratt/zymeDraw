@@ -174,6 +174,7 @@ export function createLiftSession(canvas, master, { onStateChange }) {
   }
 
   function onMouseDown(opt) {
+    if (canvas.__navPanArmed) return // Space held: a pan is in progress, don't take/drop
     if (carry) {
       setDown()
       return

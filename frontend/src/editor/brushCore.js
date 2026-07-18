@@ -287,6 +287,7 @@ export function createStrokeEngine(canvas, { states, resolveTarget, getControls,
 
   function onMouseDown(opt) {
     if (!active || drawing || sizing) return
+    if (canvas.__navPanArmed) return // Space held: a pan is in progress, don't paint
     if (opt.e?.shiftKey && onSizeChange) {
       beginSizing(opt.e)
       return

@@ -9,6 +9,7 @@ import { cardRegistry } from './cards/registry.jsx'
 import { placeImages, layerThumbUrl } from './placement.js'
 import { sampleImages } from './sampling.js'
 import { createMaskSession } from './brushCore.js'
+import { attachCanvasNav } from './canvasNav.js'
 import { dispatchKey } from './keymap.js'
 import { arrangeBindings, brushBindings } from './sessionBindings.js'
 import { randomHexColor, randomizeColors } from './colorSeed.js'
@@ -40,6 +41,7 @@ function Editor({ config, deckSpec, onBackToSetup }) {
   const canvasStageRef = useRef(null)
   const cardSessionRef = useRef(null) // opaque per-card data the registry owns
   const masterRef = useRef(null) // the full-resolution truth (masterRaster.js)
+  const navRef = useRef(null) // canvasNav: the zoom/pan lens on the proxy
 
   // Per-card UI state: controls (slider values etc.), info (data the Tools
   // component renders), ready (true once begin has finished).
@@ -223,6 +225,14 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     if (!canvas) return
     masterRef.current = createMaster()
     showMaster(canvas, masterRef.current)
+    // The zoom/pan lens: one instance for the whole session (canvasNav.js).
+    // Space-drag pans, Ctrl/Cmd+wheel zooms; it only moves the proxy's
+    // viewportTransform, never the master. Disposed with the canvas.
+    navRef.current = attachCanvasNav(canvas)
+    return () => {
+      navRef.current?.dispose()
+      navRef.current = null
+    }
   }, [])
 
   // When a death card is dealt (phase → COMPLETE), write the master out —
@@ -323,6 +333,21 @@ function Editor({ config, deckSpec, onBackToSetup }) {
       cancelled = true
     }
   }, [state.currentCard, imageList])
+
+  // The nav lens and the card's own viewport must never fight. A card that
+  // drives its own viewport (Etch, `ownsViewport`) takes the wheel: suspend
+  // the global nav for its whole session and re-enable when it's gone. Reset
+  // the view to identity on every card change and phase transition so no
+  // zoom/pan ever leaks between rounds (the bake also resets — this keeps the
+  // *screen* honest between commits, not just the baked pixels). Keyed on the
+  // card + phase so it runs at every deal, End, and transition.
+  useEffect(() => {
+    const nav = navRef.current
+    if (!nav) return
+    const entry = state.currentCard ? cardRegistry[state.currentCard.id] : null
+    nav.reset()
+    nav.setEnabled(!entry?.ownsViewport)
+  }, [state.currentCard, state.phase])
 
   // UPDATE hook: when the user changes a control, let the registry react
   // (e.g. Pencil re-sets brush size/color on the fly).
@@ -563,10 +588,9 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     )
   }
   if (state.phase === 'WORKING' && !state.currentCard) {
-    bindings.push(
-      { code: 'Space', run: () => dispatch({ type: 'DEAL' }) },
-      { key: 'Enter', run: () => dispatch({ type: 'DEAL' }) }
-    )
+    // Deal is Enter-only now — Space is the canvasNav pan-hold everywhere
+    // (issue #53). The two-press rhythm (End, then Deal) is unchanged.
+    bindings.push({ key: 'Enter', run: () => dispatch({ type: 'DEAL' }) })
   } else if (state.phase === 'COMPLETE') {
     bindings.push({ key: 'Enter', run: handleRestart })
   } else if (inPlacement && placementReady) {
@@ -579,6 +603,11 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     // cheap for it (hotkeys.md §5.1); Shift+R keeps it deliberate and
     // frees plain R for Restore.
     { key: 'r', shift: true, run: handleRestart },
+    // The escape hatch for the zoom/pan lens: back to fit/100% (issue #53).
+    // A free digit — the only bound digit is C at the Coda, and 0 reads as
+    // "reset" in image editors. Bakes reset independently, so this is only
+    // the on-screen view.
+    { key: '0', run: () => navRef.current?.reset() },
     {
       key: 'Escape', // back out of a selection; never ends or commits
       run: () => {

@@ -171,6 +171,7 @@ export async function beginEtch(ctx) {
   let drawing = false
   let last = null
   const onDown = (e) => {
+    if (canvas.__navPanArmed) return // Space held: a pan is in progress, don't etch
     undoStack.push(snapshot())
     if (undoStack.length > UNDO_CAP) undoStack.shift()
     redoStack.length = 0

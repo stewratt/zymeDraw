@@ -420,7 +420,9 @@
     "always": {
       "title": "Always",
       "Enter": "The primary action — End, Deal, begin again. Never confirms the opening pick.",
-      "Space": "Deal.",
+      "Hold Space + drag": "Pan — grab the canvas and move it, to work closer or farther.",
+      "Cmd/Ctrl + scroll": "Zoom toward the cursor.",
+      "0": "Reset the view — back to fit.",
       "Shift+R": "Restart. It destroys the piece, so it takes two keys.",
       "Esc": "Back out: deselect, put a grid pick back, discard a copy in hand, close this."
     },

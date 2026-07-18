@@ -52,6 +52,13 @@ export function showMaster(canvas, master) {
 export function bake(canvas) {
   // Drop any live selection so its handles/state never affect the snapshot.
   canvas.discardActiveObject?.()
+  // Reset the viewport to identity before snapshotting: toCanvasElement bakes
+  // through the current viewportTransform, so a leaked zoom/pan (from the
+  // canvasNav lens, or a card that owns the viewport) would shift/scale the
+  // committed pixels. This is the single chokepoint every End/commit funnels
+  // through — resetting here guarantees the master is baked from the true,
+  // unzoomed proxy regardless of what left the view transformed (CLAUDE.md §6).
+  canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
   // Flush filter pipelines before snapshotting (CLAUDE.md §9's timing note).
   canvas.renderAll()
   const next = canvas.toCanvasElement(MASTER_SCALE)
