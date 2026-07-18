@@ -8,7 +8,9 @@
 //                  one, or place both (no stash beat that session)
 //   PLACEMENT      arrange the placed image(s); End bakes
 //   WORKING        deal cards from the literal shuffled deck, one round each
-//   STASH_RETURN   after Act I, the stash comes back as one placement session
+//   STASH_RETURN_NOTICE  after Act I, an interstitial beat: the stash returns;
+//                  click to acknowledge (Enter is dead here) before placement
+//   STASH_RETURN   the acknowledged stash, now a live placement session
 //   WORKING        Act II; then death cards are shuffled into whatever deck
 //                  remains — dealing one ends the session instantly
 //   CODA_CHOICE    only if Delay was committed: the dealt Coda waits for a
@@ -192,6 +194,13 @@ export function deckReducer(state, action) {
       }
     }
 
+    // The stash-return beat (issue #51): acknowledge the notice to bring the
+    // stash in, turning the interstitial into the live placement session.
+    case 'ACK_STASH_RETURN': {
+      if (state.phase !== 'STASH_RETURN_NOTICE') return state
+      return { ...state, phase: 'STASH_RETURN' }
+    }
+
     case 'END_PLACEMENT': {
       if (state.phase === 'PLACEMENT') {
         return {
@@ -349,13 +358,18 @@ export function deckReducer(state, action) {
         ]
       }
 
-      // End of Act I: the stash comes back as one placement session.
+      // End of Act I: the stash comes back — but through a beat, not straight
+      // into a live placement session (issue #51). STASH_RETURN_NOTICE is an
+      // interstitial the user must acknowledge with a click; only then does
+      // ACK_STASH_RETURN open the placement. The notice gets no Enter binding
+      // in Editor, so a double-press of the deal key can't blow through the
+      // re-encounter and commit the stash unseen (Skim's protection).
       if (
         roundsDealt >= TUNING.actOneRounds &&
         !state.stashReturned &&
         state.stash.length > 0
       ) {
-        return { ...next, phase: 'STASH_RETURN', toPlace: state.stash }
+        return { ...next, phase: 'STASH_RETURN_NOTICE', toPlace: state.stash }
       }
 
       // End of Act II (or an empty deck, if the knobs ever outrun it):

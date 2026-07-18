@@ -665,6 +665,7 @@ function Editor({ config, deckSpec, onBackToSetup }) {
             exportState={exportState}
             onControlChange={handleControlChange}
             onEndPlacement={handleEndPlacement}
+            onAckStashReturn={() => dispatch({ type: 'ACK_STASH_RETURN' })}
             onDeal={() => dispatch({ type: 'DEAL' })}
             onCommit={handleCommit}
             onAcceptCoda={() => dispatch({ type: 'ACCEPT_CODA' })}
