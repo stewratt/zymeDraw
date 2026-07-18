@@ -461,6 +461,25 @@
   display: block;
   user-select: none;
 }
+/* The reveal names itself (issue #50): a caption pinned to the top of the
+   revealed face so Skim's keep/bury choice knows what it's deciding on.
+   Its own scrim carries guaranteed contrast over any art; a plain plate in
+   the studio register, not a HUD (§1). Reveal-only, gated in Card.jsx. */
+.card-name-plate {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 14px 12px 22px;
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 300;
+  letter-spacing: 0.06em;
+  color: #f4f0e8;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
+  pointer-events: none;
+}
 .card-text-face {
   position: absolute;
   inset: 0;

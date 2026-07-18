@@ -51,13 +51,19 @@ function Card({ id, label, kind = 'mod', size = 'panel', count, dimmed, flip, on
       }
     >
       {art ? (
-        <img
-          className="card-art"
-          src={art}
-          alt={label}
-          draggable={false}
-          onError={() => setAttempt((a) => a + 1)}
-        />
+        <>
+          <img
+            className="card-art"
+            src={art}
+            alt={label}
+            draggable={false}
+            onError={() => setAttempt((a) => a + 1)}
+          />
+          {/* Card art can bury its own name by design; Skim's reveal is where
+              the keep/bury choice is made, so the revealed face captions
+              itself (issue #50). A plain name plate, not a HUD (§1). */}
+          {size === 'reveal' && <span className="card-name-plate">{label}</span>}
+        </>
       ) : (
         <div className="card-text-face">
           <span className="card-kind">
