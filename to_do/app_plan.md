@@ -253,7 +253,196 @@ other machines.
 
 ---
 
-## 6. The invariants this line must not bend
+## 6. Track: the choreography — a rhythm worth pressing through
+
+The UI is refined in *logic* — flow, panels, the two-press rhythm (§5) —
+but the *feel* of moving through a turn is flat. The session is *made of*
+its transitions: the End, the deal, the flip, the tools arriving, the
+return to a waiting deck. Each one reads today as a **state change**, not
+as an **event**. This track's job is to make them land — and to hand the
+result to the design-language track (#10) as a **choreography contract**:
+the motion, timing, and weight the eventual reskin will animate.
+
+**Register first (§1).** Deck borrows game design to impose constraint; it
+must never *present* as a game. "Juicy" here means **weight, consequence,
+physicality** — the press coming down, a print sliding into the fix, the
+darkroom's deliberate pace. Never arcade feedback: no confetti, no score
+pops, no bounce-easing that reads as a mobile game. Motion that flatters
+is wrong; motion that makes an action feel *chosen and irreversible* is
+right.
+
+**The two invariants this track styles around, never through:** card
+geometry stays in `Card.jsx` (§6-live); the canvas stays fixed portrait.
+The choreography lives in the shell's transitions and CSS, not in the card
+frame or the raster.
+
+### 6.1 What exists today (the honest baseline)
+
+The only real motion in the turn loop is **one animation**: `card--flip`
+in `editor/editor.css` — a 480ms `rotateY(90deg)→0` with a slight scale,
+played whenever `Card` is rendered with the `flip` prop (the dealt card,
+the Coda, the completed face in `DeckPanel.jsx`). It has a
+`prefers-reduced-motion` off-switch. Everything else is instant:
+
+- The **bake** (`masterRaster.js` `bake()`) swaps the canvas to a fresh
+  flattened master in a single synchronous frame — the most consequential
+  moment in the app, and visually a no-op.
+- The **deal** (`deck.js` `DEAL`) is a pure reducer state flip; the panel
+  simply re-renders from `AwaitingDeal` to `CardRevealed`.
+- **Tools** appear the instant `CardRevealed` mounts — no arrival.
+- The **return to AWAITING_DEAL** after `COMMIT` is an unmarked re-render.
+- Searcher's chosen-card lift (`.searcher-row .deck-cell.chosen`) is a
+  120ms transform — proof the register *can* carry a "deliberate lift, not
+  a jump"; it just hasn't been extended to the loop.
+
+So the plan is mostly **addition**, not correction — one good instinct
+already in the CSS, five flat moments around it.
+
+### 6.2 The moments, inventoried
+
+Each moment below: **now → target (in the §1 register) → cost** (S/M/L and
+the files/mechanisms it touches). Costs assume CSS-and-shell work only;
+none reaches into `deck.js` (pure) or `Card.jsx` (geometry).
+
+1. **End pressed → the bake → one image again.**
+   *Now:* `handleCommit`/`handleEndPlacement` run the card's commit, call
+   `bake()`, dispatch. The flatten is a single silent frame; the
+   "Committing…" label is the only tell, and only for async cards.
+   *Target:* the press coming down. End should read as a **plate pressed
+   into paper** — a brief, weighted settle as the layers fuse to one, so
+   commitment is *felt as irreversible* rather than smoothed over. Not a
+   flash: a short darken-and-settle on the canvas as the master resolves,
+   the kind of beat that says *that is fixed now*. This is the most
+   important moment in the track — commitment is the mechanic (§1).
+   *Cost:* **M** — a commit-transition state in `Editor.jsx` (the
+   `committing` flag already exists) driving a canvas-area CSS overlay;
+   `bake()` stays synchronous, the choreography wraps it. Must respect the
+   filter-flush race (§6-platform) — the visual settle plays *after*
+   `renderAll()`, never masking a mid-flush frame.
+
+2. **The deal (Enter/Space) → the card arriving in hand.**
+   *Now:* reducer flip; `CardRevealed` pops in with the flip already
+   attached to the face.
+   *Target:* a card **drawn off the deck** — a short travel/settle into the
+   panel's card slot before the face turns, so the deal is an arrival with
+   somewhere it came *from*. The deck is a physical stack; a card leaves it.
+   *Cost:* **S/M** — a mount transition on the `CardRevealed` container in
+   `DeckPanel.jsx` + CSS; sequence it *before* the existing flip so the two
+   read as one gesture (arrive, then turn face-up).
+
+3. **The flip → the face landing.**
+   *Now:* `card--flip`, 480ms `rotateY`. The one good beat — but it fires
+   in isolation, with no arrival before and no weight after.
+   *Target:* keep the turn; give it a **landing** — a whisper of settle at
+   0% overshoot (no bounce; the register forbids arcade easing), so the
+   face doesn't just stop, it *sets*. Tune the curve to feel like card
+   stock, not UI.
+   *Cost:* **S** — re-tune the `@keyframes card-flip-in` curve/box-shadow
+   and sequence it after the deal arrival; no JS.
+
+4. **Tools appearing for the dealt card.**
+   *Now:* the card's `Tools` component (`CardRevealed`) mounts instantly
+   alongside the face.
+   *Target:* the tools **come up as the face sets** — a short staggered
+   reveal so the constraint the card imposes *arrives with* the card, not
+   before it. The bench is laid out for this one card's work.
+   *Cost:* **S** — CSS transition/stagger on the tools container, keyed to
+   the flip's completion; no per-card work (stays generic in `DeckPanel`).
+
+5. **The round's work → back to AWAITING_DEAL.**
+   *Now:* after `COMMIT`, `CardRevealed` unmounts and `AwaitingDeal`
+   re-renders with no marking.
+   *Target:* the card **spent and cleared**, the deck **settling back to
+   ready** — a brief exit for the finished card (it goes to the record,
+   `spentCards`), then the waiting state composing itself. The pause is the
+   point: the two-press rhythm lives in this gap, and it should feel like a
+   held breath, not a dropped frame.
+   *Cost:* **S/M** — exit transition on the committed card + entrance on
+   `AwaitingDeal` in `DeckPanel.jsx`.
+
+**Two adjacent beats the track should hold in scope** (same loop, terminal
+forms of the same moments):
+
+6. **The Coda arriving / the piece completing.** The death card is dealt
+   straight to `COMPLETE` (or `CODA_CHOICE` under Delay). Its flip already
+   fires; the *target* is that this deal reads as **heavier** than a mod
+   deal — the ending should feel like the ending, a print going into final
+   fix, without tipping into fanfare (§1: finished, not *beaten*).
+   *Cost:* **S** — a weightier variant of the deal/flip beats, gated on
+   `kind === 'death'`.
+
+### 6.3 Card-line beats this track touches (named)
+
+The loop is shell-side, but three card-line moments have their own
+choreography and must be named so #52's children don't collide with them:
+
+- **Placement → End** (opening pick and the stash return, #51): the
+  placement session's End is the *first* bake a session performs; its beat
+  is the same "press" as 6.2.1 but with no card face involved
+  (`handleEndPlacement`). The **stash return** (#51) already wants "a beat
+  before it becomes a live placement session" — that beat and this track's
+  return-to-ready beat are neighbours; coordinate, don't duplicate.
+- **Searcher / Skim** (deck-family rounds): these already carry motion
+  (the chosen-card lift; the reveal's self-caption). Their commits still
+  run the standard End; the track should make the deck-family End feel
+  continuous with the image-card End, not bolt a second idiom on.
+- **The opening pick grid** (`OPENING_PICK`): out of the turn loop proper,
+  but the same register — leave to #9/#10's surface pass unless a child
+  explicitly claims it.
+
+### 6.4 The contract handed to #10 (and the boundary)
+
+This track produces a **choreography contract** for the design-language
+project (#10): a short spec of *what moves, when, how long, and with what
+weight* at each of the moments above — the timing envelope and the register
+words ("press," "settle," "fix," "draw off the stack") that the reskin's
+motion must satisfy. #10 owns the **look** (tokens, the custom visual
+language); #9 owns the **surface inventory**. This track owns **motion,
+rhythm, timing, weight** and nothing else:
+
+- It must **not** define color, type, or the card's visual language — that
+  is #10. It expresses targets in motion terms and register words, and
+  leaves the pixels to the overhaul.
+- It must **not** re-inventory surfaces — that is #9. It names only the
+  moments in the turn loop.
+- Its children may land **before** #10 (as CSS on the current tokens) or be
+  deferred into #10's animation pass; either way the contract is the
+  durable artifact. Recommended: land the cheap wins (flip tune, tools
+  stagger, deal arrival) early as their own units; let the **bake/press**
+  beat (6.2.1) — the one with real weight — be a checkpoint of its own.
+
+### 6.5 Where this track must not quietly change the rhythm
+
+**Owner ruling required, do not assume (§6-live: the two-press rhythm is
+the design; auto-deal was tried and reverted).** Everywhere below, the
+temptation is to make the loop *smoother*; smoothing is exactly how a feel
+fix becomes a flow change:
+
+- **The gap between End and Deal is sacred.** The return-to-ready beat
+  (6.2.5) must *mark* the pause, never *auto-advance* through it. A settle
+  animation that flows straight into a re-deal would be auto-deal by the
+  back door. Flagged for Stew: **how long may the "settling back to ready"
+  beat run before it risks reading as the app dealing for you?**
+- **The bake settle (6.2.1) must not become a skippable transition that
+  softens commitment.** If it can be clicked-through or auto-times-out into
+  the next deal, it stops selling irreversibility. Flagged: **is a
+  weighted, uninterruptible ~Xms settle acceptable, or does any forced
+  wait violate the tool's responsiveness?** (Owner's call on the duration
+  ceiling.)
+- **No new input collapses the two presses into one.** The children must
+  not add a "commit-and-deal" affordance even as a convenience. If any beat
+  seems to want it, that is a separate ruling, not a choreography detail.
+
+### 6.6 Proposed children (see #52)
+
+Spawned as `proposed` (owner promotes): the bake/press beat, the deal
+arrival, the flip tune, the tools stagger, the return-to-ready beat, the
+Coda weight, and the contract doc for #10. Each is one moment (or a tight
+cluster), buildable on the current tokens; costs above.
+
+---
+
+## 7. The invariants this line must not bend
 
 Carried forward explicitly, because glue work is where invariants get
 smeared:
@@ -272,7 +461,7 @@ smeared:
 
 ---
 
-## 7. Waves (proposed sequence, checkpoint map)
+## 8. Waves (proposed sequence, checkpoint map)
 
 - **Wave 0 — housekeeping.** ZYME title in copy + README; the rename
   rite lands in `card_anatomy.md`; production build (`vite build` +
@@ -284,7 +473,11 @@ smeared:
   config placement), then the live-folder features (watch → tell →
   freshness bias) as appetite dictates.
 - **Wave 3 — the face.** Token consolidation first (may land as early as
-  Wave 1), then the full design-language project with paper.design.
+  Wave 1), then the full design-language project with paper.design. The
+  **choreography track (§6)** rides alongside: the cheap motion wins can
+  land early on the current tokens, and its choreography contract is a
+  prerequisite input to the paper.design pass (the reskin animates what §6
+  specifies).
 - **Wave 4 — the package.** Electron: builder config, updater, sidecar
   companion install. Ships the merged, redesigned app.
 
@@ -293,7 +486,7 @@ parallel to all of this on its own checkpoints.
 
 ---
 
-## 8. Open questions for Stew (answer before each wave opens)
+## 9. Open questions for Stew (answer before each wave opens)
 
 1. **The merge shape (Wave 1):** is the foundry a *wing* behind one
    shell (recommended above), or does the studio grow a door to it some
@@ -309,3 +502,10 @@ parallel to all of this on its own checkpoints.
    with the app-ness?
 5. **Rename rite scope:** checklist-only (recommended), or also a
    `tools/` script that mechanically greps the homes?
+6. **The choreography and the rhythm (§6.5):** two rulings the motion track
+   must not decide for itself. (a) How long may the "settling back to
+   ready" beat run before it risks reading as the app dealing *for* you —
+   i.e. auto-deal by the back door? (b) Is a weighted, uninterruptible
+   ~Xms bake/press settle acceptable to sell irreversibility, or does any
+   forced wait violate the tool's responsiveness — and what is the duration
+   ceiling? Both gate #52's bake-press and return-to-ready children.
