@@ -316,8 +316,23 @@
 .searcher-row .card--clickable {
   cursor: pointer; /* a take, not a zoom */
 }
+/* The chosen card lifts off the sheet: a thick pick-green edge, a green
+   glow over the enlarged-card shadow, and a slight scale-up — unmistakable
+   at a glance which one is taken (issue #54). Transition on the card so the
+   pick reads as a deliberate lift, not a jump. */
+.searcher-row .deck-cell .card {
+  transition: transform 120ms ease, box-shadow 120ms ease,
+    border-color 120ms ease;
+}
 .searcher-row .deck-cell.chosen .card {
   border-color: var(--pick-place);
+  border-width: 3px;
+  transform: scale(1.06);
+  box-shadow: 0 0 0 2px var(--pick-place), 0 0 22px rgba(125, 168, 105, 0.55),
+    var(--shadow-zoom);
+}
+.searcher-row .deck-cell.chosen .deck-cell-name {
+  color: var(--pick-place);
 }
 
 /* Skim (the scry): one card, center stage, one choice — the work beside. */
