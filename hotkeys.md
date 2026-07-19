@@ -76,9 +76,14 @@ is Deck's normal state.
   Tier 1 slot; best used as "the bigger/inverse version of the unshifted
   key", never as an unrelated action.
 - **Pointer-modifier gestures** (shift+drag is the precedent): safe while
-  the app owns the canvas interaction. Alt+drag and Ctrl+drag are *not*
-  clean (Alt fights Firefox's menu and Fabric's centered-transform;
-  Ctrl+click is right-click on macOS).
+  the app owns the canvas interaction. Alt+drag is *not* clean (it fights
+  Firefox's menu and Fabric's centered-transform). **Ctrl+drag was listed
+  here as unclean too, and is now bound anyway** (pan, §5.6/issue #72):
+  the objection was that Ctrl+click is right-click on macOS, which we
+  answer by accepting `ctrlKey || metaKey` — Mac hands pan with Cmd — and
+  suppressing the canvas context menu while either is held. The exception
+  earns itself because the modifier is *already* the zoom key: it makes
+  one navigation modifier instead of a second, unrelated binding.
 - **Enter / Space**: already ours; extending their per-phase meaning is
   fine as long as each phase keeps exactly one meaning.
 
@@ -134,7 +139,8 @@ is Deck's normal state.
 | Key | Action | Notes |
 |---|---|---|
 | **Enter** | Primary action | As today. Keep the opening-pick exception. **Now also the only Deal key** — Space moved to pan (§5.6, issue #53). |
-| **Hold Space + drag** | Pan the canvas | Photoshop's grab hand. Space is no longer Deal — it's a pan-hold everywhere the working canvas is live (§5.6). |
+| **Cmd/Ctrl + drag** | Pan the canvas | The canvas-navigation modifier: same key as the zoom, and the same gesture the 3D room already answers to (§5.6, issue #72). |
+| **Hold Space + drag** | Pan the canvas | Photoshop's grab hand, kept as an alias for the muscle memory. Space is no longer Deal — it's a pan-hold everywhere the working canvas is live (§5.6). |
 | **Cmd/Ctrl + scroll** | Zoom toward the cursor | Clamped 0.5×–8×; plain scroll does nothing (§5.6). |
 | **0** | Reset the view to fit | The escape hatch for a zoomed/panned view. A free digit — 0 = "reset" in image editors; the only other bound digit is C at the Coda (§5.6). |
 | **Shift+R** | Restart | **Change from plain R.** Restart destroys the piece with no confirm; a single unmodified letter is too cheap for it — and it sits next to the browser-reload reflex (Cmd/Ctrl+R), which also destroys the piece. Shift+R keeps it reachable but deliberate. Frees plain `R` for Restore (§5.2). |
@@ -149,7 +155,8 @@ attached to the canvas by Editor).
 
 | Key / gesture | Action | Notes |
 |---|---|---|
-| **Hold Space + drag** | Pan | Grab-hand cursor; object selection/drag suspended while Space is held so a pan never moves a piece, restored on release. |
+| **Cmd/Ctrl + drag** | Pan | Same handler as the Space hold. Arms on *keydown*, not mouse-down — Fabric resolves what a press hit before it emits `mouse:down`, so arming any later would already have grabbed the object underneath. |
+| **Hold Space + drag** | Pan | Grab-hand cursor; object selection/drag suspended while either hold is down so a pan never moves a piece, restored on release. Holding alone never clears the selection — only an actual pan does, so Cmd/Ctrl+Z leaves it be. |
 | **Cmd/Ctrl + scroll** | Zoom to cursor | `zoomToPoint`, clamped 0.5×–8×. `preventDefault` on the wheel only while the modifier is held. |
 | **0** | Reset to fit | Also reset automatically on every deal/End/phase transition. |
 
@@ -295,3 +302,18 @@ These target the active/topmost placed object (Deeper: the frame rect).
     only the on-screen proxy — the bake resets the viewport first, so the
     committed pixels are never shifted. Etch keeps its own zoom; the global
     nav steps aside (`ownsViewport`) while it's live.
+11. (2026-07-19, issue #72) **Cmd/Ctrl is the canvas-navigation key.**
+    **Cmd/Ctrl + drag** now pans, joining the scroll-zoom already on that
+    modifier; **Space + drag stays** as an alias rather than being
+    replaced, because the Photoshop habit costs nothing to keep. This
+    knowingly overrides the Tier 2 "Ctrl+drag is not clean" note — see the
+    rationale recorded there. It also makes the 2D canvas and the Coda's
+    3D room answer to one habit: OrbitControls already reads modifier+drag
+    as pan, plain drag as orbit, so nothing changed on the 3D side.
+    Two implementation notes worth keeping, both learned the hard way:
+    the hold arms on **keydown**, never at mouse-down (Fabric decides what
+    a press hit before it emits `mouse:down`, so arming later means the
+    press already grabbed an object); and holding the modifier must be
+    **non-destructive** — clearing the selection on arm would make every
+    Cmd/Ctrl+Z deselect what you were working on, so only a real pan
+    clears it.

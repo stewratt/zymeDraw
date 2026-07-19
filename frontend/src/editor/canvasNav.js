@@ -8,11 +8,26 @@
 // a lens on the same pixels, not a change to them. We move the view, never the
 // artboard (exactly as Photoshop does).
 //
-// Two gestures, both borrowed from image editors (hotkeys.md §1.3):
-//   • Hold Space + drag = pan (grab the view and slide the artboard anywhere).
-//   • Ctrl/Cmd + scroll wheel = zoom toward the cursor.
+// Gestures, all borrowed from image editors (hotkeys.md §1.3). Ctrl/Cmd is
+// "the canvas-navigation key" — the same modifier drives both axes of the
+// camera here, and the 3D room at the Coda already reads it the same way
+// (OrbitControls: modifier+drag pans, plain drag orbits), so one habit covers
+// both surfaces:
+//   • Ctrl/Cmd + drag       = pan.
+//   • Hold Space + drag     = pan (kept as an alias — the Photoshop habit).
+//   • Ctrl/Cmd + scroll     = zoom toward the cursor.
 // Plain scroll does nothing (the page never scrolls here); the wheel is only
 // prevented from its default when the zoom modifier is held.
+//
+// Both pan gestures arm on KEYDOWN rather than at mouse-down, and that timing
+// is the whole trick. Fabric decides what a press hit (target finding) before
+// it emits mouse:down, so suspending selection from inside that handler would
+// already be too late — the press would have grabbed whatever was under it.
+// Arming while the key goes down means the canvas is already inert by the time
+// any press lands. Merely holding the key is therefore non-destructive: it
+// suspends interaction and shows the grab cursor but never clears the
+// selection, so Ctrl+Z (brush undo) doesn't disturb what you have selected.
+// Clearing happens only when a pan actually starts.
 //
 // reset() is fit-and-center: it scales the artboard to fit the current buffer
 // with a margin and centers it. Editor calls it on the `0` key and on every
@@ -69,11 +84,12 @@ function fitTransform(canvas) {
 export function attachCanvasNav(canvas, { onZoomChange } = {}) {
   let enabled = true
   let spaceDown = false // Space held → pan-hold armed
+  let modDown = false // Ctrl/Cmd held → pan-hold armed
   let panning = false // a pan drag is in progress
   let lastClient = null // last pointer position (client coords) during a pan
 
-  // Space suspends Fabric's own selection/target-finding so a pan-drag never
-  // grabs an object; we snapshot the real values to restore on release. A card
+  // Either hold suspends Fabric's own selection/target-finding so a pan-drag
+  // never grabs an object; we snapshot the real values to restore on release. A card
   // (Etch) may set skipTargetFind itself — restoring our snapshot is correct
   // because nav is disabled while such a card owns the viewport.
   let saved = null
@@ -83,7 +99,6 @@ export function attachCanvasNav(canvas, { onZoomChange } = {}) {
     canvas.__navPanArmed = true // signal the other pointer consumers to stand down
     canvas.selection = false
     canvas.skipTargetFind = true
-    canvas.discardActiveObject()
     canvas.defaultCursor = 'grab'
     canvas.setCursor('grab')
     canvas.requestRenderAll()
@@ -99,6 +114,13 @@ export function attachCanvasNav(canvas, { onZoomChange } = {}) {
     panning = false
     lastClient = null
     canvas.requestRenderAll()
+  }
+
+  // Either hold arms the pan; it stays armed until BOTH are released, so
+  // pressing Space while Ctrl is down (or the reverse) can't disarm mid-gesture.
+  const syncArm = () => {
+    if (enabled && (spaceDown || modDown)) armPan()
+    else disarmPan()
   }
 
   // --- zoom: Ctrl/Cmd + wheel, toward the cursor ---
@@ -118,11 +140,14 @@ export function attachCanvasNav(canvas, { onZoomChange } = {}) {
     onZoomChange?.(zoom)
   }
 
-  // --- pan: Space held + drag ---
+  // --- pan: Ctrl/Cmd or Space held + drag ---
   const onMouseDown = (opt) => {
-    if (!enabled || !spaceDown) return
+    if (!enabled || !saved) return // `saved` is set iff a hold armed the pan
     panning = true
     lastClient = { x: opt.e.clientX, y: opt.e.clientY }
+    // Drop the selection only now that a pan is genuinely under way: holding
+    // the key alone must not disturb it (see the header note on Ctrl+Z).
+    canvas.discardActiveObject()
     canvas.setCursor('grabbing')
   }
   const onMouseMove = (opt) => {
@@ -140,7 +165,7 @@ export function attachCanvasNav(canvas, { onZoomChange } = {}) {
     if (!panning) return
     panning = false
     lastClient = null
-    if (spaceDown) canvas.setCursor('grab')
+    if (spaceDown || modDown) canvas.setCursor('grab')
   }
 
   // Soft clamp: unlike the old hard clamp (which pinned the artboard's edges to
@@ -168,18 +193,44 @@ export function attachCanvasNav(canvas, { onZoomChange } = {}) {
   // holding Space arms exactly once. Form fields keep their Space (typing).
   const isFormTarget = (t) =>
     t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)
+  const isNavMod = (e) => e.key === 'Control' || e.key === 'Meta'
   const onKeyDown = (e) => {
-    if (e.code !== 'Space' || e.repeat || !enabled) return
-    if (isFormTarget(e.target)) return
-    e.preventDefault() // Space no longer deals; here it must not scroll either
-    spaceDown = true
-    armPan()
+    if (e.repeat || !enabled || isFormTarget(e.target)) return
+    if (e.code === 'Space') {
+      e.preventDefault() // Space no longer deals; here it must not scroll either
+      spaceDown = true
+    } else if (isNavMod(e)) {
+      // Never preventDefault the modifier itself — Ctrl/Cmd+Z (brush undo) and
+      // every browser combo must still reach their handlers.
+      modDown = true
+    } else return
+    syncArm()
   }
   const onKeyUp = (e) => {
-    if (e.code !== 'Space') return
-    spaceDown = false
-    disarmPan()
+    if (e.code === 'Space') spaceDown = false
+    else if (isNavMod(e)) modDown = false
+    else return
+    syncArm()
   }
+
+  // A key can go down here and up somewhere else — Cmd+Tab, Alt+Tab, or any
+  // focus change swallows the keyup and would otherwise leave the canvas armed
+  // and inert with a grab cursor stuck on. Losing focus always disarms.
+  const onBlur = () => {
+    spaceDown = false
+    modDown = false
+    syncArm()
+  }
+
+  // macOS makes Ctrl+click a secondary click, so a Mac Ctrl+drag also raises a
+  // context menu over the canvas. Mac users pan with Cmd (the wheel zoom has
+  // always accepted either), so the menu here is pure noise — suppress it while
+  // a navigation modifier is held, and leave the plain right-click menu alone.
+  const el = canvas.upperCanvasEl
+  const onContextMenu = (e) => {
+    if (e.ctrlKey || e.metaKey) e.preventDefault()
+  }
+  el?.addEventListener('contextmenu', onContextMenu)
 
   canvas.on('mouse:wheel', onWheel)
   canvas.on('mouse:down', onMouseDown)
@@ -187,6 +238,7 @@ export function attachCanvasNav(canvas, { onZoomChange } = {}) {
   canvas.on('mouse:up', onMouseUp)
   window.addEventListener('keydown', onKeyDown)
   window.addEventListener('keyup', onKeyUp)
+  window.addEventListener('blur', onBlur)
 
   // Fit-and-center the artboard in the current buffer. This is the `0` key, the
   // auto-reset on every deal/End/phase change, and the re-fit on buffer resize.
@@ -205,6 +257,7 @@ export function attachCanvasNav(canvas, { onZoomChange } = {}) {
       enabled = v
       if (!v) {
         spaceDown = false
+        modDown = false
         disarmPan()
       }
     },
@@ -215,6 +268,8 @@ export function attachCanvasNav(canvas, { onZoomChange } = {}) {
       canvas.off('mouse:up', onMouseUp)
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
+      window.removeEventListener('blur', onBlur)
+      el?.removeEventListener('contextmenu', onContextMenu)
       disarmPan()
     }
   }
