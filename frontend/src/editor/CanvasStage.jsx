@@ -12,6 +12,15 @@ import * as fabric from 'fabric'
 export const CANVAS_WIDTH = 800
 export const CANVAS_HEIGHT = 1000
 
+// The ARTBOARD — "what a card sees," in scene units — aliased to the working
+// dims. Before the pasteboard, the Fabric buffer equalled the artboard, so
+// code that meant "the artboard" just asked the canvas (`getWidth()`). In
+// `fill` mode the buffer is the whole workspace, so those sites (placement,
+// lift, brush composites) must read the artboard explicitly. Same numbers;
+// the name marks intent — artboard, not buffer.
+export const ARTBOARD_WIDTH = CANVAS_WIDTH
+export const ARTBOARD_HEIGHT = CANVAS_HEIGHT
+
 // Exposes a small imperative handle: `ref.current.getCanvas()` returns the
 // Fabric Canvas instance once it's been created. The parent (Editor) needs
 // this so card actions can add/remove/manipulate Fabric objects.
