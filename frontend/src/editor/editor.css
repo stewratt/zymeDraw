@@ -99,6 +99,23 @@
   background: transparent;
 }
 
+/* Pasteboard void (Deck `fill` mode, Phase 2). The block above frames a fixed
+   artboard-sized buffer: white "paper" + border + drop shadow on the container.
+   In fill mode the buffer is the whole workspace and the white paper is the
+   artboard image itself (masterRaster.showMaster), so the container becomes the
+   dark studio void the artboard floats on and drops that frame. The Fabric
+   buffer is left transparent (showMaster clears backgroundColor), so this void
+   shows through everywhere except the artboard rect; the artboard's floating
+   edge is the master's own soft shadow. Dark, near-black tone keeps the
+   darkroom register (CLAUDE.md §1) and makes the white paper read crisply.
+   Double-class selector so it beats `.canvas-wrap .canvas-container` regardless
+   of source order once Phase 1's markup merges in. */
+.canvas-wrap.canvas-wrap--fill .canvas-container {
+  background: #1b1b1d;
+  border: none;
+  box-shadow: none;
+}
+
 /* ---------- the plinth (finished-piece viewer, canvas-area overlay) ---------- */
 
 .plinth {
