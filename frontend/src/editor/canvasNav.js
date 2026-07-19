@@ -1,29 +1,53 @@
-// canvasNav.js — Photoshop-style zoom/pan for the working canvas.
+// canvasNav.js — Photoshop/PureRef-style free camera over the pasteboard.
 //
-// Deck's visible Fabric canvas is a scaled proxy over the master raster
-// (masterRaster.js). This module lets the user work in closer or farther —
-// finer detail while placing or brushing — by moving ONLY the canvas's
-// viewportTransform. The master, the bake, and the export are untouched:
-// the transform is a lens on the same pixels, not a change to them.
+// Deck's Fabric buffer is the whole workspace; the artboard (the 800×1000
+// document a card sees) is a rectangle anchored at scene (0,0)→(800,1000),
+// floating in a gray void. This module is the *camera*: it moves ONLY the
+// canvas's viewportTransform — panning and zooming the view over that fixed
+// artboard. The master, the bake, and the export are untouched: the camera is
+// a lens on the same pixels, not a change to them. We move the view, never the
+// artboard (exactly as Photoshop does).
 //
 // Two gestures, both borrowed from image editors (hotkeys.md §1.3):
-//   • Hold Space + drag = pan (grab the canvas and move it).
+//   • Hold Space + drag = pan (grab the view and slide the artboard anywhere).
 //   • Ctrl/Cmd + scroll wheel = zoom toward the cursor.
-// Plain scroll does nothing (the page never scrolls here); the wheel is
-// only prevented from its default when the zoom modifier is held.
+// Plain scroll does nothing (the page never scrolls here); the wheel is only
+// prevented from its default when the zoom modifier is held.
+//
+// reset() is fit-and-center: it scales the artboard to fit the current buffer
+// with a margin and centers it. Editor calls it on the `0` key and on every
+// deal/End/phase change, and should also call it when the buffer resizes — so
+// "reset" is the single re-fit entry point regardless of what changed.
 //
 // attachCanvasNav wires these to a given Fabric canvas and returns
 // { reset, dispose, setEnabled }. Editor owns one instance for the whole
-// session and disables it while a card owns the viewport itself (Etch), so
-// the two navigators can never fight and leave a leaked transform — the bake
-// resets the viewport regardless, but suspending nav keeps the gestures from
+// session and disables it while a card owns the viewport itself (Etch), so the
+// two navigators can never fight and leave a leaked transform — the bake resets
+// the viewport regardless, but suspending nav keeps the gestures from
 // interfering with the card's own zoom mid-session.
 
-const ZOOM_MIN = 0.5
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from './CanvasStage.jsx'
+
+// The artboard is what a card sees: the fixed 800×1000 document rect at scene
+// origin. CANVAS_WIDTH/HEIGHT stay the *artboard* dims (masterRaster imports
+// them too); the buffer is the whole workspace, read live from the canvas.
+const ARTBOARD_WIDTH = CANVAS_WIDTH
+const ARTBOARD_HEIGHT = CANVAS_HEIGHT
+
+// Zoom bounds. Min is low so the artboard can shrink to a card-sized rectangle
+// in a big void; the soft clamp (not the min) is what keeps it from vanishing.
+const ZOOM_MIN = 0.1
 const ZOOM_MAX = 8
 const ZOOM_STEP = 0.0018 // wheel delta → zoom factor; tuned for a trackpad
 
-const IDENTITY = [1, 0, 0, 1, 0, 0]
+// Fit-and-center leaves a breath of void around the artboard so it reads as a
+// floating page, not an edge-to-edge fill.
+const FIT_MARGIN = 0.9
+
+// The soft clamp keeps at least this many *artboard* pixels (screen-space) on
+// each edge, so the artboard can roam to either side or fill the view but can
+// never be dragged fully out of sight. A tuning number — iterate in-browser.
+const KEEP_VISIBLE = 96
 
 // While Space is held, canvasNav flags the canvas so the other pointer
 // consumers (brushCore, etch, lift) stand down — a pan-drag must never also
@@ -31,6 +55,18 @@ const IDENTITY = [1, 0, 0, 1, 0, 0]
 // internals; one shared, explicit convention.
 export function isPanning(canvas) {
   return !!canvas.__navPanArmed
+}
+
+// The fit-and-center transform: scale the artboard to fit the current buffer
+// (with FIT_MARGIN) and center it. The artboard sits at scene (0,0), so its
+// top-left maps to (tx, ty) and the whole rect lands centered in the buffer.
+function fitTransform(canvas) {
+  const bw = canvas.getWidth()
+  const bh = canvas.getHeight()
+  const zoom = Math.min(bw / ARTBOARD_WIDTH, bh / ARTBOARD_HEIGHT) * FIT_MARGIN
+  const tx = (bw - ARTBOARD_WIDTH * zoom) / 2
+  const ty = (bh - ARTBOARD_HEIGHT * zoom) / 2
+  return [zoom, 0, 0, zoom, tx, ty]
 }
 
 export function attachCanvasNav(canvas, { onZoomChange } = {}) {
@@ -77,7 +113,10 @@ export function attachCanvasNav(canvas, { onZoomChange } = {}) {
     e.stopPropagation()
     let zoom = canvas.getZoom() * (1 - e.deltaY * ZOOM_STEP)
     zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoom))
-    canvas.zoomToPoint(canvas.getScenePoint(e), zoom)
+    // zoomToPoint keeps the given *viewport* (screen) point fixed while it
+    // rescales — verified against Fabric 6.9.1 (it inverts the vpt internally),
+    // so the cursor's screen position is getViewportPoint(e), not getScenePoint.
+    canvas.zoomToPoint(canvas.getViewportPoint(e), zoom)
     clampPan()
     onZoomChange?.(zoom)
   }
@@ -107,16 +146,23 @@ export function attachCanvasNav(canvas, { onZoomChange } = {}) {
     if (spaceDown) canvas.setCursor('grab')
   }
 
-  // Keep the canvas from being panned entirely off-view: at any zoom the pan
-  // offset stays within [-(scaled size - view size), 0] on each axis, so at
-  // 1× the view is pinned and zoomed-in panning can't lose the piece.
+  // Soft clamp: unlike the old hard clamp (which pinned the artboard's edges to
+  // the buffer), the pasteboard lets the artboard roam freely — to either side,
+  // or filling the screen when zoomed in — but never fully off-view. We keep at
+  // least KEEP_VISIBLE screen-pixels of the artboard on each axis. The artboard
+  // occupies scene (0,0)→(ARTBOARD), so on screen it spans
+  // [vpt[4], vpt[4] + ARTBOARD_WIDTH*zoom] × [vpt[5], vpt[5] + ARTBOARD_HEIGHT*zoom].
   const clampPan = () => {
-    const vpt = canvas.viewportTransform
+    const vpt = canvas.viewportTransform.slice()
     const zoom = canvas.getZoom()
-    const overX = canvas.getWidth() * (zoom - 1)
-    const overY = canvas.getHeight() * (zoom - 1)
-    vpt[4] = Math.min(0, Math.max(-overX, vpt[4]))
-    vpt[5] = Math.min(0, Math.max(-overY, vpt[5]))
+    const bw = canvas.getWidth()
+    const bh = canvas.getHeight()
+    const spanX = ARTBOARD_WIDTH * zoom
+    const spanY = ARTBOARD_HEIGHT * zoom
+    // vpt[4] in [KEEP - spanX, bw - KEEP]: the right edge stays ≥ KEEP from the
+    // left wall, and the left edge stays ≥ KEEP from the right wall.
+    vpt[4] = Math.min(bw - KEEP_VISIBLE, Math.max(KEEP_VISIBLE - spanX, vpt[4]))
+    vpt[5] = Math.min(bh - KEEP_VISIBLE, Math.max(KEEP_VISIBLE - spanY, vpt[5]))
     canvas.setViewportTransform(vpt)
   }
 
@@ -145,10 +191,12 @@ export function attachCanvasNav(canvas, { onZoomChange } = {}) {
   window.addEventListener('keydown', onKeyDown)
   window.addEventListener('keyup', onKeyUp)
 
+  // Fit-and-center the artboard in the current buffer. This is the `0` key, the
+  // auto-reset on every deal/End/phase change, and the re-fit on buffer resize.
   const reset = () => {
-    canvas.setViewportTransform(IDENTITY.slice())
+    canvas.setViewportTransform(fitTransform(canvas))
     canvas.requestRenderAll()
-    onZoomChange?.(1)
+    onZoomChange?.(canvas.getZoom())
   }
 
   return {
