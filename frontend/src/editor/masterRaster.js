@@ -31,16 +31,41 @@ export function createMaster(width = MASTER_WIDTH, height = MASTER_HEIGHT) {
   return el
 }
 
-// Show the master on the working canvas as its background, scaled to display
-// size. Fabric 6 has no setBackgroundImage — assign the property directly.
+// Show the master on the working canvas as the ARTBOARD: a fixed rectangle
+// seated at scene origin (0,0) with the artboard's footprint.
+//
+// Since the pasteboard (Phase 1) the Fabric buffer is the whole workspace, so
+// we must NOT scale the master to the buffer (canvas.getWidth/getHeight) — that
+// would stretch the artboard across the void. The master is always MASTER_SCALE×
+// the artboard (createMaster sizes it that way and bake re-renders at that
+// scale), so 1/MASTER_SCALE seats it back at one artboard-unit per scene pixel:
+// 800×1000 for Deck, 745×1040 for Foundry, with no per-app branch. The camera
+// (canvasNav) is what makes the artboard roam or fill the view; showMaster only
+// ever places it at the origin.
+//
+// The float treatment (transparent buffer + paper shadow) is pasteboard-only,
+// gated on `canvas.__pasteboard` (set by CanvasStage in `fill` mode). Deck gets
+// the void showing around the artboard and a soft shadow lifting the "paper";
+// the shadow falls only on the void — the opaque master covers it within the
+// artboard rect, and Phase 4's bake crop (0,0 → artboard) excludes the spill,
+// so it never bakes in. Foundry (no `fill`) keeps its opaque buffer with no
+// shadow: its master tiles the whole buffer, so there is no void to reveal and
+// a card face must not carry a drop shadow. Fabric 6 has no setBackgroundImage
+// — assign the property directly.
 export function showMaster(canvas, master) {
+  const scale = 1 / MASTER_SCALE
+  const floating = !!canvas.__pasteboard
+  if (floating) canvas.backgroundColor = '' // transparent buffer → CSS void shows through
   canvas.backgroundImage = new fabric.FabricImage(master, {
     left: 0,
     top: 0,
     originX: 'left',
     originY: 'top',
-    scaleX: canvas.getWidth() / master.width,
-    scaleY: canvas.getHeight() / master.height
+    scaleX: scale,
+    scaleY: scale,
+    ...(floating
+      ? { shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.55)', blur: 24, offsetX: 0, offsetY: 12 }) }
+      : {})
   })
   canvas.requestRenderAll()
 }

@@ -63,6 +63,10 @@ const CanvasStage = forwardRef(function CanvasStage(
       // Foundry (fixed small buffer) keeps Fabric's default.
       ...(fill ? { enableRetinaScaling: false } : {})
     })
+    // Mark the buffer as a pasteboard so shared modules (masterRaster.showMaster)
+    // give it the float treatment — transparent buffer + paper shadow — without
+    // threading a flag through every caller. Mirrors the __navPanArmed convention.
+    if (fill) canvas.__pasteboard = true
     canvasRef.current = canvas
     return () => {
       canvasRef.current = null
