@@ -64,6 +64,13 @@
   justify-content: center;
   padding: 0;
   min-height: 0;
+  /* min-width:0 decouples this 1fr grid track from its content's intrinsic
+     size. A <canvas> is a replaced element whose intrinsic width is its
+     backing-store pixels (2× on retina); without this, `1fr` = minmax(auto,1fr)
+     lets that intrinsic width force the track wider than the viewport → page
+     h-scroll. The camera's full-window buffer must be sized BY the layout, not
+     the reverse. */
+  min-width: 0;
   /* GridPicker overlays this area during the opening pick. */
   position: relative;
 }
@@ -111,11 +118,14 @@
   height: 100%;
   max-width: none;
 }
-.canvas-wrap--fill canvas {
-  /* Defeat the 100% stretch above — the buffer already matches the box. */
-  width: auto !important;
-  height: auto !important;
-}
+/* Fill mode KEEPS the base `.canvas-wrap canvas { width:100% }` clamp: the
+   canvas display follows its container, and the container is sized by the
+   layout (a min-width:0 `1fr` track). This absorbs the retina backing store
+   crisply and — crucially — stops the canvas's intrinsic backing size from
+   feeding back into the grid track and inflating the page. (An earlier
+   `width:auto` here exposed that backing store and blew the layout out to 2×.)
+   The ResizeObserver in CanvasStage still sizes the buffer to this box, so the
+   logical buffer == the box 1:1; the CSS only governs on-screen display. */
 
 /* Pasteboard void (Deck `fill` mode, Phase 2). The block above frames a fixed
    artboard-sized buffer: white "paper" + border + drop shadow on the container.
