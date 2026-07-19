@@ -99,6 +99,75 @@
   background: transparent;
 }
 
+/* ========== Phase 5 — pasteboard chrome (Deck editor only, issue #53) ==========
+   The Deck surface goes full-bleed; the header and deck panel float over it as
+   translucent chrome instead of boxing the canvas in a two-column grid.
+
+   Scoped to `.editor:not(.foundry)` on purpose: the Foundry wing reuses these
+   same layout classes (foundry.css) and reads as a single card, not a
+   pasteboard — so it keeps the shared grid layout untouched. To extend the
+   pasteboard to Foundry too, drop the `:not(.foundry)` qualifier throughout.
+
+   Visual note: the gray void + centered artboard only fully read once Phases
+   1–2 land (full-window buffer + artboard-as-scene-object). This phase is the
+   floating-chrome layer that sits over that surface; on its own it floats the
+   header/panel over today's centered artboard. */
+.editor:not(.foundry) {
+  position: relative;
+  overflow: hidden;
+  --header-h: 52px;
+  --panel-w: 340px;
+  --panel-clear: calc(var(--panel-w) + 32px); /* panel width + its side gaps */
+}
+/* A thin bar floating over the top of the surface; the translucent
+   --surface-panel + a blur keep the wordmark and buttons legible over art. */
+.editor:not(.foundry) .editor-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  backdrop-filter: blur(8px);
+}
+/* No longer a two-column grid boxing the canvas — the full-bleed stage. */
+.editor:not(.foundry) .editor-main {
+  position: absolute;
+  inset: 0;
+  display: block;
+  grid-template-columns: none;
+  gap: 0;
+  padding: 0;
+}
+/* The surface fills the stage edge-to-edge, behind the floating chrome. */
+.editor:not(.foundry) .canvas-area {
+  position: absolute;
+  inset: 0;
+}
+/* The deck panel floats as a right-side overlay: clears the header at the top,
+   hugs the window edges below. */
+.editor:not(.foundry) .side-stack {
+  position: absolute;
+  top: calc(var(--header-h) + 16px);
+  right: 16px;
+  bottom: 16px;
+  width: var(--panel-w);
+  z-index: 20;
+}
+/* Blur the panel too — it floats over the surface just like the header. */
+.editor:not(.foundry) .deck-panel {
+  backdrop-filter: blur(8px);
+}
+/* The decision overlays (opening pick, Searcher, Skim all share this root)
+   fill the surface but stop short of the floating panel and clear the floating
+   header, so no thumb or card is ever hidden behind chrome. Overrides the base
+   `inset: 0` longhand-by-longhand. */
+.editor:not(.foundry) .grid-picker {
+  top: var(--header-h);
+  right: var(--panel-clear);
+  bottom: 0;
+  left: 0;
+}
+
 /* ---------- the plinth (finished-piece viewer, canvas-area overlay) ---------- */
 
 .plinth {
