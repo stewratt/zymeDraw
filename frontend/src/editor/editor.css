@@ -99,6 +99,24 @@
   background: transparent;
 }
 
+/* Pasteboard (Deck, CanvasStage `fill` mode): the wrap fills the whole
+   workspace — no 4:5 aspect lock, no 86vh cap — and the buffer renders at its
+   own pixel size 1:1 (CanvasStage sizes it to this box and tracks resizes).
+   The camera roam (Phase 3) and the artboard rectangle floating inside the
+   void (Phase 2) build on top of this; here the buffer just stops being a
+   fixed 800×1000 stretched by CSS. */
+.canvas-wrap--fill {
+  aspect-ratio: auto;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+}
+.canvas-wrap--fill canvas {
+  /* Defeat the 100% stretch above — the buffer already matches the box. */
+  width: auto !important;
+  height: auto !important;
+}
+
 /* ---------- the plinth (finished-piece viewer, canvas-area overlay) ---------- */
 
 .plinth {
