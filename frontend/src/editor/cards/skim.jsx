@@ -54,6 +54,10 @@ export function SkimOverlay({ info, deckView, onDeckAction, workUrl }) {
   } else if (!skim.choice) {
     stage = (
       <>
+        {/* Card art can bury its own name by design, and the keep/bury choice
+            needs to know what it's deciding on (issue #50) — so the name sits
+            above the face, not over it. */}
+        <p className="skim-name">{skim.card.label}</p>
         <Card id={skim.card.id} label={skim.card.label} kind={skim.card.kind} size="reveal" flip />
         <p className="hint">{H.choiceHint}</p>
         <div className="skim-choices">
