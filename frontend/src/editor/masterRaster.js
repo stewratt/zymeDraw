@@ -86,7 +86,25 @@ export function bake(canvas) {
   canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
   // Flush filter pipelines before snapshotting (CLAUDE.md §9's timing note).
   canvas.renderAll()
-  const next = canvas.toCanvasElement(MASTER_SCALE)
+  // Crop the snapshot to the artboard rectangle at scene origin. Once the
+  // buffer becomes the whole pasteboard (bigger than the artboard), an
+  // uncropped snapshot would bake the surrounding void in; the crop takes
+  // exactly the artboard. The artboard footprint in proxy coords is the
+  // master's native size ÷ MASTER_SCALE (2400/3 = 800 in Deck, 2235/3 = 745
+  // in Foundry) — deriving it here keeps bake dimension-agnostic across both
+  // apps and needs no artboard dims threaded from the caller. With the
+  // viewport reset to identity above, scene coords equal buffer pixels, so
+  // {left:0, top:0} is the artboard's top-left. Fall back to the full buffer
+  // if no master is shown yet (pre-first-bake safety).
+  const src = canvas.backgroundImage
+  const cropWidth = src ? src.width / MASTER_SCALE : canvas.getWidth()
+  const cropHeight = src ? src.height / MASTER_SCALE : canvas.getHeight()
+  const next = canvas.toCanvasElement(MASTER_SCALE, {
+    left: 0,
+    top: 0,
+    width: cropWidth,
+    height: cropHeight
+  })
   canvas.remove(...canvas.getObjects())
   showMaster(canvas, next)
   return next
