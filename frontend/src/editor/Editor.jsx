@@ -10,6 +10,7 @@ import { placeImages, layerThumbUrl } from './placement.js'
 import { sampleImages } from './sampling.js'
 import { createMaskSession } from './brushCore.js'
 import { attachCanvasNav } from './canvasNav.js'
+import { attachArtboardMatte } from './artboardMatte.js'
 import { dispatchKey } from './keymap.js'
 import { arrangeBindings, brushBindings } from './sessionBindings.js'
 import { randomHexColor, randomizeColors } from './colorSeed.js'
@@ -42,6 +43,7 @@ function Editor({ config, deckSpec, onBackToSetup }) {
   const cardSessionRef = useRef(null) // opaque per-card data the registry owns
   const masterRef = useRef(null) // the full-resolution truth (masterRaster.js)
   const navRef = useRef(null) // canvasNav: the zoom/pan lens on the proxy
+  const matteRef = useRef(null) // artboardMatte: the crop preview, screen-only
 
   // Per-card UI state: controls (slider values etc.), info (data the Tools
   // component renders), ready (true once begin has finished).
@@ -229,9 +231,16 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     // Space-drag pans, Ctrl/Cmd+wheel zooms; it only moves the proxy's
     // viewportTransform, never the master. Disposed with the canvas.
     navRef.current = attachCanvasNav(canvas)
+    // The crop preview (artboardMatte.js): dims everything outside the artboard
+    // so an image scaled past the edge shows where it will actually crop. Like
+    // the camera it is screen-only — it paints after each render and never
+    // touches an object, the master, or the bake.
+    matteRef.current = attachArtboardMatte(canvas)
     return () => {
       navRef.current?.dispose()
       navRef.current = null
+      matteRef.current?.dispose()
+      matteRef.current = null
     }
   }, [])
 
