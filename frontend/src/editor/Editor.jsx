@@ -643,7 +643,7 @@ function Editor({ config, deckSpec, onBackToSetup }) {
 
       <main className="editor-main">
         <section className="canvas-area">
-          <CanvasStage ref={canvasStageRef} />
+          <CanvasStage ref={canvasStageRef} fill />
           {state.phase === 'OPENING_PICK' &&
             imageList.status === 'ready' &&
             imageList.filenames.length > 0 && (
