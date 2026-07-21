@@ -11,7 +11,10 @@ const app = express()
 // encoded 2400×3000 PNG — easily 5–15 MB. Bump the limit to comfortably hold
 // one export.
 app.use(express.json({ limit: '64mb' }))
-const PORT = 5174
+// The env override exists for the two deploy stories that sit on this file:
+// LAN (pick a port on the image server) and Electron (pick a free port at
+// launch). Plain `npm run dev` never sets it.
+const PORT = Number(process.env.PORT) || 5174
 
 const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp'])
 
@@ -757,6 +760,29 @@ app.post('/api/dev/copy', async (req, res) => {
   } catch (err) {
     res.status(400).json({ ok: false, error: err.message })
   }
+})
+
+// ---- Production static serve ----------------------------------------------
+// After `npm run build`, the compiled frontend lives in frontend/dist and
+// Express serves it — one process, one port, no Vite. These are registered
+// LAST so every /api route and /copy-editor keeps precedence. In dev the
+// dist folder may not exist; then this whole section is a polite no-op.
+
+const DIST_DIR = fileURLToPath(new URL('../frontend/dist', import.meta.url))
+app.use(express.static(DIST_DIR))
+
+app.get('*', (req, res) => {
+  // An unmatched /api path is a mistyped route, never the app shell.
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ ok: false, error: 'Unknown API route.' })
+  }
+  res.sendFile(path.join(DIST_DIR, 'index.html'), (err) => {
+    if (err) {
+      res
+        .status(404)
+        .send('No production build found. Run `npm run build`, then reload — or use `npm run dev` for development.')
+    }
+  })
 })
 
 app.listen(PORT, () => {
