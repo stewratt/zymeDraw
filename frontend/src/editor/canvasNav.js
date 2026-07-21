@@ -46,8 +46,12 @@
 // buffer is the whole workspace, read live from the canvas.
 import { ARTBOARD_WIDTH, ARTBOARD_HEIGHT } from './CanvasStage.jsx'
 
-// Zoom bounds. Min is low so the artboard can shrink to a card-sized rectangle
-// in a big void; the soft clamp (not the min) is what keeps it from vanishing.
+// Zoom bounds — the DEFAULTS. Min is low so the artboard can shrink to a
+// card-sized rectangle in a big void; the soft clamp (not the min) is what
+// keeps it from vanishing. A card that works at an unusual scale (Etch, at the
+// master's grain) can soft-lock a tighter band for its session via
+// setZoomBounds(); the phase-change reset restores these defaults so the lock
+// never leaks past End.
 const ZOOM_MIN = 0.1
 const ZOOM_MAX = 8
 const ZOOM_STEP = 0.0018 // wheel delta → zoom factor; tuned for a trackpad
@@ -87,6 +91,10 @@ export function attachCanvasNav(canvas, { onZoomChange } = {}) {
   let modDown = false // Ctrl/Cmd held → pan-hold armed
   let panning = false // a pan drag is in progress
   let lastClient = null // last pointer position (client coords) during a pan
+  // Live zoom band — the user's wheel is clamped to these. A card may narrow
+  // them (setZoomBounds); the default is restored on every phase change.
+  let zoomMin = ZOOM_MIN
+  let zoomMax = ZOOM_MAX
 
   // Either hold suspends Fabric's own selection/target-finding so a pan-drag
   // never grabs an object; we snapshot the real values to restore on release. A card
@@ -131,7 +139,7 @@ export function attachCanvasNav(canvas, { onZoomChange } = {}) {
     e.preventDefault()
     e.stopPropagation()
     let zoom = canvas.getZoom() * (1 - e.deltaY * ZOOM_STEP)
-    zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoom))
+    zoom = Math.max(zoomMin, Math.min(zoomMax, zoom))
     // zoomToPoint keeps the given *viewport* (screen) point fixed while it
     // rescales — verified against Fabric 6.9.1 (it inverts the vpt internally),
     // so the cursor's screen position is getViewportPoint(e), not getScenePoint.
@@ -248,8 +256,36 @@ export function attachCanvasNav(canvas, { onZoomChange } = {}) {
     onZoomChange?.(canvas.getZoom())
   }
 
+  // Drive the shared camera to frame a scene rect (fit-and-center, same math as
+  // reset() but on an arbitrary region). A card uses this to dive to the grain
+  // over its work area instead of owning the viewport itself. Like reset() this
+  // is the card COMMANDING the camera, so it is NOT clamped to the user zoom
+  // band — the fixed rect keeps the fit zoom sane on its own. Returns the zoom
+  // it applied so the caller can set a band relative to the landing scale.
+  const focusRect = (rect, { margin = FIT_MARGIN } = {}) => {
+    const bw = canvas.getWidth()
+    const bh = canvas.getHeight()
+    const zoom = Math.min(bw / rect.width, bh / rect.height) * margin
+    const cx = rect.left + rect.width / 2
+    const cy = rect.top + rect.height / 2
+    canvas.setViewportTransform([zoom, 0, 0, zoom, bw / 2 - cx * zoom, bh / 2 - cy * zoom])
+    canvas.requestRenderAll()
+    onZoomChange?.(zoom)
+    return zoom
+  }
+
+  // Narrow (or, with no argument, restore) the user's wheel-zoom band. A card
+  // soft-locks a tight band around its working scale for its session; Editor
+  // restores the defaults on every phase change so the lock never outlives End.
+  const setZoomBounds = ({ min = ZOOM_MIN, max = ZOOM_MAX } = {}) => {
+    zoomMin = min
+    zoomMax = max
+  }
+
   return {
     reset,
+    focusRect,
+    setZoomBounds,
     // Suspend/resume: while a card owns the viewport (Etch), nav steps aside.
     // Disabling ends any in-progress pan and drops the Space arm so the card
     // sees a clean canvas.
