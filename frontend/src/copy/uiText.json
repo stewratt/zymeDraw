@@ -421,29 +421,94 @@
   },
   "guide": {
     "title": "THE GUIDE",
-    "close": "Click anywhere or press Esc to close.",
-    "what": {
-      "title": "What this is",
-      "p1": "Deck is a studio for digital collage, worked one card at a time. Each round deals a single card, and the card decides the one thing the bench can do — a brush to compose with, a frame to move, a bath to steep in. You work inside that constraint, then press **End**."
+    "close": "Esc or the × closes. The page names above open the other areas.",
+    "session": {
+      "label": "the session",
+      "what": {
+        "title": "What this is",
+        "p1": "Zyme is a studio for digital collage, worked one card at a time. Each round deals a single card from a deck, and the card decides the one thing the bench can do — a brush to compose with, a frame to move, a bath to steep in. You work inside that constraint, then press **End**."
+      },
+      "arc": {
+        "title": "The arc of a session",
+        "opening": "**The opening** — take two images from the grid: one placed now, one stashed for later.",
+        "placement": "**Placement** — arrange the image: drag to move, handles to scale and rotate, the mask brush to erase what shouldn't survive.",
+        "actOne": "**Act I** — a handful of rounds, one dealt card each.",
+        "stash": "**The stash returns** — the image you held back comes home, met by a piece that has moved on without it.",
+        "actTwo": "**Act II** — the Coda is shuffled into the deck. Deal by deal, it is coming.",
+        "coda": "**The Coda** — the piece is finished, and writes to your output folder at full resolution."
+      },
+      "commitment": {
+        "title": "Commitment",
+        "p1": "**End is permanent.** Every End bakes the canvas down to one flat image; there is no undo across rounds and no stepping back. Undo lives only inside a round, for brush strokes.",
+        "p2": "Closing the tab abandons the piece in progress. None of this is missing — commitment is the discipline the deck imposes."
+      },
+      "brush": {
+        "title": "The brush",
+        "p1": "Whenever an image is loose on the canvas, the mask brush is at hand: **erase** paints an image away, **restore** brings it back, **soften** feathers an edge. A mask belongs to its image — it travels through every move, scale, and rotation.",
+        "p2": "Cmd/Ctrl+Z takes back a stroke, Shift added redoes it — within the round only. No undo crosses an End."
+      },
+      "deckCards": {
+        "title": "Cards that work the deck",
+        "p1": "Most cards work the piece; a few work the deck itself. **Skim** turns the top card, and you leave it or bury it. **Searcher** takes the card the piece needs. **Delay** grants a held right: the first Coda dealt can be set aside — once.",
+        "p2": "You always know *what* remains in the deck, never the order it arrives in. The Coda ends the session when it is accepted."
+      },
+      "bearings": {
+        "title": "Finding your way",
+        "p1": "The rhythm is two presses: **End** commits the round, **Deal** turns the next card. Enter presses whichever is lit.",
+        "p2": "Every control names its key when you hover it; the full map is behind **keys** in the header. **View the deck** shows what has been spent, in order — and what remains, in none."
+      }
     },
-    "arc": {
-      "title": "The arc of a session",
-      "opening": "**The opening** — take two images from the grid: one placed now, one stashed for later.",
-      "placement": "**Placement** — arrange the image: drag to move, handles to scale and rotate, the mask brush to erase what shouldn't survive.",
-      "actOne": "**Act I** — a handful of rounds, one dealt card each.",
-      "stash": "**The stash returns** — the image you held back comes home, met by a piece that has moved on without it.",
-      "actTwo": "**Act II** — the Coda is shuffled into the deck. Deal by deal, it is coming.",
-      "coda": "**The Coda** — the piece is finished, and writes to your output folder at full resolution."
+    "deckEditor": {
+      "label": "the deck editor",
+      "what": {
+        "title": "What a deck is",
+        "p1": "A deck is a recipe: which cards, and how many copies of each. A session shuffles that recipe and deals it — change the recipe and you change the kind of piece a session produces."
+      },
+      "rules": {
+        "title": "The rules of assembly",
+        "p1": "A deck holds **12 to 20 cards**. The cap is the point: a deck small enough to know is a deck whose remains you can read at the table. Copies of one card are capped too — weight a deck toward a card, don't fill it with one.",
+        "p2": "The Codas are never edited here. Three are always shuffled in late, whatever the deck holds — the ending is not optional."
+      },
+      "saved": {
+        "title": "Saving and using",
+        "p1": "Name a deck to save it; saved decks live on this machine only. **Use this deck** hands it to the next session, and the house deck is always there to come back to."
+      }
     },
-    "commitment": {
-      "title": "Commitment",
-      "p1": "**End is permanent.** Every End bakes the canvas down to one flat image; there is no undo across rounds and no stepping back. Undo lives only inside a round, for brush strokes.",
-      "p2": "Closing the tab abandons the piece in progress. None of this is missing — commitment is the discipline the deck imposes."
+    "foundry": {
+      "label": "the foundry",
+      "what": {
+        "title": "What the foundry is",
+        "p1": "The foundry is Zyme's second wing: sessions that cast the card faces themselves. A cast is one session for one face — worked under constraint and sealed for good, like any piece."
+      },
+      "arc": {
+        "title": "The arc of a cast",
+        "commission": "**The commission** — the card this face is for. Choose it, or let the deck decide.",
+        "plate": "**The plate** — take one of the dealt blanks: its frame is the card's fixed anatomy, and the white window waits for art. Taking the plate also fixes the run — how many impressions this cast will pull.",
+        "panel": "**The panel** — take an image and arrange it under the window; the plate's edge crops whatever crosses it.",
+        "type": "**The type** — name, type line, and description are set on the face. Double-click to edit, drag to nudge, re-deal the fonts until it reads right.",
+        "press": "**The Press** — the foundry's End. Art, plate, and type flatten to pixels for good; after it, a working deck deals cards that mark the sealed face.",
+        "proof": "**The Proof** — the finished cast writes to your casts folder, with the full-resolution master alongside. A run returns to the sealed base for the next impression."
+      },
+      "play": {
+        "title": "Putting a face in play",
+        "p1": "A cast joins the game through a card-faces set: a folder of PNGs named by card id, one subfolder per set. Point Setup's *card faces* field at that folder and choose the set — every deal after that wears your faces."
+      }
     },
-    "bearings": {
-      "title": "Finding your way",
-      "p1": "The rhythm is two presses: **End** commits the round, **Deal** turns the next card. Enter presses whichever is lit.",
-      "p2": "Every control names its key when you hover it; the full map is behind **keys** in the header. **View the deck** shows what has been spent, in order — and what remains, in none."
+    "setup": {
+      "label": "setup",
+      "folders": {
+        "title": "The folders",
+        "p1": "**Input** is read-only — the images sessions deal from. **Output** is where finished pieces land at full resolution. Both must exist before a session begins; paths take a leading `~` for home.",
+        "p2": "**Card faces** is optional — a folder of alternate face sets, one subfolder per set. The built-in faces stand whenever it is empty."
+      },
+      "deck": {
+        "title": "The deck line",
+        "p1": "The deck named here is the one the next session shuffles. The **Deck editor** is where decks are assembled, saved, and chosen."
+      },
+      "doors": {
+        "title": "The two doors",
+        "p1": "**Begin session** opens the studio. **Foundry** opens the wing that casts card faces. Each returns here when its work is done — and everything on this screen is remembered per machine."
+      }
     }
   },
   "keys": {

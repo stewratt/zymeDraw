@@ -1092,7 +1092,9 @@
   cursor: pointer; /* the whole sheet closes on click */
 }
 .keys-panel {
-  background: var(--surface-panel);
+  /* Solid, not the translucent panel token — these are reading sheets
+     over a busy canvas; the piece must not show through the prose. */
+  background: var(--surface);
   border: 1px solid var(--border-strong);
   width: min(560px, calc(100vw - 48px));
   max-height: calc(100vh - 80px);
@@ -1144,8 +1146,14 @@
   margin: 0;
 }
 
-/* The Guide (GuideSheet.jsx) wears the keys-overlay chrome; only the body
-   differs — prose paragraphs instead of key rows. */
+/* The Guide (GuideSheet.jsx) wears the keys-overlay chrome; the body is
+   prose paragraphs instead of key rows, paged by the tab row. The panel
+   is clickable (page names), so it drops the overlay's close-on-click
+   cursor — backdrop, Esc, or the × close instead. */
+.guide-panel {
+  cursor: auto;
+  width: min(620px, calc(100vw - 48px));
+}
 .guide-panel .guide-para {
   font-size: 0.8rem;
   color: var(--text-dim);
@@ -1154,6 +1162,40 @@
 }
 .guide-panel .guide-para:last-of-type {
   margin-bottom: 0;
+}
+.guide-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.guide-header h2 {
+  margin: 0;
+}
+.guide-close {
+  font-size: 1rem;
+  line-height: 1;
+  text-decoration: none;
+  color: var(--text-dim);
+}
+.guide-pages {
+  display: flex;
+  gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.guide-page-tab {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--text-mute);
+  text-decoration: none;
+}
+.guide-page-tab:hover {
+  color: var(--text);
+}
+.guide-page-tab.active {
+  color: var(--text-heading);
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 /* ---------- the deck overlay (HistoryOverlay.jsx) ---------- */

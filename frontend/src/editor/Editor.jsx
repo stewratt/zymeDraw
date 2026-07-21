@@ -112,9 +112,9 @@ function Editor({ config, deckSpec, onBackToSetup }) {
   const [keysOpen, setKeysOpen] = useState(false)
 
   // The Guide (issue #75): the whole-system sheet, same modal pattern.
-  // On a machine that has never seen it, it starts open — the one
-  // interruption a first session gets; GuideSheet marks it seen.
-  const [guideOpen, setGuideOpen] = useState(() => !guideSeen())
+  // On a machine that has never seen its session page, it starts open —
+  // the one interruption a first session gets; GuideSheet marks it seen.
+  const [guideOpen, setGuideOpen] = useState(() => !guideSeen('session'))
 
   // The deck overlay (v4): spent sequence + remaining multiset. Same modal
   // pattern as the Keys reference.
@@ -660,7 +660,7 @@ function Editor({ config, deckSpec, onBackToSetup }) {
         </div>
       </header>
       {keysOpen && <KeysReference onClose={() => setKeysOpen(false)} />}
-      {guideOpen && <GuideSheet onClose={() => setGuideOpen(false)} />}
+      {guideOpen && <GuideSheet page="session" onClose={() => setGuideOpen(false)} />}
       {historyOpen && <HistoryOverlay state={state} onClose={() => setHistoryOpen(false)} />}
 
       <main className="editor-main">

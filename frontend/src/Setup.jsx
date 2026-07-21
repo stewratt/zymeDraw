@@ -155,7 +155,7 @@ function Setup({ initial, deckName, deckSpec, onOpenDeckEditor, onContinue }) {
       <button type="button" className="link setup-guide-link" onClick={() => setGuideOpen(true)}>
         {T.guideLink}
       </button>
-      {guideOpen && <GuideSheet onClose={() => setGuideOpen(false)} />}
+      {guideOpen && <GuideSheet page="session" onClose={() => setGuideOpen(false)} />}
 
       <label className="field">
         <span className="field-label">{T.inputLabel}</span>
