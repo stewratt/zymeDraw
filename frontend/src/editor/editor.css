@@ -1145,6 +1145,31 @@
   font-size: 0.75rem;
   margin: 0;
 }
+/* The reading sheets scroll behind the foundry's scrollbar dress (see
+   foundry.css): thin dark track, hairline-grey pill thumb lifting toward
+   --sel-border on hover. Firefox reads scrollbar-color; Chromium/WebKit
+   needs ::-webkit-*. */
+.keys-panel {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+.keys-panel::-webkit-scrollbar {
+  width: 10px;
+}
+.keys-panel::-webkit-scrollbar-track {
+  background: var(--surface-2);
+}
+.keys-panel::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 5px;
+  /* Inset the thumb off the track edges so it reads as a floating pill. */
+  border: 2px solid var(--surface-2);
+  background-clip: padding-box;
+}
+.keys-panel::-webkit-scrollbar-thumb:hover {
+  background: var(--sel-border);
+  background-clip: padding-box;
+}
 
 /* The Guide (GuideSheet.jsx) wears the keys-overlay chrome; the body is
    prose paragraphs instead of key rows, paged by the tab row. The panel
