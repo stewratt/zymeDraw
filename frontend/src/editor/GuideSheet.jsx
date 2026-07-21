@@ -17,7 +17,29 @@ const SECTIONS = ['what', 'arc', 'commitment', 'bearings'].map((id) => {
   return { title, paras: Object.values(paras) }
 })
 
+// First-run memory: the editor auto-opens the guide once per machine
+// (issue #75). The sheet marks itself seen on mount — not on close — so
+// reading it anywhere (Setup included) counts, and a session abandoned
+// mid-read doesn't re-summon it. If storage is unavailable, err quiet:
+// claim seen rather than greet every launch with the sheet.
+const SEEN_KEY = 'deck-guide-seen'
+export function guideSeen() {
+  try {
+    return localStorage.getItem(SEEN_KEY) === '1'
+  } catch {
+    return true
+  }
+}
+
 export default function GuideSheet({ onClose }) {
+  useEffect(() => {
+    try {
+      localStorage.setItem(SEEN_KEY, '1')
+    } catch {
+      // No storage — the auto-open simply never quiets on this machine.
+    }
+  }, [])
+
   useEffect(() => {
     const onKeyDown = (e) => {
       e.stopPropagation() // the guide is modal: no app key acts behind it

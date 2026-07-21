@@ -3,6 +3,7 @@ import { UI, fmt } from './copy/uiText.js'
 import { rich } from './copy/rich.jsx'
 import { loadCardSets, setActiveCardSet, useActiveCardSet, useCardSets } from './editor/cardArt.js'
 import { MOD_CARDS } from './editor/deck.js'
+import GuideSheet from './editor/GuideSheet.jsx'
 
 const T = UI.setup
 
@@ -15,6 +16,9 @@ function Setup({ initial, deckName, deckSpec, onOpenDeckEditor, onContinue }) {
   // buttons meanwhile), plus a per-field note if the picker isn't available.
   const [picking, setPicking] = useState(null) // 'input' | 'output' | 'cards' | null
   const [pickNote, setPickNote] = useState({ inputFolder: null, outputFolder: null })
+
+  // The Guide (issue #75), readable before the first session begins.
+  const [guideOpen, setGuideOpen] = useState(false)
 
   // Card faces (optional): the folder + the chosen set live in the shared
   // card-art store, so switching updates every dealt card live. The path is
@@ -148,6 +152,10 @@ function Setup({ initial, deckName, deckSpec, onOpenDeckEditor, onContinue }) {
         <img src="/logo/zyme.png" alt={T.title} />
       </h1>
       <p className="muted">{T.subtitle}</p>
+      <button type="button" className="link setup-guide-link" onClick={() => setGuideOpen(true)}>
+        {T.guideLink}
+      </button>
+      {guideOpen && <GuideSheet onClose={() => setGuideOpen(false)} />}
 
       <label className="field">
         <span className="field-label">{T.inputLabel}</span>

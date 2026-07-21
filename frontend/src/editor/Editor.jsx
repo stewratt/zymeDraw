@@ -3,7 +3,7 @@ import CanvasStage, { CANVAS_WIDTH, CANVAS_HEIGHT } from './CanvasStage.jsx'
 import DeckPanel from './DeckPanel.jsx'
 import GridPicker from './GridPicker.jsx'
 import KeysReference from './KeysReference.jsx'
-import GuideSheet from './GuideSheet.jsx'
+import GuideSheet, { guideSeen } from './GuideSheet.jsx'
 import HistoryOverlay from './HistoryOverlay.jsx'
 import { TUNING, deckReducer, initialState, remainingCounts } from './deck.js'
 import { cardRegistry } from './cards/registry.jsx'
@@ -112,7 +112,9 @@ function Editor({ config, deckSpec, onBackToSetup }) {
   const [keysOpen, setKeysOpen] = useState(false)
 
   // The Guide (issue #75): the whole-system sheet, same modal pattern.
-  const [guideOpen, setGuideOpen] = useState(false)
+  // On a machine that has never seen it, it starts open — the one
+  // interruption a first session gets; GuideSheet marks it seen.
+  const [guideOpen, setGuideOpen] = useState(() => !guideSeen())
 
   // The deck overlay (v4): spent sequence + remaining multiset. Same modal
   // pattern as the Keys reference.

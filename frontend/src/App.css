@@ -124,6 +124,13 @@ button.link:hover {
   text-align: center;
 }
 
+/* The guide link (GuideSheet.jsx) sits under the subtitle, quiet. */
+.setup .setup-guide-link {
+  margin: -16px auto 0;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
 .field {
   display: flex;
   flex-direction: column;
