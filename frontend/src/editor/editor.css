@@ -1144,6 +1144,18 @@
   margin: 0;
 }
 
+/* The Guide (GuideSheet.jsx) wears the keys-overlay chrome; only the body
+   differs — prose paragraphs instead of key rows. */
+.guide-panel .guide-para {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  line-height: 1.55;
+  margin: 0 0 8px;
+}
+.guide-panel .guide-para:last-of-type {
+  margin-bottom: 0;
+}
+
 /* ---------- the deck overlay (HistoryOverlay.jsx) ---------- */
 
 .deck-overlay {

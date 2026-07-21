@@ -343,6 +343,7 @@
     "title": "ZYME",
     "deckButton": "deck",
     "keysButton": "keys",
+    "guideButton": "guide",
     "stateAfterCard": "after {card}",
     "stateStashReturn": "the stash return",
     "stateOpening": "the opening",
@@ -416,6 +417,33 @@
     "codaSomewhere": "…and the Coda is somewhere in here.",
     "inHand": "in hand",
     "close": "Click anywhere or press Esc to close."
+  },
+  "guide": {
+    "title": "THE GUIDE",
+    "close": "Click anywhere or press Esc to close.",
+    "what": {
+      "title": "What this is",
+      "p1": "Deck is a studio for digital collage, worked one card at a time. Each round deals a single card, and the card decides the one thing the bench can do — a brush to compose with, a frame to move, a bath to steep in. You work inside that constraint, then press **End**."
+    },
+    "arc": {
+      "title": "The arc of a session",
+      "opening": "**The opening** — take two images from the grid: one placed now, one stashed for later.",
+      "placement": "**Placement** — arrange the image: drag to move, handles to scale and rotate, the mask brush to erase what shouldn't survive.",
+      "actOne": "**Act I** — a handful of rounds, one dealt card each.",
+      "stash": "**The stash returns** — the image you held back comes home, met by a piece that has moved on without it.",
+      "actTwo": "**Act II** — the Coda is shuffled into the deck. Deal by deal, it is coming.",
+      "coda": "**The Coda** — the piece is finished, and writes to your output folder at full resolution."
+    },
+    "commitment": {
+      "title": "Commitment",
+      "p1": "**End is permanent.** Every End bakes the canvas down to one flat image; there is no undo across rounds and no stepping back. Undo lives only inside a round, for brush strokes.",
+      "p2": "Closing the tab abandons the piece in progress. None of this is missing — commitment is the discipline the deck imposes."
+    },
+    "bearings": {
+      "title": "Finding your way",
+      "p1": "The rhythm is two presses: **End** commits the round, **Deal** turns the next card. Enter presses whichever is lit.",
+      "p2": "Every control names its key when you hover it; the full map is behind **keys** in the header. **View the deck** shows what has been spent, in order — and what remains, in none."
+    }
   },
   "keys": {
     "title": "KEYS",

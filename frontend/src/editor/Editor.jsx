@@ -3,6 +3,7 @@ import CanvasStage, { CANVAS_WIDTH, CANVAS_HEIGHT } from './CanvasStage.jsx'
 import DeckPanel from './DeckPanel.jsx'
 import GridPicker from './GridPicker.jsx'
 import KeysReference from './KeysReference.jsx'
+import GuideSheet from './GuideSheet.jsx'
 import HistoryOverlay from './HistoryOverlay.jsx'
 import { TUNING, deckReducer, initialState, remainingCounts } from './deck.js'
 import { cardRegistry } from './cards/registry.jsx'
@@ -109,6 +110,9 @@ function Editor({ config, deckSpec, onBackToSetup }) {
   // The Keys reference overlay (header button). While open it blocks the
   // whole keymap itself (KeysReference swallows keys at the capture phase).
   const [keysOpen, setKeysOpen] = useState(false)
+
+  // The Guide (issue #75): the whole-system sheet, same modal pattern.
+  const [guideOpen, setGuideOpen] = useState(false)
 
   // The deck overlay (v4): spent sequence + remaining multiset. Same modal
   // pattern as the Keys reference.
@@ -648,9 +652,13 @@ function Editor({ config, deckSpec, onBackToSetup }) {
           <button type="button" className="link keys-button" onClick={() => setKeysOpen(true)}>
             {UI.editor.keysButton}
           </button>
+          <button type="button" className="link keys-button" onClick={() => setGuideOpen(true)}>
+            {UI.editor.guideButton}
+          </button>
         </div>
       </header>
       {keysOpen && <KeysReference onClose={() => setKeysOpen(false)} />}
+      {guideOpen && <GuideSheet onClose={() => setGuideOpen(false)} />}
       {historyOpen && <HistoryOverlay state={state} onClose={() => setHistoryOpen(false)} />}
 
       <main className="editor-main">
