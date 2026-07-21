@@ -30,12 +30,20 @@
       "category": "Graphics"
     },
     "mac": {
-      "target": "dmg",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ],
       "icon": "frontend/public/logo/icon.png"
     },
     "win": {
       "target": "nsis",
       "icon": "frontend/public/logo/icon.png"
+    },
+    "publish": {
+      "provider": "github"
     }
   },
   "devDependencies": {
