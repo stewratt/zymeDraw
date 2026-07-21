@@ -3,13 +3,17 @@
   "private": true,
   "version": "0.0.0",
   "description": "Deck — a card-constrained, destructive image editor",
+  "type": "module",
+  "main": "electron/main.js",
   "scripts": {
     "install:all": "npm install && npm install --prefix frontend && npm install --prefix backend",
     "dev": "concurrently -n frontend,backend,ml -c blue,green,magenta \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\" \"node backend/ml/start.js\"",
     "build": "npm run build --prefix frontend",
-    "start": "concurrently -n backend,ml -c green,magenta \"node backend/server.js\" \"node backend/ml/start.js\""
+    "start": "concurrently -n backend,ml -c green,magenta \"node backend/server.js\" \"node backend/ml/start.js\"",
+    "electron": "electron ."
   },
   "devDependencies": {
-    "concurrently": "^9.0.0"
+    "concurrently": "^9.0.0",
+    "electron": "^43.2.0"
   }
 }

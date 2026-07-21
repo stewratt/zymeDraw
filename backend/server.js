@@ -3,7 +3,7 @@ import { promises as fs, constants as fsc } from 'fs'
 import { spawn } from 'child_process'
 import path from 'path'
 import os from 'os'
-import { fileURLToPath } from 'url'
+import { fileURLToPath, pathToFileURL } from 'url'
 import { loadConfig, saveConfig } from './config-store.js'
 
 const app = express()
@@ -785,6 +785,16 @@ app.get('*', (req, res) => {
   })
 })
 
-app.listen(PORT, () => {
-  console.log(`Deck backend listening on http://localhost:${PORT}`)
-})
+// Electron imports this and passes port 0 ("any free port"); the actual
+// number is read back off the returned server. `node backend/server.js`
+// (dev and npm start) still self-starts via the guard below.
+export function startServer(port = PORT) {
+  const server = app.listen(port, () => {
+    console.log(`Deck backend listening on http://localhost:${server.address().port}`)
+  })
+  return server
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  startServer()
+}
