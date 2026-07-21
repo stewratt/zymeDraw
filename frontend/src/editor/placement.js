@@ -7,10 +7,14 @@
 // small an image appears on the working canvas.
 
 import * as fabric from 'fabric'
+import { ARTBOARD_WIDTH, ARTBOARD_HEIGHT } from './CanvasStage.jsx'
 
 export async function placeImages(canvas, filenames, isCancelled = () => false) {
-  const W = canvas.getWidth()
-  const H = canvas.getHeight()
+  // Fit/center against the ARTBOARD, not the buffer: in pasteboard `fill` mode
+  // the buffer is the whole workspace, so getWidth()/getHeight() would drop the
+  // image into the void instead of onto the paper (scene 0..800 × 0..1000).
+  const W = ARTBOARD_WIDTH
+  const H = ARTBOARD_HEIGHT
 
   const imgs = await Promise.all(
     filenames.map((f) => fabric.FabricImage.fromURL(`/api/images/${encodeURIComponent(f)}`))

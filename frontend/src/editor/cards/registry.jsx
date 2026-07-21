@@ -44,6 +44,10 @@
 //     (keymap.js); run gets { controls, setControl, info, session, canvas }
 //     and may return false to pass the key along. Any card with a `color`
 //     control gets N (re-roll the hue) for free, like the random opening.
+//   - `ownsViewport`: the card drives the canvas viewportTransform itself
+//     for its whole session (Etch's zoom-in). Editor suspends the global
+//     zoom/pan nav (canvasNav) while such a card is live so the two can't
+//     fight; the card must still restore identity in commit AND cleanup.
 
 import { MOD_CARDS } from '../deck.js'
 import { ghostCard } from './ghost.jsx'
@@ -303,6 +307,7 @@ export const cardRegistry = {
     defaultControls: { color: '#c43c28', pixel: 1 },
     Tools: EtchTools,
     hotkeys: etchHotkeys,
+    ownsViewport: true, // drives its own zoom-in; global nav steps aside
     begin: beginEtch,
     update: updateEtch,
     commit: commitEtch,

@@ -30,6 +30,7 @@
 
 import * as fabric from 'fabric'
 import { MASTER_SCALE } from './masterRaster.js'
+import { ARTBOARD_WIDTH, ARTBOARD_HEIGHT } from './CanvasStage.jsx'
 
 const MIN_LIFT = 6 // display px per side — smaller is a click, not a take
 
@@ -97,10 +98,13 @@ export function createLiftSession(canvas, master, { onStateChange }) {
   }
 
   function marqueeBounds(p) {
-    const x1 = clamp(marquee.start.x, 0, canvas.getWidth())
-    const y1 = clamp(marquee.start.y, 0, canvas.getHeight())
-    const x2 = clamp(p.x, 0, canvas.getWidth())
-    const y2 = clamp(p.y, 0, canvas.getHeight())
+    // Clamp the marquee to the ARTBOARD, not the buffer: fill mode makes the
+    // buffer the workspace, so getWidth()/getHeight() would let a lift stray
+    // into the void beyond the paper (#53).
+    const x1 = clamp(marquee.start.x, 0, ARTBOARD_WIDTH)
+    const y1 = clamp(marquee.start.y, 0, ARTBOARD_HEIGHT)
+    const x2 = clamp(p.x, 0, ARTBOARD_WIDTH)
+    const y2 = clamp(p.y, 0, ARTBOARD_HEIGHT)
     return {
       left: Math.min(x1, x2),
       top: Math.min(y1, y2),
@@ -144,8 +148,8 @@ export function createLiftSession(canvas, master, { onStateChange }) {
     canvas.add(img)
     // Offset the copy against the clamped release point, so releasing the
     // marquee past an edge doesn't snap the copy away from the cursor.
-    const rx = clamp(scenePoint.x, 0, canvas.getWidth())
-    const ry = clamp(scenePoint.y, 0, canvas.getHeight())
+    const rx = clamp(scenePoint.x, 0, ARTBOARD_WIDTH)
+    const ry = clamp(scenePoint.y, 0, ARTBOARD_HEIGHT)
     carry = {
       img,
       pixels,
@@ -174,6 +178,7 @@ export function createLiftSession(canvas, master, { onStateChange }) {
   }
 
   function onMouseDown(opt) {
+    if (canvas.__navPanArmed) return // Space held: a pan is in progress, don't take/drop
     if (carry) {
       setDown()
       return

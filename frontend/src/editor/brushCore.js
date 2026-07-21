@@ -37,6 +37,12 @@
 // While a brush is active, a thin circle follows the pointer at the brush's
 // on-screen size, so coverage is visible before and during a stroke.
 //
+// BRUSH SIZE IS SCREEN-CONSTANT. `controls.size` is measured in screen
+// pixels, not scene units: the circle stays the same size on screen at every
+// zoom, so zooming in paints a proportionally finer patch of the image. Zoom
+// is the precision control, the slider the coarse one. The viewport zoom is
+// divided out in exactly one place — `sceneSize` in createStrokeEngine.
+//
 // SHIFT+DRAG RESIZES THE BRUSH (any brush with a size slider): pressing with
 // shift held starts a sizing drag instead of a stroke — the circle anchors
 // where you pressed and drag right/left grows/shrinks it, 1 dragged pixel =
@@ -48,6 +54,7 @@
 // History never survives an End — commitment stays absolute.
 
 import * as fabric from 'fabric'
+import { ARTBOARD_WIDTH, ARTBOARD_HEIGHT } from './CanvasStage.jsx'
 
 // One range for every size slider AND the shift+drag clamp.
 export const BRUSH_SIZE_MIN = 6
@@ -136,11 +143,12 @@ function createBrushCursor(canvas, getControls) {
   let enabled = false
   let frozen = false // sizing drag: the circle stays anchored where it began
 
-  // Brush size lives in scene units; getZoom() covers any zoomed viewport
-  // and the CSS scale converts to on-screen pixels.
+  // Brush size is screen-constant: the circle is the same size on screen at
+  // every zoom, so zooming in is the precision control. Only the CSS scale
+  // applies — deliberately NOT getZoom().
   function diameter(size) {
     const rect = canvas.wrapperEl.getBoundingClientRect()
-    return Math.max(4, size * canvas.getZoom() * (rect.width / canvas.getWidth()))
+    return Math.max(4, size * (rect.width / canvas.getWidth()))
   }
 
   function move(e) {
@@ -217,6 +225,13 @@ export function createStrokeEngine(canvas, { states, resolveTarget, getControls,
     onHistoryChange?.(undoStack.length > 0, redoStack.length > 0)
   }
 
+  // `controls.size` is a SCREEN measurement (see createBrushCursor). Every
+  // consumer downstream works in scene units, so the viewport zoom divides
+  // out here, once: zoomed in, the same circle paints a finer patch.
+  function sceneSize(size) {
+    return size / (canvas.getZoom() || 1)
+  }
+
   // Rebuild a target's committed layer by replaying its recorded strokes,
   // each at its own settings.
   function rebuild(img) {
@@ -234,11 +249,12 @@ export function createStrokeEngine(canvas, { states, resolveTarget, getControls,
   // a stroke may have travelled over empty canvas before reaching a target,
   // and the path segment that crosses the edge must still land.
   function beginStroke(img, scenePoints, controls) {
-    // Brush size is felt in display pixels; convert to source pixels per
-    // axis so the dab matches what's under the cursor regardless of the
-    // target's scale — including non-uniform squashes.
-    const radiusX = controls.size / 2 / (Math.abs(img.scaleX) || 1)
-    const radiusY = controls.size / 2 / (Math.abs(img.scaleY) || 1)
+    // Brush size is felt in screen pixels; convert to scene units, then to
+    // source pixels per axis, so the dab matches what's under the cursor
+    // regardless of the target's scale — including non-uniform squashes.
+    const size = sceneSize(controls.size)
+    const radiusX = size / 2 / (Math.abs(img.scaleX) || 1)
+    const radiusY = size / 2 / (Math.abs(img.scaleY) || 1)
     const points = scenePoints.map((sp) => toLocal(img, sp))
     const stroke = {
       points,
@@ -287,13 +303,14 @@ export function createStrokeEngine(canvas, { states, resolveTarget, getControls,
 
   function onMouseDown(opt) {
     if (!active || drawing || sizing) return
+    if (canvas.__navPanArmed) return // Space held: a pan is in progress, don't paint
     if (opt.e?.shiftKey && onSizeChange) {
       beginSizing(opt.e)
       return
     }
     const scenePoint = opt.scenePoint ?? canvas.getScenePoint(opt.e)
     const controls = getControls()
-    const img = resolveTarget(scenePoint, controls.size / 2)
+    const img = resolveTarget(scenePoint, sceneSize(controls.size) / 2)
     if (img) {
       beginStroke(img, [scenePoint], controls)
     } else {
@@ -308,7 +325,7 @@ export function createStrokeEngine(canvas, { states, resolveTarget, getControls,
     const scenePoint = opt.scenePoint ?? canvas.getScenePoint(opt.e)
     if (!drawing.img) {
       drawing.scenePoints.push(scenePoint)
-      const img = resolveTarget(scenePoint, drawing.controls.size / 2)
+      const img = resolveTarget(scenePoint, sceneSize(drawing.controls.size) / 2)
       if (img) beginStroke(img, drawing.scenePoints, drawing.controls)
       return
     }
@@ -600,8 +617,10 @@ export function createRevealSession(canvas, { applyEffect, master, getControls, 
     top: 0,
     originX: 'left',
     originY: 'top',
-    scaleX: canvas.getWidth() / composite.width,
-    scaleY: canvas.getHeight() / composite.height,
+    // Master-res composite → artboard footprint (scene units), NOT the buffer:
+    // in fill mode the buffer is the workspace, which would stretch it (#53).
+    scaleX: ARTBOARD_WIDTH / composite.width,
+    scaleY: ARTBOARD_HEIGHT / composite.height,
     selectable: false,
     evented: false
   })
@@ -747,8 +766,10 @@ export function createStampSession(canvas, { stampEl, master, getControls, onHis
     top: 0,
     originX: 'left',
     originY: 'top',
-    scaleX: canvas.getWidth() / composite.width,
-    scaleY: canvas.getHeight() / composite.height,
+    // Master-res composite → artboard footprint (scene units), NOT the buffer:
+    // in fill mode the buffer is the workspace, which would stretch it (#53).
+    scaleX: ARTBOARD_WIDTH / composite.width,
+    scaleY: ARTBOARD_HEIGHT / composite.height,
     selectable: false,
     evented: false
   })
