@@ -2,28 +2,48 @@
 // 2026-07-04; the two-word name is Stew's deliberate exception to the
 // one-word zyme register).
 // A small fixed-size frame is dragged anywhere on the piece; confirming it
-// zooms the view all the way into that region — one master pixel is a fat
-// square on screen — and a solid-color pixel brush etches a tiny glyph,
+// drives the shared camera all the way into that region — one master pixel is
+// a fat square on screen — and a solid-color pixel brush etches a tiny glyph,
 // essentially pixel art. End recedes to the whole piece, where the etch is
-// barely perceptible. The whole zoom lives inside this one card's session,
-// so nothing else in the deck has to know about it.
+// barely perceptible.
+//
+// Riding the camera, not owning it (#73): on the pasteboard the artboard is a
+// rectangle floating in a larger buffer, so the old trick — the card seizing
+// the viewportTransform and Editor suspending nav — clipped the glyph and
+// killed pan/zoom for the session. Instead the card CONSTRAINS THE TOOL, not
+// the view: it commands the shared camera (ctx.nav.focusRect) to dive to the
+// grain and soft-locks a tight zoom band (setZoomBounds) so Space/Ctrl pan and
+// Ctrl-scroll zoom stay alive but you can't retreat far enough to see the whole
+// piece — the reveal is saved for End. Commit/cleanup restore nothing: the
+// universal bake resets the viewport and Editor's phase-change re-fit restores
+// the default zoom band. All etching is in SCENE coordinates (getScenePoint),
+// so the pixel grid and the bake are camera-independent — pan and zoom freely
+// mid-stroke and every square still lands 1:1 on the master.
 //
 // Geometry: the glyph canvas is GLYPH_W×GLYPH_H *master* pixels (4:5, like
 // everything), aligned to the master's pixel grid so the universal bake
 // lands it 1:1 with zero resampling. The Fabric image wrapping it renders
 // with imageSmoothing off (and caching off — it's tiny) so the on-screen
-// squares stay crisp at 25× zoom; the master background gets the same
-// treatment while zoomed so you're etching against the piece's true grain.
+// squares stay crisp when zoomed to the grain; the master background gets the
+// same treatment while zoomed so you're etching against the piece's true grain.
 
 import * as fabric from 'fabric'
 import { MASTER_SCALE, MASTER_WIDTH, MASTER_HEIGHT } from '../masterRaster.js'
 import { UI } from '../../copy/uiText.js'
 
-const GLYPH_W = 96 // master px — display 32, zoom ≈ 25×
+const GLYPH_W = 96 // master px — display 32, landing zoom ≈ 18–22×
 const GLYPH_H = 120
 const UNDO_CAP = 50
 const PIXEL_MIN = 1
 const PIXEL_MAX = 4
+
+// Soft-lock band around the landing zoom (#73). The user may zoom out to
+// GRAIN_ZOOM_OUT× the landing scale and in to GRAIN_ZOOM_IN×; even at the
+// loosest end the whole piece is far out of frame (it would need ~0.05× the
+// landing zoom), so "at the grain" stays the experience while pan/zoom stay
+// live. Tuning numbers — iterate in-browser.
+const GRAIN_ZOOM_OUT = 0.55
+const GRAIN_ZOOM_IN = 2.2
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
 
@@ -131,10 +151,18 @@ export async function beginEtch(ctx) {
   })
   canvas.add(img)
 
-  // Dive in. The card owns the viewport for its whole session; commit and
-  // cleanup both restore it.
-  const z = ctx.canvasWidth / (GLYPH_W / MASTER_SCALE)
-  canvas.setViewportTransform([z, 0, 0, z, -region.left * z, -region.top * z])
+  // Dive in. Command the shared camera to frame the glyph region at the grain,
+  // then soft-lock the wheel to a tight band around that landing scale — the
+  // camera stays free (pan/zoom), but can't retreat to the whole piece. Editor
+  // restores the default band and re-fits on the next phase change; the card
+  // owns no viewport state of its own.
+  const landed = ctx.nav.focusRect({
+    left: region.left,
+    top: region.top,
+    width: GLYPH_W / MASTER_SCALE,
+    height: GLYPH_H / MASTER_SCALE
+  })
+  ctx.nav.setZoomBounds({ min: landed * GRAIN_ZOOM_OUT, max: landed * GRAIN_ZOOM_IN })
 
   const bg = canvas.backgroundImage
   const prev = {
@@ -229,7 +257,9 @@ export async function beginEtch(ctx) {
       canvas.skipTargetFind = prev.skipTargetFind
       canvas.defaultCursor = prev.defaultCursor
       if (bg && prev.bgSmoothing !== undefined) bg.imageSmoothing = prev.bgSmoothing
-      canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
+      // No viewport restore: the universal bake resets it and Editor's
+      // phase-change re-fit (which also clears our soft-locked zoom band)
+      // returns the camera to fit-and-center. The card owns no camera state.
       canvas.requestRenderAll()
     }
   }
@@ -241,8 +271,10 @@ export function updateEtch(ctx) {
 }
 
 export function commitEtch(ctx) {
-  // Recede to the whole piece; the glyph image stays for the universal
-  // bake, which lands it 1:1 on the master grid.
+  // Unhook the etch listeners and drop the crisp-pixel smoothing overrides;
+  // the glyph image stays for the universal bake, which lands it 1:1 on the
+  // master grid. Editor's phase-change re-fit recedes the camera to the whole
+  // piece and clears the soft-locked zoom band.
   ctx.session?.teardown()
 }
 

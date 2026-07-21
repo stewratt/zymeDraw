@@ -152,7 +152,7 @@
     "etch": {
       "frameHint": "Drag the small frame to where the mark should hide. Its size is fixed — about a hundred pixels of the piece.",
       "zoomIn": "Zoom in",
-      "grainHint": "You are at the grain — every square is one pixel of the piece. Etch a small glyph. At full size it will be almost nothing."
+      "grainHint": "You are at the grain — every square is one pixel of the piece. Etch a small glyph; Space-drag or Ctrl-scroll to move over it. At full size it will be almost nothing."
     },
     "skim": {
       "title": "SKIM",

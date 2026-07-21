@@ -324,6 +324,11 @@ function Editor({ config, deckSpec, onBackToSetup }) {
         imageList: imageList.filenames,
         canvasWidth: CANVAS_WIDTH,
         canvasHeight: CANVAS_HEIGHT,
+        // The shared camera (canvasNav): a card may command it — dive to a
+        // region (focusRect) and soft-lock the zoom band (setZoomBounds) —
+        // instead of owning the viewportTransform. The phase-change effect
+        // re-fits and restores the default band on End, so nothing leaks.
+        nav: navRef.current,
         report: (patch) => setCardInfo((prev) => ({ ...prev, ...patch })),
         // Lets a card session write a control back (shift+drag brush sizing
         // reports through here so the panel slider follows the gesture).
@@ -343,19 +348,17 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     }
   }, [state.currentCard, imageList])
 
-  // The nav lens and the card's own viewport must never fight. A card that
-  // drives its own viewport (Etch, `ownsViewport`) takes the wheel: suspend
-  // the global nav for its whole session and re-enable when it's gone. Reset
-  // the view to identity on every card change and phase transition so no
-  // zoom/pan ever leaks between rounds (the bake also resets — this keeps the
-  // *screen* honest between commits, not just the baked pixels). Keyed on the
-  // card + phase so it runs at every deal, End, and transition.
+  // Re-fit the camera on every card change and phase transition so no zoom/pan
+  // ever leaks between rounds (the bake also resets — this keeps the *screen*
+  // honest between commits, not just the baked pixels). Restoring the default
+  // zoom band first drops any per-card soft-lock (Etch's dive to the grain), so
+  // the lock can never outlive the card that set it. Keyed on the card + phase
+  // so it runs at every deal, End, and transition.
   useEffect(() => {
     const nav = navRef.current
     if (!nav) return
-    const entry = state.currentCard ? cardRegistry[state.currentCard.id] : null
+    nav.setZoomBounds()
     nav.reset()
-    nav.setEnabled(!entry?.ownsViewport)
   }, [state.currentCard, state.phase])
 
   // UPDATE hook: when the user changes a control, let the registry react
