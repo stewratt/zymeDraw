@@ -18,8 +18,8 @@ const PORT = Number(process.env.PORT) || 5174
 
 const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp'])
 
-// "~/Pictures/foo" → "/Users/stewartbird/Pictures/foo" (or the equivalent on
-// Linux/Windows). Saves users from having to type absolute home paths.
+// "~/Pictures/foo" → "/home/you/Pictures/foo" (or the equivalent on
+// Mac/Windows). Saves users from having to type absolute home paths.
 function expandTilde(p) {
   if (!p || typeof p !== 'string') return p
   if (p === '~') return os.homedir()

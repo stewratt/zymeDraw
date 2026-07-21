@@ -5,6 +5,29 @@ cards from a deck — each card constrains the UI to exactly one tool, the user
 performs that action on a canvas, then commits it permanently before drawing
 the next card.
 
+## Get ZYME (start here)
+
+Most people should just download the app — no Node, no Python, no terminal:
+
+**[Download the latest release →](https://github.com/stewratt/zymeDraw/releases)**
+
+Pick your file:
+
+- **Linux** — the `.AppImage`. Make it executable (right-click → Properties →
+  allow executing, or `chmod +x`), then run it. If it complains about FUSE,
+  run it as `./ZYME-*.AppImage --appimage-extract-and-run`.
+- **Windows** — the `Setup-*.exe`. SmartScreen warns because the build is
+  unsigned: choose *More info → Run anyway*.
+- **Mac** — the `-arm64.dmg` on Apple silicon (2020+), the plain `.dmg` on
+  Intel. Unsigned build: first launch is right-click → Open, then Open again.
+
+On first run, Setup asks for two folders — one of source images to draw
+from, one for finished exports. That's the whole install. The ML cards
+(cutout / detail restore) are not part of the packaged build yet; they
+politely sit out.
+
+Everything below is for **developing ZYME from the repo**.
+
 ## Requirements
 
 - **Node 20 or newer** (we use `node --watch` for backend reload, built in
@@ -80,6 +103,16 @@ Notes:
   cutout, so the first Stamp on a fresh machine is slow. Once.
 - The venv lives at `backend/ml/.venv` on every machine (gitignored,
   repo-relative — no hardcoded paths anywhere).
+
+## Build & package
+
+- `npm run build && npm start` — production web mode: the compiled frontend
+  and the API served by Express alone on <http://localhost:5174>.
+- `npm run electron` — the desktop shell: Express in-process on a free
+  port, ZYME in its own window. Build first if the frontend changed.
+- `npm run dist` — casts this machine's installer into `dist/`.
+- Pushing a tag like `v0.2.0` makes GitHub Actions build **all three
+  platforms'** installers and attach them to a draft release for review.
 
 ## Architecture, in one sentence
 
