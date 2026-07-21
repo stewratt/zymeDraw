@@ -17,7 +17,9 @@ import './editor.css' // shares the keys-overlay chrome, wherever it's mounted
 // Prose lives in the copy file (UI.guide): one object per page — a
 // "label" plus section objects, each a "title" plus paragraph entries,
 // all in display order.
-const PAGE_IDS = ['session', 'deckEditor', 'foundry', 'setup']
+// Tab order = the order a new hand meets the areas: setup first.
+// Every surface's guide button opens to its own area's page.
+const PAGE_IDS = ['setup', 'session', 'deckEditor', 'foundry']
 const PAGES = Object.fromEntries(
   PAGE_IDS.map((id) => {
     const { label, ...sections } = UI.guide[id]

@@ -317,7 +317,7 @@
     "deckLabel": "Deck",
     "deckLine": "{name} · {count} cards",
     "deckEditorButton": "Deck editor",
-    "guideLink": "How a session works — the guide"
+    "guideLink": "How Zyme works — the guide"
   },
   "deckEditor": {
     "title": "Deck editor",
@@ -422,6 +422,22 @@
   "guide": {
     "title": "THE GUIDE",
     "close": "Esc or the × closes. The page names above open the other areas.",
+    "setup": {
+      "label": "setup",
+      "folders": {
+        "title": "The folders",
+        "p1": "**Input** is read-only — the images sessions deal from. **Output** is where finished pieces land at full resolution. Both must exist before a session begins; paths take a leading `~` for home.",
+        "p2": "**Card faces** is optional — a folder of alternate face sets, one subfolder per set. The built-in faces stand whenever it is empty."
+      },
+      "deck": {
+        "title": "The deck line",
+        "p1": "The deck named here is the one the next session shuffles. The **Deck editor** is where decks are assembled, saved, and chosen."
+      },
+      "doors": {
+        "title": "The two doors",
+        "p1": "**Begin session** opens the studio. **Foundry** opens the wing that casts card faces. Each returns here when its work is done — and everything on this screen is remembered per machine."
+      }
+    },
     "session": {
       "label": "the session",
       "what": {
@@ -491,23 +507,7 @@
       },
       "play": {
         "title": "Putting a face in play",
-        "p1": "A cast joins the game through a card-faces set: a folder of PNGs named by card id, one subfolder per set. Point Setup's *card faces* field at that folder and choose the set — every deal after that wears your faces."
-      }
-    },
-    "setup": {
-      "label": "setup",
-      "folders": {
-        "title": "The folders",
-        "p1": "**Input** is read-only — the images sessions deal from. **Output** is where finished pieces land at full resolution. Both must exist before a session begins; paths take a leading `~` for home.",
-        "p2": "**Card faces** is optional — a folder of alternate face sets, one subfolder per set. The built-in faces stand whenever it is empty."
-      },
-      "deck": {
-        "title": "The deck line",
-        "p1": "The deck named here is the one the next session shuffles. The **Deck editor** is where decks are assembled, saved, and chosen."
-      },
-      "doors": {
-        "title": "The two doors",
-        "p1": "**Begin session** opens the studio. **Foundry** opens the wing that casts card faces. Each returns here when its work is done — and everything on this screen is remembered per machine."
+        "p1": "A cast comes into play through a card-faces set: a folder of PNGs named by card id, one subfolder per set. Point Setup's *card faces* field at that folder and choose the set — every deal after that wears your faces."
       }
     }
   },
