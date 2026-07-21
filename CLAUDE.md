@@ -200,6 +200,26 @@ mismatching the screen = the filter-flush race on End (`renderAll()`).
 Hotkey map + decision record: `hotkeys.md` (`editor/keymap.js` dispatches;
 `KeysReference.jsx` is the in-app overlay).
 
+**Cutting a release ("build a new version").** Merges alone never reach
+testers — only a pushed tag ships anything, and there is no auto-update
+yet. The four steps, in sequence:
+
+1. Bump `"version"` in the **root** `package.json` to the tag-to-be
+   (fixes → patch, features → minor; it can ride on any branch).
+2. Land everything on `main` — open PRs merged, tree clean.
+3. From up-to-date `main`: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+   GitHub Actions builds every platform's installer (~15 min) into a
+   **draft** release (`.github/workflows/release.yml`).
+4. Stew reviews the draft, writes what-changed notes (keep the per-OS
+   install lines from the previous release), ticks **pre-release**,
+   publishes, and tells testers to re-download.
+
+Packaging rules that hold until revisited: `backend/ml` is never bundled
+(ML is a future first-run companion, #11); `asar` stays off; Mac ships
+unsigned (right-click → Open); the zip/tarball on a release are GitHub's
+auto-added source snapshots, not builds. `npm run dist` casts this
+machine's installer locally for a pre-tag sanity check.
+
 ## 8. How to add a new card
 
 **Start with `card_anatomy.md`** — the card designer's contract. Fill in
