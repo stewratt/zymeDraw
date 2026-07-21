@@ -3,6 +3,7 @@ import { MOD_CARDS } from './editor/deck.js'
 import { CARD_TEXT } from './editor/cardText.js'
 import Card from './editor/Card.jsx'
 import CardZoom from './editor/CardZoom.jsx'
+import GuideSheet, { guideSeen } from './editor/GuideSheet.jsx'
 import './editor/editor.css' // base .card styles for the pool's face icons
 import { UI, fmt } from './copy/uiText.js'
 
@@ -63,6 +64,10 @@ function DeckEditor({ decks, active, onUse, onBack, onDecksSaved }) {
   const [saving, setSaving] = useState(false)
   const [zoom, setZoom] = useState(null) // the card whose face is open in the overlay
 
+  // The Guide (issue #75): this room's page opens itself on a machine's
+  // first visit, then lives behind the header's guide button.
+  const [guideOpen, setGuideOpen] = useState(() => !guideSeen('deckEditor'))
+
   const total = useMemo(
     () => Object.values(counts).reduce((sum, n) => sum + n, 0),
     [counts]
@@ -120,7 +125,11 @@ function DeckEditor({ decks, active, onUse, onBack, onDecksSaved }) {
         </button>
         <h1>{T.title}</h1>
         <p className="muted">{T.subtitle}</p>
+        <button type="button" className="link deck-editor-guide" onClick={() => setGuideOpen(true)}>
+          {UI.editor.guideButton}
+        </button>
       </header>
+      {guideOpen && <GuideSheet page="deckEditor" onClose={() => setGuideOpen(false)} />}
 
       <div className={`deck-count ${legal ? '' : 'illegal'}`}>
         {fmt(T.countLine, { count: total, cap: DECK_CAP, floor: DECK_FLOOR })}
