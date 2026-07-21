@@ -12,6 +12,7 @@ import { dealTypeFonts, fetchFontCatalog } from './fonts.js'
 import { roundCorners, roundedCopy } from './cardCorners.js'
 import { applyTypeFonts, inkSlot, mountTypeLayer } from './typeLayer.js'
 import { saveSlotHomes } from './slotHomes.js'
+import GuideSheet, { guideSeen } from '../editor/GuideSheet.jsx'
 import { createMaskSession } from '../editor/brushCore.js'
 import { dispatchKey } from '../editor/keymap.js'
 import { arrangeBindings, brushBindings } from '../editor/sessionBindings.js'
@@ -61,6 +62,10 @@ function FoundryEditor({ onBackToSetup }) {
   const [committing, setCommitting] = useState(false)
 
   const [exportState, setExportState] = useState({ status: 'idle', savedPath: null, error: null, thumbDataUrl: null })
+
+  // The Guide (issue #75): this wing's page opens itself on a machine's
+  // first visit, then lives behind the header's guide button.
+  const [guideOpen, setGuideOpen] = useState(() => !guideSeen('foundry'))
 
   // The plates folder listing (plates.js). `status`: loading | ready | error.
   const [plateList, setPlateList] = useState({ status: 'loading', filenames: [], folder: null, error: null })
@@ -775,8 +780,12 @@ function FoundryEditor({ onBackToSetup }) {
                 ` ${fmt(F.header.impressionNote, { i: state.copyIndex, n: state.copiesTotal })}`}
             </span>
           )}
+          <button type="button" className="link keys-button" onClick={() => setGuideOpen(true)}>
+            {UI.editor.guideButton}
+          </button>
         </div>
       </header>
+      {guideOpen && <GuideSheet page="foundry" onClose={() => setGuideOpen(false)} />}
 
       <main className="editor-main">
         <section className="canvas-area">

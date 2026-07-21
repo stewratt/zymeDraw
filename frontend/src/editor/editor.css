@@ -1092,7 +1092,9 @@
   cursor: pointer; /* the whole sheet closes on click */
 }
 .keys-panel {
-  background: var(--surface-panel);
+  /* Solid, not the translucent panel token — these are reading sheets
+     over a busy canvas; the piece must not show through the prose. */
+  background: var(--surface);
   border: 1px solid var(--border-strong);
   width: min(560px, calc(100vw - 48px));
   max-height: calc(100vh - 80px);
@@ -1142,6 +1144,83 @@
   color: var(--text-mute);
   font-size: 0.75rem;
   margin: 0;
+}
+/* The reading sheets scroll behind the foundry's scrollbar dress (see
+   foundry.css): thin dark track, hairline-grey pill thumb lifting toward
+   --sel-border on hover. Firefox reads scrollbar-color; Chromium/WebKit
+   needs ::-webkit-*. */
+.keys-panel {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+.keys-panel::-webkit-scrollbar {
+  width: 10px;
+}
+.keys-panel::-webkit-scrollbar-track {
+  background: var(--surface-2);
+}
+.keys-panel::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 5px;
+  /* Inset the thumb off the track edges so it reads as a floating pill. */
+  border: 2px solid var(--surface-2);
+  background-clip: padding-box;
+}
+.keys-panel::-webkit-scrollbar-thumb:hover {
+  background: var(--sel-border);
+  background-clip: padding-box;
+}
+
+/* The Guide (GuideSheet.jsx) wears the keys-overlay chrome; the body is
+   prose paragraphs instead of key rows, paged by the tab row. The panel
+   is clickable (page names), so it drops the overlay's close-on-click
+   cursor — backdrop, Esc, or the × close instead. */
+.guide-panel {
+  cursor: auto;
+  width: min(620px, calc(100vw - 48px));
+}
+.guide-panel .guide-para {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  line-height: 1.55;
+  margin: 0 0 8px;
+}
+.guide-panel .guide-para:last-of-type {
+  margin-bottom: 0;
+}
+.guide-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.guide-header h2 {
+  margin: 0;
+}
+.guide-close {
+  font-size: 1rem;
+  line-height: 1;
+  text-decoration: none;
+  color: var(--text-dim);
+}
+.guide-pages {
+  display: flex;
+  gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.guide-page-tab {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--text-mute);
+  text-decoration: none;
+}
+.guide-page-tab:hover {
+  color: var(--text);
+}
+.guide-page-tab.active {
+  color: var(--text-heading);
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 /* ---------- the deck overlay (HistoryOverlay.jsx) ---------- */

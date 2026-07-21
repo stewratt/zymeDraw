@@ -124,6 +124,13 @@ button.link:hover {
   text-align: center;
 }
 
+/* The guide link (GuideSheet.jsx) sits under the subtitle, quiet. */
+.setup .setup-guide-link {
+  margin: -16px auto 0;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
 .field {
   display: flex;
   flex-direction: column;
@@ -266,6 +273,15 @@ button.link:hover {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  position: relative; /* anchors the guide button to the room's corner */
+}
+.deck-editor header .deck-editor-guide {
+  position: absolute;
+  top: 32px;
+  right: 32px;
+  align-self: auto;
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
 }
 
 .deck-editor header {
