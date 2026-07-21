@@ -3,7 +3,7 @@ import { promises as fs, constants as fsc } from 'fs'
 import { spawn } from 'child_process'
 import path from 'path'
 import os from 'os'
-import { fileURLToPath } from 'url'
+import { fileURLToPath, pathToFileURL } from 'url'
 import { loadConfig, saveConfig } from './config-store.js'
 
 const app = express()
@@ -18,8 +18,8 @@ const PORT = Number(process.env.PORT) || 5174
 
 const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp'])
 
-// "~/Pictures/foo" → "/Users/stewartbird/Pictures/foo" (or the equivalent on
-// Linux/Windows). Saves users from having to type absolute home paths.
+// "~/Pictures/foo" → "/home/you/Pictures/foo" (or the equivalent on
+// Mac/Windows). Saves users from having to type absolute home paths.
 function expandTilde(p) {
   if (!p || typeof p !== 'string') return p
   if (p === '~') return os.homedir()
@@ -581,6 +581,15 @@ app.post('/api/ml/:op(cutout|upscale|style)', express.raw({ type: '*/*', limit: 
   }
 })
 
+// ---- Native hooks (Electron) -----------------------------------------------
+// Browser deployments reach the OS through spawned commands (zenity, xdg-open,
+// osascript, powershell). Electron has first-class APIs for the same two jobs
+// and injects them here at boot; when unset, the command fallbacks below run.
+const native = { pickFolder: null, openFolder: null }
+export function setNativeHooks(hooks) {
+  Object.assign(native, hooks)
+}
+
 // Reveal the configured output folder in the user's native file manager.
 // macOS = `open`, Windows = `explorer`, everywhere else = `xdg-open`.
 // We spawn detached/unref'd so the file manager outlives this request.
@@ -588,6 +597,9 @@ app.post('/api/open-output', async (req, res) => {
   const { outputFolder } = await loadConfig()
   if (!outputFolder) {
     return res.status(400).json({ ok: false, error: 'Output folder is not configured.' })
+  }
+  if (native.openFolder) {
+    return res.json(await native.openFolder(outputFolder))
   }
   const platform = os.platform()
   const cmd = platform === 'darwin' ? 'open' : platform === 'win32' ? 'explorer' : 'xdg-open'
@@ -650,6 +662,8 @@ function runCapture(cmd, args) {
 }
 
 async function pickFolder(prompt, startDir) {
+  if (native.pickFolder) return native.pickFolder(prompt, startDir)
+
   const platform = os.platform()
 
   if (platform === 'darwin') {
@@ -785,6 +799,16 @@ app.get('*', (req, res) => {
   })
 })
 
-app.listen(PORT, () => {
-  console.log(`Deck backend listening on http://localhost:${PORT}`)
-})
+// Electron imports this and passes port 0 ("any free port"); the actual
+// number is read back off the returned server. `node backend/server.js`
+// (dev and npm start) still self-starts via the guard below.
+export function startServer(port = PORT) {
+  const server = app.listen(port, () => {
+    console.log(`Deck backend listening on http://localhost:${server.address().port}`)
+  })
+  return server
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  startServer()
+}

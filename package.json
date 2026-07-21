@@ -1,15 +1,54 @@
 {
   "name": "zymedraw",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Deck — a card-constrained, destructive image editor",
+  "author": "stewratt",
+  "type": "module",
+  "main": "electron/main.js",
   "scripts": {
     "install:all": "npm install && npm install --prefix frontend && npm install --prefix backend",
     "dev": "concurrently -n frontend,backend,ml -c blue,green,magenta \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\" \"node backend/ml/start.js\"",
     "build": "npm run build --prefix frontend",
-    "start": "concurrently -n backend,ml -c green,magenta \"node backend/server.js\" \"node backend/ml/start.js\""
+    "start": "concurrently -n backend,ml -c green,magenta \"node backend/server.js\" \"node backend/ml/start.js\"",
+    "electron": "electron .",
+    "dist": "npm run build && electron-builder"
+  },
+  "build": {
+    "appId": "com.stewratt.zyme",
+    "productName": "ZYME",
+    "asar": false,
+    "files": [
+      "electron/**",
+      "backend/**",
+      "!backend/ml/**",
+      "frontend/dist/**"
+    ],
+    "linux": {
+      "target": "AppImage",
+      "icon": "frontend/public/logo/icon.png",
+      "category": "Graphics"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "icon": "frontend/public/logo/icon.png"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "frontend/public/logo/icon.png"
+    },
+    "publish": {
+      "provider": "github"
+    }
   },
   "devDependencies": {
-    "concurrently": "^9.0.0"
+    "concurrently": "^9.0.0",
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3"
   }
 }

@@ -1,0 +1,36 @@
+# Casts the installers. Push a tag like v0.1.0 and each OS runner builds its
+# own native installer (Linux AppImage, Windows NSIS, Mac dmg ×2 arch) and
+# uploads it to a DRAFT GitHub release — nothing goes public until Stew
+# reviews the draft and publishes it (as a pre-release for testing rounds).
+# workflow_dispatch exists so a failed leg can be retried without re-tagging.
+name: release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm ci --prefix frontend
+      - run: npm ci --prefix backend
+      - run: npm run dist -- --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # No Apple certificate yet — stop electron-builder from hunting for
+          # one. The dmg ships unsigned (right-click → Open on first launch).
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
