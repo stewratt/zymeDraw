@@ -581,6 +581,15 @@ app.post('/api/ml/:op(cutout|upscale|style)', express.raw({ type: '*/*', limit: 
   }
 })
 
+// ---- Native hooks (Electron) -----------------------------------------------
+// Browser deployments reach the OS through spawned commands (zenity, xdg-open,
+// osascript, powershell). Electron has first-class APIs for the same two jobs
+// and injects them here at boot; when unset, the command fallbacks below run.
+const native = { pickFolder: null, openFolder: null }
+export function setNativeHooks(hooks) {
+  Object.assign(native, hooks)
+}
+
 // Reveal the configured output folder in the user's native file manager.
 // macOS = `open`, Windows = `explorer`, everywhere else = `xdg-open`.
 // We spawn detached/unref'd so the file manager outlives this request.
@@ -588,6 +597,9 @@ app.post('/api/open-output', async (req, res) => {
   const { outputFolder } = await loadConfig()
   if (!outputFolder) {
     return res.status(400).json({ ok: false, error: 'Output folder is not configured.' })
+  }
+  if (native.openFolder) {
+    return res.json(await native.openFolder(outputFolder))
   }
   const platform = os.platform()
   const cmd = platform === 'darwin' ? 'open' : platform === 'win32' ? 'explorer' : 'xdg-open'
@@ -650,6 +662,8 @@ function runCapture(cmd, args) {
 }
 
 async function pickFolder(prompt, startDir) {
+  if (native.pickFolder) return native.pickFolder(prompt, startDir)
+
   const platform = os.platform()
 
   if (platform === 'darwin') {
