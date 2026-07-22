@@ -44,6 +44,12 @@
 //     (keymap.js); run gets { controls, setControl, info, session, canvas }
 //     and may return false to pass the key along. Any card with a `color`
 //     control gets N (re-roll the hue) for free, like the random opening.
+//   Every lifecycle hook's ctx carries `canvasWidth`/`canvasHeight` — the
+//   ARTBOARD, the 800×1000 document a card sees. The Fabric buffer is the
+//   whole pasteboard (window-sized, with the artboard floating in it), so a
+//   hook that needs the document's size must take it from the ctx and never
+//   from canvas.getWidth(). Commit was missing these, which is how the frame
+//   pair's re-frame drifted with window size (issue #80).
 //   A card that works at an unusual scale (Etch, at the master's grain) does
 //   NOT own the viewport — it rides the shared camera through `ctx.nav`
 //   (canvasNav): focusRect() dives to a region and setZoomBounds() soft-locks

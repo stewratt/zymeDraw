@@ -458,7 +458,11 @@ function FoundryEditor({ onBackToSetup }) {
           await entry.commit({
             canvas,
             controls: cardControls,
-            session: cardSessionRef.current
+            session: cardSessionRef.current,
+            // The face, same as begin/update get — the buffer is the whole
+            // pasteboard and never the document (issue #80, deck-side).
+            canvasWidth: FACE_WIDTH,
+            canvasHeight: FACE_HEIGHT
           })
         }
         if (!entry?.skipBake) {

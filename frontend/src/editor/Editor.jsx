@@ -417,7 +417,12 @@ function Editor({ config, deckSpec, onBackToSetup }) {
           await entry.commit({
             canvas,
             controls: cardControls,
-            session: cardSessionRef.current
+            session: cardSessionRef.current,
+            // The artboard, same as begin/update get. The Fabric buffer is
+            // the whole pasteboard, so a commit that needs "how big is the
+            // document" must never ask the canvas (issue #80).
+            canvasWidth: CANVAS_WIDTH,
+            canvasHeight: CANVAS_HEIGHT
           })
         }
         // Cards that never touch the canvas (Searcher's empty-remains round)

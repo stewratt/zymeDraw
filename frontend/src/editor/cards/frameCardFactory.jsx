@@ -65,7 +65,11 @@ export function makeFrameCardHooks({ smoothing = () => true, restore = null } = 
     restoreScaling(ctx.canvas, s.prev)
     ctx.canvas.requestRenderAll()
 
-    const proxyScale = master.width / ctx.canvas.getWidth() // display px → master px
+    // Scene units → master px. Must divide by the ARTBOARD, not the Fabric
+    // buffer: since the pasteboard refactor the buffer is window-sized, and
+    // the frame's left/top/scaled size are scene units. Using the buffer made
+    // the committed re-frame zoom and land wrong, varying with window size.
+    const proxyScale = master.width / ctx.canvasWidth
     const zoom = master.width / (rect.getScaledWidth() * proxyScale)
 
     // Map the frame region onto the full master: center it, undo its
