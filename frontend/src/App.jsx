@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
 import Setup from './Setup.jsx'
+import MlSetup from './MlSetup.jsx'
 import DeckEditor from './DeckEditor.jsx'
 import Editor from './editor/Editor.jsx'
 import { UI } from './copy/uiText.js'
@@ -16,23 +17,39 @@ const FoundryEditor = lazy(() => import('./foundry/FoundryEditor.jsx'))
 // to Editor, which seeds the reducer with it — App never holds deck
 // logic, just the choice.
 function App() {
-  const [stage, setStage] = useState('loading') // loading | setup | deckEditor | editor | foundry
+  const [stage, setStage] = useState('loading') // loading | mlSetup | setup | deckEditor | editor | foundry
   const [config, setConfig] = useState({ inputFolder: '', outputFolder: '', homedir: '', decks: [] })
   const [deck, setDeck] = useState({ spec: null, name: UI.deckEditor.houseDeckName })
 
   useEffect(() => {
     loadCardSets() // populate the card-set store; faces resolve before Setup
-    fetch('/api/config')
-      .then((r) => r.json())
-      .then((data) => {
-        setConfig({ decks: [], ...data })
-        setStage('setup')
-      })
-      .catch(() => setStage('setup'))
+    // Two questions before the shell opens: the folders, and (Electron only)
+    // whether the machine tools still need their first-launch install. A
+    // remembered "work without them" answers the second without asking again.
+    Promise.all([
+      fetch('/api/config').then((r) => r.json()).catch(() => null),
+      fetch('/api/ml/setup').then((r) => r.json()).catch(() => null)
+    ]).then(([cfg, ml]) => {
+      if (cfg) setConfig({ decks: [], ...cfg })
+      const firstRun = ml?.state === 'missing' && !localStorage.getItem('zyme-ml-skip')
+      setStage(firstRun ? 'mlSetup' : 'setup')
+    })
   }, [])
 
   if (stage === 'loading') {
     return <div className="loading">{UI.app.loading}</div>
+  }
+
+  if (stage === 'mlSetup') {
+    return (
+      <MlSetup
+        onDone={() => setStage('setup')}
+        onSkip={() => {
+          localStorage.setItem('zyme-ml-skip', '1')
+          setStage('setup')
+        }}
+      />
+    )
   }
 
   if (stage === 'setup') {
@@ -42,6 +59,10 @@ function App() {
         deckName={deck.name}
         deckSpec={deck.spec}
         onOpenDeckEditor={() => setStage('deckEditor')}
+        onOpenMlSetup={() => {
+          localStorage.removeItem('zyme-ml-skip')
+          setStage('mlSetup')
+        }}
         onContinue={(saved, wing = 'editor') => {
           setConfig({ ...config, ...saved })
           setStage(wing)

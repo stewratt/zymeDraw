@@ -7,7 +7,7 @@ import GuideSheet from './editor/GuideSheet.jsx'
 
 const T = UI.setup
 
-function Setup({ initial, deckName, deckSpec, onOpenDeckEditor, onContinue }) {
+function Setup({ initial, deckName, deckSpec, onOpenDeckEditor, onOpenMlSetup, onContinue }) {
   const [inputFolder, setInputFolder] = useState(initial.inputFolder || '')
   const [outputFolder, setOutputFolder] = useState(initial.outputFolder || '')
   const [errors, setErrors] = useState({ inputFolder: null, outputFolder: null })
@@ -19,6 +19,29 @@ function Setup({ initial, deckName, deckSpec, onOpenDeckEditor, onContinue }) {
 
   // The Guide (issue #75), readable before the first session begins.
   const [guideOpen, setGuideOpen] = useState(false)
+
+  // Machine tools (Electron only): where the first-launch install stands.
+  // 'unmanaged' (browser/dev) hides the row; a background install re-polls
+  // until it lands so the row flips to ready on its own.
+  const [mlState, setMlState] = useState(null)
+  useEffect(() => {
+    let timer
+    let stopped = false
+    const poll = () =>
+      fetch('/api/ml/setup')
+        .then((r) => r.json())
+        .then((d) => {
+          if (stopped) return
+          setMlState(d.state)
+          if (d.state === 'running') timer = setTimeout(poll, 3000)
+        })
+        .catch(() => {})
+    poll()
+    return () => {
+      stopped = true
+      clearTimeout(timer)
+    }
+  }, [])
 
   // Card faces (optional): the folder + the chosen set live in the shared
   // card-art store, so switching updates every dealt card live. The path is
@@ -259,6 +282,30 @@ function Setup({ initial, deckName, deckSpec, onOpenDeckEditor, onContinue }) {
           </button>
         </div>
       </div>
+
+      {mlState && mlState !== 'unmanaged' && (
+        <div className="field">
+          <span className="field-label">{UI.mlSetup.setupLabel}</span>
+          <div className="field-row setup-deck-row">
+            <span className="hint">
+              {
+                {
+                  ready: UI.mlSetup.setupReady,
+                  running: UI.mlSetup.setupRunning,
+                  missing: UI.mlSetup.setupMissing,
+                  error: UI.mlSetup.setupError,
+                  unsupported: UI.mlSetup.setupUnsupported
+                }[mlState]
+              }
+            </span>
+            {(mlState === 'missing' || mlState === 'error') && (
+              <button type="button" className="browse" onClick={onOpenMlSetup}>
+                {UI.mlSetup.setupInstall}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="setup-doors">
         <button type="submit" disabled={!canSubmit}>

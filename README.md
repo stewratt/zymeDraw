@@ -21,10 +21,15 @@ Pick your file:
 - **Mac** — the `-arm64.dmg` on Apple silicon (2020+), the plain `.dmg` on
   Intel. Unsigned build: first launch is right-click → Open, then Open again.
 
-On first run, Setup asks for two folders — one of source images to draw
-from, one for finished exports. That's the whole install. The ML cards
-(cutout / detail restore) are not part of the packaged build yet; they
-politely sit out.
+On first run the app offers to fit its **machine tools** — the models behind
+the cutout and detail-restore cards. It's a one-time download of about
+400 MB (just under 1 GB once installed, kept in the app's own data folder,
+removed with the app). You can let it finish in the background, and if you
+decline or it fails, everything else works exactly the same — those two
+cards simply degrade. Setup keeps an entry to install them later.
+
+Then Setup asks for two folders — one of source images to draw from, one
+for finished exports. That's the whole install.
 
 Everything below is for **developing ZYME from the repo**.
 

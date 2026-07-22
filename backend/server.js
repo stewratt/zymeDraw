@@ -549,11 +549,14 @@ app.post('/api/foundry/export', async (req, res) => {
 // raw bytes to the Python process and never inspects them. When the
 // sidecar is down these routes answer quickly with ok:false / 503; the
 // frontend treats that as "degrade, don't block" (mandatory, CLAUDE.md §3).
-const ML_BASE = process.env.DECK_ML_URL || 'http://127.0.0.1:5175'
+// Read per-request, not at load: in Electron the sidecar starts after this
+// module (possibly long after — first-launch setup) and announces itself by
+// setting DECK_ML_URL to whatever free port it landed on.
+const mlBase = () => process.env.DECK_ML_URL || 'http://127.0.0.1:5175'
 
 app.get('/api/ml/health', async (req, res) => {
   try {
-    const r = await fetch(`${ML_BASE}/health`, { signal: AbortSignal.timeout(1500) })
+    const r = await fetch(`${mlBase()}/health`, { signal: AbortSignal.timeout(1500) })
     res.json(await r.json())
   } catch {
     res.json({ ok: false })
@@ -565,7 +568,7 @@ app.get('/api/ml/health', async (req, res) => {
 app.post('/api/ml/:op(cutout|upscale|style)', express.raw({ type: '*/*', limit: '64mb' }), async (req, res) => {
   try {
     const query = req.originalUrl.includes('?') ? '?' + req.originalUrl.split('?')[1] : ''
-    const r = await fetch(`${ML_BASE}/${req.params.op}${query}`, {
+    const r = await fetch(`${mlBase()}/${req.params.op}${query}`, {
       method: 'POST',
       headers: { 'content-type': req.get('content-type') || 'application/octet-stream' },
       body: req.body,
@@ -581,11 +584,26 @@ app.post('/api/ml/:op(cutout|upscale|style)', express.raw({ type: '*/*', limit: 
   }
 })
 
+// The first-launch ML installer runs in the Electron main process; these two
+// routes are the frontend's only window onto it (GET = where is it, POST =
+// start it). Outside Electron there is nothing to manage — dev machines run
+// their own venv (backend/ml/start.js) — so both answer 'unmanaged' and the
+// frontend hides the whole surface.
+app.get('/api/ml/setup', async (req, res) => {
+  if (!native.mlSetupStatus) return res.json({ ok: true, state: 'unmanaged' })
+  res.json({ ok: true, ...(await native.mlSetupStatus()) })
+})
+
+app.post('/api/ml/setup', async (req, res) => {
+  if (!native.mlSetupStart) return res.json({ ok: true, state: 'unmanaged' })
+  res.json({ ok: true, ...(await native.mlSetupStart()) })
+})
+
 // ---- Native hooks (Electron) -----------------------------------------------
 // Browser deployments reach the OS through spawned commands (zenity, xdg-open,
 // osascript, powershell). Electron has first-class APIs for the same two jobs
 // and injects them here at boot; when unset, the command fallbacks below run.
-const native = { pickFolder: null, openFolder: null }
+const native = { pickFolder: null, openFolder: null, mlSetupStatus: null, mlSetupStart: null }
 export function setNativeHooks(hooks) {
   Object.assign(native, hooks)
 }
