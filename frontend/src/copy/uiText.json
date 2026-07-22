@@ -319,6 +319,25 @@
     "deckEditorButton": "Deck editor",
     "guideLink": "How Zyme works — the guide"
   },
+  "mlSetup": {
+    "title": "Fitting the machine tools",
+    "body": "ZYME is installing the models behind its cutouts and detail restore — a one-time download of about 400 MB (just under 1 GB once fitted). Everything else works without them.",
+    "phasePython": "Fetching the engine…",
+    "phasePackages": "Fitting the parts…",
+    "phaseWeights": "Loading the models…",
+    "continueBehind": "Continue — this finishes in the background",
+    "errorTitle": "The install didn't finish.",
+    "errorHint": "Check the connection and try again — or work without the machine tools; every other card is unaffected. You can install them later from this screen's setup entry.",
+    "retry": "Try again",
+    "skip": "Work without them",
+    "setupLabel": "Machine tools",
+    "setupReady": "Installed — cutouts and detail restore are on.",
+    "setupMissing": "Not installed — cutout and restore cards degrade.",
+    "setupError": "Last install didn't finish — cutout and restore cards degrade.",
+    "setupRunning": "Installing in the background…",
+    "setupUnsupported": "No build for this machine — cutout and restore cards degrade.",
+    "setupInstall": "Install"
+  },
   "deckEditor": {
     "title": "Deck editor",
     "subtitle": "Assemble the deck the next session deals from. Codas are never edited here — three are always shuffled in late.",
