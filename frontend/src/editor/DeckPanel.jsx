@@ -369,11 +369,6 @@ function AwaitingDeal({ state, onAdvance, onOpenHistory }) {
 function CodaChoice({ state, onAcceptCoda, onDelayCoda }) {
   const card = state.currentCard
   const [zoomed, setZoomed] = useState(false)
-  // The Coda is dealt like any other card — it just lands here instead of in
-  // the dock, and the turn should not be the one silent one.
-  useEffect(() => {
-    playCardFlip()
-  }, [])
   return (
     <aside className="deck-panel">
       {zoomed && (
