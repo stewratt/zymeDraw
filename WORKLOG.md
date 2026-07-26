@@ -21,7 +21,7 @@ session goes through one `handleAdvance` in Editor — opening placement, the
 stash return, and every card round — and Enter is that same action from the
 keyboard. No End or Deal buttons remain; the Coda keeps its own finish/export
 flow, and the stash-return notice keeps its click-only acknowledgement.
-Where: PR #88
+Where: PR #89
 Choices: (1) `handleCommit` split into `commitCurrentCard` (impure work) +
 the caller's `dispatch(COMMIT)`, so COMMIT and DEAL are dispatched adjacently
 and land in ONE render — otherwise a slow commit hook (Deeper's restore) lets
