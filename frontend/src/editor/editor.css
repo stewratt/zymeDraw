@@ -481,6 +481,28 @@
 .card--death {
   border-color: var(--border-strong);
 }
+/* The card back (issue #86): the ZYME mark on one flat field, nothing else.
+   --surface sits a step under the app background, so a face-down card reads
+   as an object lying on the table; it is also the value this wordmark is
+   already known to read against (the header, Setup). The mark is
+   dark-on-transparent, so the field must stay darker than it. */
+.card--back {
+  background: var(--surface);
+}
+.card-back {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.card-back-mark {
+  width: 62%;
+  height: auto;
+  user-select: none;
+  /* drop-shadow (not box-shadow) follows the letterforms' alpha. */
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+}
 .card--clickable {
   cursor: zoom-in;
 }

@@ -9,12 +9,28 @@
 // hand, not yet committed). `onClick` makes the face clickable — the
 // consumers use it to open CardZoom; propagation stops here so a tile
 // click never falls through to a close-on-click overlay behind it.
+//
+// `faceDown` turns the card over: the one back, the ZYME mark on a flat
+// field and nothing else. It reuses this frame so the back can never drift
+// from the geometry the faces are cut to.
 
 import { useEffect, useState } from 'react'
 import { cardArtSources, useActiveCardSet } from './cardArt.js'
 import { cardFamily } from './deck.js'
 
-function Card({ id, label, kind = 'mod', size = 'panel', count, dimmed, flip, onClick, title, variant = 1 }) {
+function Card({
+  id,
+  label,
+  kind = 'mod',
+  size = 'panel',
+  count,
+  dimmed,
+  flip,
+  faceDown,
+  onClick,
+  title,
+  variant = 1
+}) {
   const activeSet = useActiveCardSet()
   const sources = cardArtSources(id, activeSet, variant)
   // Walk the sources (active set → bundled, variant face → bare) on image
@@ -25,12 +41,13 @@ function Card({ id, label, kind = 'mod', size = 'panel', count, dimmed, flip, on
   const art = sources[attempt]
   // Mod cards split into two color-coded families (image vs deck) until
   // the designed faces carry the distinction; the Coda stays its own thing.
-  const family = kind === 'mod' ? cardFamily(id) : null
+  const family = kind === 'mod' && !faceDown ? cardFamily(id) : null
   const classes = [
     'card',
     `card--${size}`,
     family && `card--family-${family}`,
-    kind === 'death' && 'card--death',
+    faceDown && 'card--back',
+    kind === 'death' && !faceDown && 'card--death',
     dimmed && 'card--dimmed',
     flip && 'card--flip',
     onClick && 'card--clickable'
@@ -50,7 +67,13 @@ function Card({ id, label, kind = 'mod', size = 'panel', count, dimmed, flip, on
         })
       }
     >
-      {art ? (
+      {faceDown ? (
+        // Decorative: the mark says "a card, face down", which the frame
+        // already says — naming it again would only clutter a screen reader.
+        <div className="card-back">
+          <img className="card-back-mark" src="/logo/zyme.png" alt="" draggable={false} />
+        </div>
+      ) : art ? (
         <img
           className="card-art"
           src={art}

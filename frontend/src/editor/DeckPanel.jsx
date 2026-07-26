@@ -254,6 +254,10 @@ function AwaitingDeal({ state, onDeal, onOpenHistory }) {
     <aside className="deck-panel">
       <div className="panel-scroll">
         <h2>{T.deckTitle}</h2>
+        {/* The undealt deck, face down — the thing the Deal button acts on,
+            shown where you're deciding. Interim placement: issue #87 gives
+            the deck its own clickable home in this panel. */}
+        <Card faceDown size="panel" />
         <p className="hint">
           {fmt(T.cardsRemain, { count: state.deck.length, plural: state.deck.length === 1 ? '' : 's' })}
           {state.stash.length > 0 ? ` ${fmt(T.stashedSuffix, { count: state.stash.length })}` : ''}
