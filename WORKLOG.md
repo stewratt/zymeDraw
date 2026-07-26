@@ -10,6 +10,27 @@ Choices: any decisions the executor made on its own.
 Files: the main files touched.
 ```
 
+## [10] #97 — Foundry: brush strokes double the image, offset toward top-left (2026-07-26)
+What: the shared reveal/stamp overlays in `brushCore.js` were seated with Deck's
+hardcoded 800×1000 artboard constants (a #53 change), so in the Foundry — whose
+artboard is the 745×1040 card face — every effect-brush stroke revealed a
+master-sized copy of the card stretched 7.4% wide and squashed 3.8% short: the
+doubled, skewed ghost. Both overlays now seat at `1 / MASTER_SCALE`, the same
+master→artboard ratio `showMaster` and Etch already use, which is correct in
+both wings with no per-wing branch.
+Where: PR #98.
+Choices: (1) navigation model — the Foundry KEEPS its fixed, identity-transform
+canvas; no pasteboard camera, per the spec's "diverge if simpler". It already
+had no `fill` and no `attachCanvasNav`, so this is the zero-change option and
+also the one that keeps the screen-constant brush (#71) trivially correct
+(getZoom() === 1). Recorded as a header comment in FoundryEditor.jsx.
+(2) Derived the scale from `MASTER_SCALE` rather than threading artboard dims
+through the session options — the composite is master-sized by construction, so
+the ratio is the same constant in both wings and nothing new crosses the API.
+(3) Left `liftSession.js` and `placement.js` (same #53 constant treatment) alone
+— neither is reachable from the Foundry roster; out of scope.
+Files: `frontend/src/editor/brushCore.js`, `frontend/src/foundry/FoundryEditor.jsx`.
+
 ## [10] #92 (fix) — the Zoom In gate was backwards: it now COMMITS (2026-07-26)
 What: #92 shipped the gate on the wrong side of the round — Closer/Deeper dealt
 with no frame on screen, the button started the session, and the deck committed
