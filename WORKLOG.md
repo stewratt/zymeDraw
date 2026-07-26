@@ -18,7 +18,7 @@ master-sized copy of the card stretched 7.4% wide and squashed 3.8% short: the
 doubled, skewed ghost. Both overlays now seat at `1 / MASTER_SCALE`, the same
 master→artboard ratio `showMaster` and Etch already use, which is correct in
 both wings with no per-wing branch.
-Where: PR #98.
+Where: PR #100.
 Choices: (1) navigation model — the Foundry KEEPS its fixed, identity-transform
 canvas; no pasteboard camera, per the spec's "diverge if simpler". It already
 had no `fill` and no `attachCanvasNav`, so this is the zero-change option and
