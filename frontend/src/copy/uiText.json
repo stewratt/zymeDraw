@@ -252,7 +252,7 @@
       "mounting": "Mounting the plate…",
       "placingArt": "Placing the art…",
       "continueType": "Continue — to the type",
-      "gridHint": "Take an image for the window — your finished pieces and raw inputs, dealt together. It lands under the plate; the window crops it.",
+      "gridHint": "Take an image for the window — a hand dealt from your panel-art pool. It lands under the plate; the window crops it.",
       "gridConfirm": "Choose card image"
     },
     "type": {
@@ -283,7 +283,7 @@
     },
     "working": {
       "title": "THE WORKING DECK",
-      "placeholder": "(placeholder — scribble on the face; this card's real tool arrives in Phase 5)"
+      "placeholder": "(placeholder — this card's tools arrive in a later wave)"
     },
     "proof": {
       "title": "THE PROOF",
@@ -539,7 +539,8 @@
         "plate": "**The plate** — take one of the dealt blanks: its frame is the card's fixed anatomy, and the white window waits for art. Taking the plate also fixes the run — how many impressions this cast will pull.",
         "panel": "**The panel** — take an image and arrange it under the window; the plate's edge crops whatever crosses it.",
         "type": "**The type** — name, type line, and description are set on the face. Double-click to edit, drag to nudge, re-deal the fonts until it reads right.",
-        "press": "**The Press** — the foundry's End. Art, plate, and type flatten to pixels for good; after it, a working deck deals cards that mark the sealed face.",
+        "press": "**The Press** — the foundry's one irreversible commit. Art, plate, and type flatten to pixels for good; after it, a working deck deals cards that mark the sealed face.",
+        "rounds": "**The working rounds** — each dealt card marks the sealed face its own way. The deck is the button here too: it waits at the foot of the panel, and one click on it commits the round in hand and turns the next card face-up beside it. Enter does the same.",
         "proof": "**The Proof** — the finished cast writes to your casts folder, with the full-resolution master alongside. A run returns to the sealed base for the next impression."
       },
       "play": {

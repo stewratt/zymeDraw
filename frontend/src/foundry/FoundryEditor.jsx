@@ -1,5 +1,4 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
-import * as fabric from 'fabric'
 import CanvasStage from '../editor/CanvasStage.jsx'
 import Card from '../editor/Card.jsx'
 import { CardGridPicker } from '../editor/GridPicker.jsx'
@@ -18,8 +17,6 @@ import { dispatchKey } from '../editor/keymap.js'
 import { arrangeBindings, brushBindings } from '../editor/sessionBindings.js'
 import { randomHexColor, randomizeColors } from '../editor/colorSeed.js'
 import { UI, fmt } from '../copy/uiText.js'
-
-const F = UI.foundry
 import {
   bake,
   createMaster,
@@ -29,6 +26,9 @@ import {
 } from '../editor/masterRaster.js'
 import '../editor/editor.css'
 import './foundry.css'
+
+// F is Foundry's own copy, the same shorthand FoundryPanel uses.
+const F = UI.foundry
 
 // Foundry canvas geometry (card_maker.md §2): the working canvas IS the
 // deliverable's size — 745×1040, the exact face Card.jsx renders — with a
@@ -322,12 +322,18 @@ function FoundryEditor({ onBackToSetup }) {
   }, [plateTint, plateReady])
 
   // BEGIN hook: a new working card appears. Registry entries get the same
-  // lifecycle as Deck's Editor; cards WITHOUT an entry are placeholders —
-  // a plain scribble brush stands in for their tool until Phase 5, so every
-  // hollow round still puts real pixels through the real bake.
+  // lifecycle as Deck's Editor; a card WITHOUT an entry is a placeholder
+  // round — ready immediately, no tool, nothing touched (Editor.jsx, same
+  // branch). It used to arm a scribble brush as a stand-in, which Phase 5
+  // retired: every id in FOUNDRY_CARDS now resolves in foundryRegistry.
+  //
+  // Gated on WORKING because `currentCard` outlives the phase: a dealt Proof
+  // stays in hand while the arc sits at COMPLETE (foundryDeck.DEAL), and this
+  // effect firing there is what used to leave the finished cast in free-draw
+  // mode with a paintable canvas under the Proof panel (issue #99).
   useEffect(() => {
     const canvas = canvasStageRef.current?.getCanvas()
-    if (!state.currentCard || !canvas) {
+    if (state.phase !== 'WORKING' || !state.currentCard || !canvas) {
       cardSessionRef.current = null
       setCardControls({})
       setCardInfo({})
@@ -337,17 +343,11 @@ function FoundryEditor({ onBackToSetup }) {
 
     const entry = foundryRegistry[state.currentCard.id]
     if (!entry) {
-      canvas.freeDrawingBrush = new fabric.PencilBrush(canvas)
-      canvas.freeDrawingBrush.width = 6
-      canvas.freeDrawingBrush.color = '#1a1a1a'
-      canvas.isDrawingMode = true
       cardSessionRef.current = null
       setCardControls({})
       setCardInfo({})
       setCardReady(true)
-      return () => {
-        canvas.isDrawingMode = false
-      }
+      return
     }
 
     // Fresh defaults per deal: the color invariant first, then the card's
@@ -383,7 +383,7 @@ function FoundryEditor({ onBackToSetup }) {
     return () => {
       cancelled = true
     }
-  }, [state.currentCard, artSources])
+  }, [state.phase, state.currentCard, artSources])
 
   // UPDATE hook, verbatim from Deck's Editor.
   useEffect(() => {

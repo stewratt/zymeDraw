@@ -110,6 +110,13 @@ function FoundryPanel({
             {!hasArt ? (
               <>
                 <p className="hint">{F.panel.pickPanelHint}</p>
+                {/* The art sources can fail (no folder, nothing readable) —
+                    say so here rather than leaving the grid overlay stuck on
+                    "Dealing…" with no explanation, the way the plate deal
+                    surfaces its own folder error. */}
+                {artSources?.status === 'error' && (
+                  <p className="error">{artSources.error}</p>
+                )}
                 <button type="button" className="secondary" title="N" onClick={onRedealGrid}>
                   {F.panel.redealImages}
                 </button>

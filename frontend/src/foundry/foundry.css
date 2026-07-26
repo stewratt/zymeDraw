@@ -4,16 +4,10 @@
    two apps share one visual language. Only Foundry's own pieces live here:
    the commission grid scroll, the plate deal, the header note. */
 
-/* Deck's back-to-setup is a button; Foundry's is a real link to the other
-   app. Match button.link's look (App.css). */
-.editor-header a.link {
-  color: var(--text);
-  font-size: 0.875rem;
-  text-decoration: underline;
-}
-.editor-header a.link:hover {
-  color: var(--text-bright);
-}
+/* (An `.editor-header a.link` rule lived here for the era when the Foundry
+   was its own HTML entry and back-to-setup was a real <a> to the other app.
+   Since the two wings became one shell both headers render a <button>, so the
+   rule matched nothing — removed in the #99 audit.) */
 
 /* The workspace reads as a CARD: round the canvas container to the same
    corner law the export cuts (cardCorners.js, R = 5% of width). Purely
