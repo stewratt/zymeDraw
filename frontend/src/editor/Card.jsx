@@ -17,6 +17,7 @@
 import { useEffect, useState } from 'react'
 import { cardArtSources, useActiveCardSet } from './cardArt.js'
 import { cardFamily } from './deck.js'
+import { playCardFlip } from './sound.js'
 
 function Card({
   id,
@@ -38,6 +39,13 @@ function Card({
   // when the card, set, or variant changes so a re-deal starts from the top.
   const [attempt, setAttempt] = useState(0)
   useEffect(() => setAttempt(0), [id, activeSet, variant])
+  // The flip is the turn separator, so the sound belongs to the animation
+  // rather than to any one panel: every card that turns over here — the Stash
+  // Return notice, the Coda — sounds, and a new one gets it for free. The
+  // dock's dealt card flips through its own wrapper and plays its own.
+  useEffect(() => {
+    if (flip) playCardFlip()
+  }, [flip])
   const art = sources[attempt]
   // Mod cards split into two color-coded families (image vs deck) until
   // the designed faces carry the distinction; the Coda and the Stash Return
