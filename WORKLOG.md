@@ -10,6 +10,58 @@ Choices: any decisions the executor made on its own.
 Files: the main files touched.
 ```
 
+## [06] #88 — Stash Return is a card — shuffled in, not scheduled (2026-07-26)
+What: The stash no longer comes back on a schedule. When Act I ends, COMMIT
+slips one **Stash Return** card into the undealt deck at a uniformly random
+position (`shuffleIn` in `deck.js`); drawing it opens the existing stash beat
+from #51 — the click-only notice, then the live placement session Editor
+already runs for `STASH_RETURN`. It shows in REMAINS like any other card
+(only the Coda hides), so *that* it is coming is known and *when* is not. If
+the Coda surfaces first the stash is simply lost: the session completes and
+exports without it, no orphaned state. Reducer behavior was checked with a
+throwaway esbuild+node harness (21 assertions: shuffle-in position spread,
+the notice path, Coda-first, no-stash sessions, Skim's kept top).
+Where: PR #90
+Choices: (1) **The deal decides the phase, like the Coda's.** DEAL on a
+`kind: 'stash'` card lands straight on `STASH_RETURN_NOTICE` with the card as
+`currentCard`, instead of the card taking a WORKING round of its own. Giving
+it a round would have said the same thing twice (card panel, then notice) and
+cost an extra press; more importantly the notice phase is where Enter is
+*unbound*, which is #51's protection against a fast double-press committing
+the stash unseen. The notice now shows the card face (with CardZoom), so the
+card is genuinely drawn and seen. Consequence: the card never increments
+`roundsDealt` and never bakes — the acts keep their old pacing.
+(2) **A distinct `kind: 'stash'`**, not a mod with a family. Mods are
+tutorable, buildable in the deck editor, and countable as rounds; this card
+is none of those. `STASH_RETURN_CARD` sits beside `DEATH_CARD` and is
+deliberately not in `MOD_CARDS`, so the deck editor never offers it.
+(3) **Visible in REMAINS, not takeable by Searcher.** `remainingCounts` now
+filters only the Coda; a new sibling selector `findableCounts` (mods only)
+feeds Searcher's picker through `deckView.findable`. Otherwise Searcher would
+show a card the reducer refuses — and buying the stash's timing is #18's
+parked mechanic, not a side effect of the tutor.
+(4) **The registry entry is declarative.** `stashReturn` is registered (every
+dealable card belongs there) with `skipBake` and no lifecycle hooks, because
+its beat is a phase; the card's panel lives in `cards/stashReturn.jsx`, which
+DeckPanel renders for the existing `STASH_RETURN_NOTICE` case — no new
+per-card branch. The placement it opens is the shared session, untouched.
+(5) `shuffleIn(deck, card, keepTop)` keeps Skim's promise (a kept top card
+stays on top), and the death shuffle's empty-deck trigger now reads the deck
+*before* the insert, so a lone Stash Return card can't silence it and strand
+a session with nothing to draw.
+(6) Card face: a **placeholder** cast from plate `03` with the name, type
+line and description typed into that plate's own slots, art window left as an
+empty field; pngquant'd in place (741K → 242K, no banding). **Stew casts the
+real face in the Foundry** — the id `stashReturn` is the permanent key, so
+replacing `assets/cards/stashReturn.png` is the whole job.
+(7) `stashReturned` stays (the record that the stash actually came home);
+`stashShuffled` is the new guard that the card has joined the deck.
+Files: frontend/src/editor/deck.js · frontend/src/editor/cards/stashReturn.jsx
+(new) · frontend/src/editor/cards/registry.jsx · frontend/src/editor/DeckPanel.jsx
+· frontend/src/editor/Editor.jsx · frontend/src/editor/cards/searcher.jsx ·
+frontend/src/editor/Card.jsx · frontend/src/copy/uiText.json ·
+frontend/src/assets/cards/stashReturn.png (new) · CLAUDE.md
+
 ## [05] #87 — The deck is the button — one click commits and deals, with a flip (2026-07-26)
 What: Retired the two-press rhythm. A deck of card backs now sits in a dock
 pinned at the foot of the right panel, with the drawn card face-up beside it

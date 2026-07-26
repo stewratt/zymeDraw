@@ -307,6 +307,19 @@ export const cardRegistry = {
     skipBake: true
   },
 
+  // ---- The stash's return (issue #88) ----
+  // Declared here because every card deck.js can deal belongs in the
+  // registry, but it holds no hooks: the deal itself opens the stash beat
+  // (deck.js → STASH_RETURN_NOTICE), the way a dealt Coda opens the Coda, so
+  // the card is never a WORKING round with a canvas of its own. Its panel
+  // and its face live in cards/stashReturn.jsx; the placement it triggers is
+  // the shared stash-return session Editor already runs.
+  stashReturn: {
+    controls: [],
+    defaultControls: {},
+    skipBake: true
+  },
+
   // ---- Etch (pixel glyph at the master's grain) ----
 
   etch: {

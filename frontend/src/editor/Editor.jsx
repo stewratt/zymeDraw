@@ -5,7 +5,7 @@ import GridPicker from './GridPicker.jsx'
 import KeysReference from './KeysReference.jsx'
 import GuideSheet, { guideSeen } from './GuideSheet.jsx'
 import HistoryOverlay from './HistoryOverlay.jsx'
-import { TUNING, deckReducer, initialState, remainingCounts } from './deck.js'
+import { TUNING, deckReducer, findableCounts, initialState, remainingCounts } from './deck.js'
 import { cardRegistry } from './cards/registry.jsx'
 import { placeImages, layerThumbUrl } from './placement.js'
 import { sampleImages } from './sampling.js'
@@ -544,7 +544,11 @@ function Editor({ config, deckSpec, onBackToSetup }) {
   // selector outputs only — the legibility policy stays enforced in deck.js.
   // state.skim is the one raw field: the paid exception, shown only while
   // Skim itself is in hand (the reducer clears it on COMMIT).
-  const deckView = { remaining: remainingCounts(state), skim: state.skim }
+  const deckView = {
+    remaining: remainingCounts(state),
+    findable: findableCounts(state), // the takeable subset — see deck.js
+    skim: state.skim
+  }
   // The fence: a card's Overlay may only fire the deck actions its registry
   // entry declares (`deckActions`) — no card ever holds raw dispatch, and
   // the reducer's legality guards remain the real gate.

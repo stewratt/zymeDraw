@@ -21,6 +21,7 @@ import Card from './Card.jsx'
 import CardZoom from './CardZoom.jsx'
 import PlacementLayers from './PlacementLayers.jsx'
 import { ArrangeMaskControls, maskHint } from './cards/maskControls.jsx'
+import { StashReturnNotice } from './cards/stashReturn.jsx'
 import { UI, fmt } from '../copy/uiText.js'
 import { rich } from '../copy/rich.jsx'
 
@@ -58,7 +59,10 @@ function DeckPanel({
     case 'OPENING_PICK':
       return <OpeningPickPanel imageList={imageList} />
     case 'STASH_RETURN_NOTICE':
-      return <StashReturnNotice onAck={onAckStashReturn} />
+      // The beat belongs to the Stash Return card, so its panel lives with
+      // the card (cards/stashReturn.jsx) — this is a phase, not a branch on
+      // which card is in hand.
+      return <StashReturnNotice card={state.currentCard} onAck={onAckStashReturn} />
     case 'PLACEMENT':
     case 'STASH_RETURN':
       return (
@@ -321,24 +325,6 @@ function Placement({
         delayHeld={state.delayHeld}
         onDraw={onAdvance}
       />
-    </aside>
-  )
-}
-
-// The stash-return beat (issue #51): an interstitial that must be clicked
-// before placement goes live. Deliberately click-only — Enter (the deal key)
-// has no binding in this phase — so a double-press can't blow through the
-// re-encounter and commit the stash unseen (Skim's protection).
-function StashReturnNotice({ onAck }) {
-  return (
-    <aside className="deck-panel">
-      <div className="panel-scroll">
-        <h2>{T.stashReturnNoticeTitle}</h2>
-        <p className="hint">{T.stashReturnNoticeHint}</p>
-      </div>
-      <button type="button" className="primary" onClick={onAck}>
-        {T.stashReturnNoticeButton}
-      </button>
     </aside>
   )
 }
