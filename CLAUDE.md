@@ -213,3 +213,6 @@ backlog) → the active plan for the work at hand (`to_do/cards_plan.md` or
 `to_do/app_plan.md`) → `editor/deck.js` (the session rulebook) → skim
 `cards/registry.jsx` and one nearby card file. Check in with Stew before
 non-trivial work (§2): one unit, checkpoint, wait for "continue."
+
+WORKLOG.md contains a compact history of completed issues — read the top
+entries if you need recent context.
