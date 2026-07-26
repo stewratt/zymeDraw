@@ -5,6 +5,10 @@ dist/
 *.log
 output/
 
+# Per-machine Claude Code permissions (the gh allowances /execute needs).
+# Machine-local by design — never committed.
+.claude/settings.local.json
+
 # ---- Images ----
 # Ignored EVERYWHERE by default: Deck sessions work through large local
 # input/output folders that must never land in git. ONE exception rule:
