@@ -58,15 +58,17 @@ async function restoreDetail(reframed, zoom) {
   return out
 }
 
-// `entered` is false while the card rests behind its entry gate (issue #92) —
+// `committed` flips once the Zoom In button has run the re-frame (issue #92) —
 // see CloserTools; the pair reads the same.
-export function DeeperTools({ ready, entered }) {
-  if (entered && !ready) return <span className="hint">{UI.shared.preparing}</span>
+export function DeeperTools({ ready, committed }) {
+  if (!ready) return <span className="hint">{UI.shared.preparing}</span>
   return (
     <div className="card-tools">
       <p className="hint">
         {CARD_TEXT.deeper.description}{' '}
-        {entered ? UI.cardHints.deeper.commitNote : UI.cardEntry.restingNote}
+        {committed
+          ? UI.cardGate.committedNote
+          : `${UI.cardHints.deeper.commitNote} ${UI.cardGate.passNote}`}
       </p>
     </div>
   )

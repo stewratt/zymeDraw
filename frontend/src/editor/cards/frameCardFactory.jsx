@@ -26,12 +26,13 @@ import * as fabric from 'fabric'
 import { showMaster } from '../masterRaster.js'
 import { UI } from '../../copy/uiText.js'
 
-// Both re-frame cards deal into a resting state behind this gate (issue #92):
-// the frame session only starts when the entry button is pressed, so a round
-// you would rather not re-frame at all is skipped by clicking the deck —
-// nothing commits, the next card turns over. One shared label for the pair;
-// Editor/DeckPanel apply `entryGate` generically (registry.jsx's header).
-export const frameEntryGate = { label: UI.cardEntry.zoomIn }
+// Both re-frame cards commit through this gate (issue #92): the frame is set
+// first, then the button commits it — so the re-frame is seen before the next
+// card is dealt. A round you would rather not re-frame at all is passed by
+// clicking the deck instead: nothing commits, the next card turns over. One
+// shared label for the pair; Editor/DeckPanel apply `commitGate` generically
+// (registry.jsx's header).
+export const frameCommitGate = { label: UI.cardGate.zoomIn }
 
 export function makeFrameCardHooks({ smoothing = () => true, restore = null } = {}) {
   function begin(ctx) {

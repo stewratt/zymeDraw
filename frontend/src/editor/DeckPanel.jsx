@@ -35,8 +35,8 @@ function DeckPanel({
   controls,
   info,
   ready,
-  entered,
-  onEnterCard,
+  committed,
+  onGateCommit,
   committing,
   placementReady,
   placedLayers,
@@ -93,8 +93,8 @@ function DeckPanel({
           controls={controls}
           info={info}
           ready={ready}
-          entered={entered}
-          onEnterCard={onEnterCard}
+          committed={committed}
+          onGateCommit={onGateCommit}
           committing={committing}
           onControlChange={onControlChange}
           onAdvance={onAdvance}
@@ -398,15 +398,17 @@ function CodaChoice({ state, onAcceptCoda, onDelayCoda }) {
 // The card in hand: its name and Tools stack above the pair, the face itself
 // lies in the dock beside the deck it came out of.
 //
-// A card may declare an entry gate (registry `entryGate`): until its button is
-// pressed the round is at rest — the description stands, the entry button sits
-// at the foot of the panel just above the dock, and the deck says plainly that
-// drawing lets the card pass. All of it reads from the registry, so this is
-// still a panel that knows nothing about any particular card.
-function CardRevealed({ state, entry, controls, info, ready, entered, onEnterCard, committing, onControlChange, onAdvance }) {
+// A card may declare a commit gate (registry `commitGate`): its session runs
+// as usual, but it commits on the labelled button at the foot of the panel —
+// just above the dock — instead of on the deck click. Until that press the
+// deck says plainly that drawing lets the card pass; after it the round rests
+// on its result and the deck is only the next deal. All of it reads from the
+// registry, so this is still a panel that knows nothing about any card.
+function CardRevealed({ state, entry, controls, info, ready, committed, onGateCommit, committing, onControlChange, onAdvance }) {
   const card = state.currentCard
   const ToolsComponent = entry?.Tools
-  const gate = entered ? null : entry?.entryGate
+  const gate = entry?.commitGate
+  const gateOpen = !!gate && !committed // the button is up; the deck would pass
   const commitDisabled = !ready || committing
   const [zoomed, setZoomed] = useState(false)
 
@@ -424,7 +426,7 @@ function CardRevealed({ state, entry, controls, info, ready, entered, onEnterCar
               controls={controls}
               info={info}
               ready={ready}
-              entered={entered}
+              committed={committed}
               onControlChange={onControlChange}
             />
           ) : (
@@ -432,8 +434,8 @@ function CardRevealed({ state, entry, controls, info, ready, entered, onEnterCar
           )}
         </div>
       </div>
-      {gate && (
-        <button type="button" className="primary" onClick={onEnterCard}>
+      {gateOpen && (
+        <button type="button" className="primary" onClick={onGateCommit} disabled={commitDisabled}>
           {gate.label}
         </button>
       )}
@@ -450,11 +452,13 @@ function CardRevealed({ state, entry, controls, info, ready, entered, onEnterCar
             ? T.committing
             : !ready
               ? T.settingUp
-              : gate
+              : gateOpen
                 ? T.deckHintGate
-                : T.deckHintActive
+                : committed
+                  ? T.deckHintIdle
+                  : T.deckHintActive
         }
-        actionLabel={gate ? T.deckDrawGate : T.deckDrawAction}
+        actionLabel={gateOpen ? T.deckDrawGate : committed ? T.deckDrawIdle : T.deckDrawAction}
         disabled={commitDisabled}
         delayHeld={state.delayHeld}
         onDraw={onAdvance}

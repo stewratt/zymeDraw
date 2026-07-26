@@ -10,6 +10,33 @@ Choices: any decisions the executor made on its own.
 Files: the main files touched.
 ```
 
+## [10] #92 (fix) — the Zoom In gate was backwards: it now COMMITS (2026-07-26)
+What: #92 shipped the gate on the wrong side of the round — Closer/Deeper dealt
+with no frame on screen, the button started the session, and the deck committed
+it. Intended (and now built): the frame is live the moment the card turns over,
+you arrange it, **Zoom In commits** the re-frame mid-round so the result is on
+screen, and the deck click after that is only the next deal. `entryGate` became
+`commitGate` throughout; the Tools prop `entered` became `committed`.
+Where: main (direct fix commit).
+Choices: (1) Kept the pass: drawing while the frame is still live lets the card
+go by, uncommitted — that was the point of #92 and it survives the inversion.
+But the session HAS begun now, so the pass runs the card's `cleanup` hook to
+take the frame rect off the canvas; nothing bakes, nothing is captured. (2)
+handleGateCommit reuses `commitCurrentCard` unchanged (hook → universal bake →
+state capture) and simply doesn't dispatch COMMIT/DEAL — the one deliberate
+break in "commit and deal land in one render", which is exactly what makes the
+result visible. (3) It re-fits the camera by hand afterwards (`nav.setZoomBounds`
++ `nav.reset`): the bake leaves the viewport at identity and the re-fit effect
+only runs at a deal, which this isn't. (4) Editor/DeckPanel still hold no
+per-card branches — `cardCommitted` replaces `cardEntered` in the same generic
+places (Overlay, `cardLive` bindings, the deck dock's hint/label). (5) Copy:
+`cardEntry` → `cardGate` (zoomIn / passNote / committedNote), both card
+commitNotes now say "Zoom In commits…" rather than "The draw commits…", and a
+committed gated round borrows the existing idle deck hint/label.
+Files: frontend/src/editor/Editor.jsx, frontend/src/editor/DeckPanel.jsx,
+frontend/src/editor/cards/registry.jsx, frontend/src/editor/cards/
+frameCardFactory.jsx, closer.jsx, deeper.jsx, frontend/src/copy/uiText.json.
+
 ## [09] #93 — Stash return deals into a preview page (2026-07-26)
 What: Drawing the Stash Return card now fills the canvas area with a full-view
 page — the card grids' chrome (head / fit area / foot), the stashed image shown

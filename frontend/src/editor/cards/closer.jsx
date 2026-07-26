@@ -19,16 +19,19 @@ export const beginCloser = hooks.begin
 export const commitCloser = hooks.commit
 export const cleanupCloser = hooks.cleanup
 
-// `entered` is false while the card rests behind its entry gate (issue #92):
-// the description stands either way, but what the draw does changes — before
-// entry it lets the card pass, after entry it commits the re-frame.
-export function CloserTools({ ready, entered }) {
-  if (entered && !ready) return <span className="hint">{UI.shared.preparing}</span>
+// `committed` flips once the Zoom In button has run the re-frame (issue #92):
+// the description stands either way, but the round changes under it — before,
+// the frame is live and the draw would let the card pass; after, the re-frame
+// is in the piece and the draw is only the next deal.
+export function CloserTools({ ready, committed }) {
+  if (!ready) return <span className="hint">{UI.shared.preparing}</span>
   return (
     <div className="card-tools">
       <p className="hint">
         {CARD_TEXT.closer.description}{' '}
-        {entered ? UI.cardHints.closer.commitNote : UI.cardEntry.restingNote}
+        {committed
+          ? UI.cardGate.committedNote
+          : `${UI.cardHints.closer.commitNote} ${UI.cardGate.passNote}`}
       </p>
     </div>
   )

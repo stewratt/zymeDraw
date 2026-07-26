@@ -111,9 +111,10 @@
     "shatteredIntro": "This image {reading}.",
     "workGlance": "Image Status"
   },
-  "cardEntry": {
+  "cardGate": {
     "zoomIn": "Zoom In",
-    "restingNote": "Press Zoom In to work the frame, or draw from the deck to let this card pass — it commits nothing."
+    "passNote": "Draw from the deck instead and the card passes — it commits nothing.",
+    "committedNote": "The re-frame is committed; the piece now stands as you see it. Draw from the deck for the next card."
   },
   "brush": {
     "erase": "Paint over {subject} to erase it.",
@@ -187,10 +188,10 @@
       "toolSuffix": "The right is held from here on. Draw to end the round."
     },
     "deeper": {
-      "commitNote": "The draw commits the re-frame and restores detail into the enlargement; that takes a few seconds."
+      "commitNote": "Zoom In commits the re-frame and restores detail into the enlargement; that takes a few seconds."
     },
     "closer": {
-      "commitNote": "The draw commits the re-frame as it stands — no restoration, no waiting."
+      "commitNote": "Zoom In commits the re-frame as it stands — no restoration, no waiting."
     },
     "char": {
       "subject": "the char"
@@ -411,7 +412,7 @@
     "deckHintIdle": "Draw from the deck to turn the next card.",
     "deckDrawAction": "Commit this round and draw",
     "deckDrawIdle": "Draw the next card",
-    "deckHintGate": "This card hasn't begun. Draw from the deck to let it pass — the piece is left exactly as it stands.",
+    "deckHintGate": "Nothing is committed yet. Draw from the deck to let this card pass — the piece is left exactly as it stands.",
     "deckDrawGate": "Let this card pass and draw",
     "codaTitle": "THE CODA",
     "codaHint": "The deck says the piece is finished. You still hold Delay — accept the ending, or set the Coda aside. It slips back into the deck and the next deal is blind: it can come straight back, and the right is spent.",

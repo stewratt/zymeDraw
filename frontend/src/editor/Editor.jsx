@@ -57,21 +57,19 @@ function Editor({ config, deckSpec, onBackToSetup }) {
   // can't bake a half-loaded arrangement.
   const [placementReady, setPlacementReady] = useState(true)
 
-  // The entry gate (registry `entryGate`, issue #92): a gated card deals
-  // into a resting state and only begins when its entry button is pressed.
-  // This holds the CARD OBJECT whose gate was opened rather than a boolean,
-  // so it resets itself the moment the next card turns over — the reducer
-  // hands out a distinct object per deal, which is why the begin effect can
-  // already key on it.
-  const [enteredCard, setEnteredCard] = useState(null)
+  // The commit gate (registry `commitGate`, issue #92): a gated card begins
+  // at the deal like any other — its session is live the moment the card
+  // turns over — but it ENDS on its own button rather than on the deck click.
+  // The commit lands mid-round, so the result is on screen before the next
+  // card is dealt. This holds the CARD OBJECT that was committed rather than
+  // a boolean, so it resets itself the moment the next card turns over: the
+  // reducer hands out a distinct object per deal.
+  const [gateCommitted, setGateCommitted] = useState(null)
 
-  // The one flag every generic consumer reads: has this card's session begun?
-  // Always true for a card with no gate, so nothing else in Editor needs to
-  // know that gates exist.
-  const cardEntered =
-    !state.currentCard ||
-    !cardRegistry[state.currentCard.id]?.entryGate ||
-    enteredCard === state.currentCard
+  // The one flag every generic consumer reads: has this card already been
+  // committed by its own button? Always false for a card with no gate, so
+  // nothing else in Editor needs to know that gates exist.
+  const cardCommitted = !!state.currentCard && gateCommitted === state.currentCard
 
   // The images being placed this session, top-to-bottom, for the layers
   // panel. Each: { id, name, thumb, img (the Fabric object) }. Reordering
@@ -336,18 +334,6 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     if (entry.randomize) defaults = entry.randomize(defaults)
     setCardControls(defaults)
     setCardInfo({})
-
-    // The entry gate (issue #92): the card is dealt but its session has not
-    // begun — no begin hook, so the canvas rests on the committed piece
-    // exactly as the deal found it. Ready all the same: the deck stays
-    // clickable, and there it means skip (commitCurrentCard). Pressing the
-    // entry button re-runs this effect with the gate open.
-    if (!cardEntered) {
-      cardSessionRef.current = null
-      setCardReady(true)
-      return
-    }
-
     setCardReady(false)
 
     let cancelled = false
@@ -381,7 +367,7 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     return () => {
       cancelled = true
     }
-  }, [state.currentCard, imageList, cardEntered])
+  }, [state.currentCard, imageList])
 
   // Re-fit the camera on every card change and phase transition so no zoom/pan
   // ever leaks between rounds (the bake also resets — this keeps the *screen*
@@ -403,6 +389,9 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     const entry = cardRegistry[state.currentCard.id]
     if (!entry?.update) return
     if (!cardReady) return
+    // A gated card that already committed has no session left to update —
+    // the controls being cleared by the commit is what would fire this.
+    if (cardCommitted) return
     const canvas = canvasStageRef.current?.getCanvas()
     if (!canvas) return
     entry.update({
@@ -413,7 +402,7 @@ function Editor({ config, deckSpec, onBackToSetup }) {
       canvasWidth: CANVAS_WIDTH,
       canvasHeight: CANVAS_HEIGHT
     })
-  }, [cardControls, state.currentCard, cardReady])
+  }, [cardControls, state.currentCard, cardReady, cardCommitted])
 
   // Keyboard: one persistent listener; the bindings it walks are rebuilt
   // every render (below, after the handlers they close over) so each run
@@ -439,6 +428,8 @@ function Editor({ config, deckSpec, onBackToSetup }) {
   // (handleAdvance), right beside the DEAL that follows it, so the round
   // that ends and the card that turns over land in ONE render. Split apart,
   // a slow commit hook would let React paint the empty in-between state.
+  // A gated card (`commitGate`) is the deliberate exception: handleGateCommit
+  // calls this mid-round precisely so the result is seen before the deal.
   async function commitCurrentCard() {
     if (!state.currentCard || committingRef.current) return
     const entry = cardRegistry[state.currentCard.id]
@@ -446,11 +437,7 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     committingRef.current = true
     setCommitting(true)
     try {
-      // A gated card whose gate never opened (issue #92) has begun nothing:
-      // no session to finalize and a canvas nobody touched, so the whole
-      // commit — hook, universal bake, state capture — is skipped and the
-      // draw is simply the next deal. Same shape as `skipBake`, one round up.
-      if (canvas && cardEntered) {
+      if (canvas) {
         if (entry?.commit) {
           await entry.commit({
             canvas,
@@ -479,6 +466,35 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     setCardInfo({})
   }
 
+  // The commit gate's button (issue #92): the card ends here instead of on
+  // the deck click. Same commit path as any other card — hook, universal
+  // bake, state capture — but no COMMIT/DEAL dispatch, so the round stays in
+  // hand with its result on screen and the next card waits for the deck.
+  async function handleGateCommit() {
+    if (committingRef.current || !cardReady || cardCommitted) return
+    if (!state.currentCard) return
+    await commitCurrentCard()
+    setGateCommitted(state.currentCard)
+    // The bake left the viewport at identity; the camera's re-fit effect only
+    // runs at a deal, and this round is not over yet — re-fit by hand so what
+    // was just committed is framed the way every other round is.
+    navRef.current?.setZoomBounds()
+    navRef.current?.reset()
+  }
+
+  // The other side of the gate: drawing while a gated card is still in hand
+  // lets it pass. Its session DID begin at the deal, so the temp objects come
+  // off the canvas through the card's own cleanup hook — but nothing bakes,
+  // nothing is captured, and the piece stands exactly as it did.
+  function passCurrentCard() {
+    const canvas = canvasStageRef.current?.getCanvas()
+    const entry = cardRegistry[state.currentCard.id]
+    if (canvas) entry?.cleanup?.({ canvas, session: cardSessionRef.current })
+    cardSessionRef.current = null
+    setCardControls({})
+    setCardInfo({})
+  }
+
   // The deck is the button (issue #87): one gesture finishes what is in hand
   // and turns the next card over. Everything that advances the session funnels
   // through here — the deck click and Enter alike — so the commit semantics
@@ -498,7 +514,10 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     if (state.phase !== 'WORKING') return
     if (state.currentCard) {
       if (!cardReady) return
-      await commitCurrentCard()
+      // A gated card never commits on the deck click: it either already
+      // committed through its own button, or this draw is the pass.
+      if (!cardRegistry[state.currentCard.id]?.commitGate) await commitCurrentCard()
+      else if (!cardCommitted) passCurrentCard()
       dispatch({ type: 'COMMIT' })
     }
     dispatch({ type: 'DEAL' })
@@ -553,7 +572,7 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     cardSessionRef.current = null
     setCardControls({})
     setCardInfo({})
-    setEnteredCard(null)
+    setGateCommitted(null)
     setPlacementReady(true)
     setStates([])
     setExportState({ status: 'idle', savedPath: null, error: null, thumbDataUrl: null })
@@ -571,9 +590,9 @@ function Editor({ config, deckSpec, onBackToSetup }) {
 
   const currentEntry = state.currentCard ? cardRegistry[state.currentCard.id] : null
   // Cards can declare a canvas-area overlay (Ghost's grid pick) — rendered
-  // generically, same props as Tools. Never before an entry gate opens: the
-  // overlay belongs to the session, and the session hasn't started.
-  const CardOverlay = state.phase === 'WORKING' && cardEntered ? currentEntry?.Overlay : null
+  // generically, same props as Tools. Never after a gated card commits: the
+  // overlay belongs to the session, and the session is over.
+  const CardOverlay = state.phase === 'WORKING' && !cardCommitted ? currentEntry?.Overlay : null
 
   // What a deck-facing card may know and do (v4 Wave 2). deckView carries
   // selector outputs only — the legibility policy stays enforced in deck.js.
@@ -604,10 +623,10 @@ function Editor({ config, deckSpec, onBackToSetup }) {
   const cardUp = state.phase === 'WORKING' && !!state.currentCard
   // A card in hand whose session is actually live: everything that reaches
   // into the session (its accents, the brush and arrange grammars, its
-  // undo/redo) hangs off this, so a card resting behind its entry gate binds
-  // nothing. Enter stays on cardUp — it is the deck click, and before the
-  // gate opens the deck click is the skip.
-  const cardLive = cardUp && cardEntered
+  // undo/redo) hangs off this, so a gated card that already committed binds
+  // nothing. Enter stays on cardUp — it is the deck click, and after the gate
+  // commits the deck click is simply the deal.
+  const cardLive = cardUp && !cardCommitted
 
   // Card accents (§5.4): declared in the registry (`hotkeys`), live for the
   // whole card — even before ready (Etch's Enter advances the frame stage).
@@ -795,8 +814,8 @@ function Editor({ config, deckSpec, onBackToSetup }) {
             controls={cardControls}
             info={cardInfo}
             ready={cardReady}
-            entered={cardEntered}
-            onEnterCard={() => setEnteredCard(state.currentCard)}
+            committed={cardCommitted}
+            onGateCommit={handleGateCommit}
             committing={committing}
             placementReady={placementReady}
             placedLayers={placedLayers}
