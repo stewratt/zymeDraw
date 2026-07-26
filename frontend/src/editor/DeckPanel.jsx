@@ -149,7 +149,7 @@ function OpeningPickPanel({ imageList }) {
 
 // ---- the deck dock ----
 // The one way a turn ends. Pinned at the foot of the panel so it never moves
-// between phases: the drawn card face-up on the left, the deck of backs on
+// between phases: the deck of backs on the left, the drawn card face-up on
 // the right, the deck's own count and the standing instruction beneath.
 // `dealKey` changes on every deal — it remounts the flip so the animation
 // replays even when one card follows another with no empty beat between.
@@ -178,13 +178,6 @@ function DeckDock({
         </div>
       )}
       <div className="deck-pair">
-        {/* Empty until a card is drawn. The columns are fixed, so the deck
-            sits in the same place whether or not anything lies beside it. */}
-        <div className="deck-slot">
-          {card && (
-            <DealtCard key={dealKey} card={card} onZoom={onZoomCard} />
-          )}
-        </div>
         <div className="deck-slot">
           <button
             type="button"
@@ -206,6 +199,13 @@ function DeckDock({
             </span>
             <Card faceDown />
           </button>
+        </div>
+        {/* Empty until a card is drawn. The columns are fixed, so the deck
+            sits in the same place whether or not anything lies beside it. */}
+        <div className="deck-slot">
+          {card && (
+            <DealtCard key={dealKey} card={card} onZoom={onZoomCard} />
+          )}
         </div>
       </div>
       <p className="hint deck-dock-line">

@@ -485,18 +485,20 @@
   cursor: default;
   opacity: 0.45;
 }
-/* The backs behind the top card, offset down-right: the deck reads as a
-   stack of cards rather than one. Purely decorative. */
+/* The backs behind the top card, offset down-left: the deck reads as a
+   stack of cards rather than one. The splay leans away from the card drawn
+   beside it (issue #91), so the stack opens outward, not into the face.
+   Purely decorative. */
 .deck-stack-under {
   position: absolute;
   inset: 0;
   display: block;
 }
 .deck-stack-under--1 {
-  transform: translate(3px, 4px);
+  transform: translate(-3px, 4px);
 }
 .deck-stack-under--2 {
-  transform: translate(6px, 8px);
+  transform: translate(-6px, 8px);
 }
 .deck-stack > .card {
   position: relative;
@@ -530,9 +532,11 @@
   inset: 0;
   transform: rotateY(180deg);
 }
+/* Starts offset toward the deck — which is now the left column (issue #91),
+   so the card travels rightward out of it as it turns face-up. */
 @keyframes card-turn-over {
   0% {
-    transform: translateX(48%) rotateY(180deg);
+    transform: translateX(-48%) rotateY(180deg);
   }
   100% {
     transform: translateX(0) rotateY(0deg);

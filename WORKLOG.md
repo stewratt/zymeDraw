@@ -10,6 +10,22 @@ Choices: any decisions the executor made on its own.
 Files: the main files touched.
 ```
 
+## [07] #91 — Flip the dock: deck on the left, drawn card on the right (2026-07-26)
+What: Swapped the two dock columns so the deck sits on the left and the card
+drawn from it lies face-up on the right. The stack's two under-cards now splay
+down-LEFT instead of down-right, and the deal flip enters from the left (the
+deck's new side) so the card still reads as coming off the deck it was dealt from.
+Where: main.
+Choices: mirrored the splay offsets exactly — translate(3px,4px)/(6px,8px)
+became (-3px,4px)/(-6px,8px); the downward component is unchanged, only the
+horizontal sign flipped, so the stack still opens away from the dealt card.
+Same for the flip: `translateX(48%)` → `translateX(-48%)`, same magnitude,
+duration and easing untouched (#59's to tune). No copy changed — nothing in
+uiText.json names a side. The swap is pure JSX order + CSS sign; `.deck-pair`
+keeps its two equal fixed columns, so the deck still lands in one spot every
+round, and the 6px leftward overhang clears the panel's 24px padding.
+Files: frontend/src/editor/DeckPanel.jsx, frontend/src/editor/editor.css.
+
 ## [06] #88 — Stash Return is a card — shuffled in, not scheduled (2026-07-26)
 What: The stash no longer comes back on a schedule. When Act I ends, COMMIT
 slips one **Stash Return** card into the undealt deck at a uniformly random
