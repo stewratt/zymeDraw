@@ -10,6 +10,39 @@ Choices: any decisions the executor made on its own.
 Files: the main files touched.
 ```
 
+## [12] #99 — Foundry regression audit (2026-07-26)
+What: read-audited every Foundry surface against the post-overhaul shell —
+entry, plates, panel pick, type, the Press, all nine roster cards, run size,
+export, keys, copy, and every shared `editor/` module the Foundry imports,
+hunting the #97 class of Deck-only assumption. Four small findings fixed here;
+four larger ones filed.
+Where: PR #106 / spawned #102, #103, #104, #105.
+Choices: (1) **Threshold** — "small" meant: no new shared abstraction, no
+backend contract change, no new copy key, and confined to `foundry/` or a pure
+copy edit. Everything touching a shared component's shape, a route's contract,
+or the copy schema got filed. (2) The one real bug fixed: `currentCard` outlives
+the WORKING phase (a dealt Proof stays in hand at COMPLETE), so the BEGIN effect
+fired at the Proof screen, hit the no-entry branch, and armed a PencilBrush —
+the finished cast sat in free-draw mode, scribbleable. Gated the effect on
+`state.phase === 'WORKING'` (an arc condition, not a per-card branch) and added
+`state.phase` to its deps. (3) Retired the no-entry scribble placeholder rather
+than keeping it behind the gate: Phase 5 landed, every `FOUNDRY_CARDS` id
+resolves in `foundryRegistry`, and the branch now mirrors Deck's Editor exactly
+(ready immediately, canvas untouched). This dropped the last `fabric` import
+from FoundryEditor. (4) Added the missing panel-pick error surface — the art
+sources could fail with the grid stuck on "Dealing…" forever; it now prints
+`artSources.error`, the way PlateDeal already prints its folder error. No new
+copy key: the string is server-supplied, same as the plate's. (5) Judged
+intel item 3 (empty-deck DEAL no-op) **unreachable by construction** — 13 cards,
+proofs shuffled in at round 3, so a deal never meets an empty deck — and filed
+nothing rather than add backlog noise. (6) Copy: the guide's foundry arc still
+said "the foundry's End", naming a button #98 deleted, and never said how a
+round ends; added a `rounds` beat mirroring `guide.session.bearings`. Also
+retired "arrives in Phase 5" dev-speak and a grid hint that named a source mix
+the dedicated panel-art folder makes false.
+Files: frontend/src/foundry/FoundryEditor.jsx, foundry/FoundryPanel.jsx,
+foundry/foundry.css, copy/uiText.json.
+
 ## [11] #98 — Foundry: adopt the deck-is-the-button draw dock (2026-07-26)
 What: the dock (deck left, dealt card right, click-to-deal with the flip) moved
 out of DeckPanel into its own shared module `editor/DeckDock.jsx`, and the
