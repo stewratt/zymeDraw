@@ -8,7 +8,7 @@
 //                  one, or place both (no stash beat that session)
 //   PLACEMENT      arrange the placed image(s); End bakes
 //   WORKING        deal cards from the literal shuffled deck, one round each
-//   STASH_RETURN_NOTICE  after Act I, an interstitial beat: the stash returns;
+//   STASH_RETURN_NOTICE  the Stash Return card, drawn: an interstitial beat;
 //                  click to acknowledge (Enter is dead here) before placement
 //   STASH_RETURN   the acknowledged stash, now a live placement session
 //   WORKING        Act II; then death cards are shuffled into whatever deck
@@ -95,6 +95,13 @@ export const MOD_CARDS = [
 
 export const DEATH_CARD = { id: 'coda', label: CARD_TEXT.coda.name }
 
+// The stash's return, as a card (issue #88). Deliberately NOT a MOD_CARD:
+// no deck is built with it and the deck editor never offers it — the session
+// shuffles exactly one in when Act I ends, and only if something was stashed.
+// Its own `kind` keeps it out of the mod paths that would misread it (a
+// Searcher can't tutor it out; it isn't a round the way a mod is).
+export const STASH_RETURN_CARD = { id: 'stashReturn', label: CARD_TEXT.stashReturn.name }
+
 // A deck spec is the deck editor's entire output: [{ id, copies }], nothing
 // more (cards_plan.md §6 — the room is UI; this reducer never learns about
 // it). Labels and families are re-derived here from MOD_CARDS, so a spec
@@ -121,6 +128,18 @@ function shuffle(cards) {
     ;[out[i], out[j]] = [out[j], out[i]]
   }
   return out
+}
+
+// Slip one card into a deck at a uniformly random position — the honest
+// reinsert every mechanic here shares (never the bottom, which would be
+// lasting order-knowledge). `keepTop` holds Skim's promise: a card just kept
+// on top stays on top, so the newcomer lands anywhere behind it.
+function shuffleIn(deck, card, keepTop) {
+  const head = keepTop && deck.length > 0 ? deck.slice(0, 1) : []
+  const rest = deck.slice(head.length)
+  const at = Math.floor(Math.random() * (rest.length + 1))
+  rest.splice(at, 0, card)
+  return [...head, ...rest]
 }
 
 function buildDeck(modCards) {
@@ -151,7 +170,8 @@ export function initialState(deckSpec = null) {
     stash: [], // filenames held back for the stash return
     deck: buildDeck(resolveSpec(deckSpec)), // the literal shuffled deck, dealt from the front
     roundsDealt: 0,
-    stashReturned: false,
+    stashShuffled: false, // the Stash Return card has joined the deck
+    stashReturned: false, // …and has been drawn and placed
     deathShuffled: false,
     currentCard: null,
     skim: null, // Skim's round: null | { card, choice: null|'kept'|'buried' }
@@ -196,9 +216,11 @@ export function deckReducer(state, action) {
 
     // The stash-return beat (issue #51): acknowledge the notice to bring the
     // stash in, turning the interstitial into the live placement session.
+    // The card that opened the beat is spent as the placement goes live — it
+    // was already written into the record when it was drawn.
     case 'ACK_STASH_RETURN': {
       if (state.phase !== 'STASH_RETURN_NOTICE') return state
-      return { ...state, phase: 'STASH_RETURN' }
+      return { ...state, phase: 'STASH_RETURN', currentCard: null }
     }
 
     case 'END_PLACEMENT': {
@@ -227,6 +249,25 @@ export function deckReducer(state, action) {
       if (state.phase !== 'WORKING' || state.currentCard) return state
       if (state.deck.length === 0) return state
       const [card, ...deck] = state.deck
+      if (card.kind === 'stash') {
+        // The stash's return, drawn (issue #88). Like the Coda, the DEAL
+        // itself decides the phase: the card turns over on the notice beat
+        // (issue #51) rather than taking a round of its own, so the beat is
+        // still click-only — Enter can't blow through the re-encounter. Its
+        // record entry is written here, where it was spent.
+        if (state.stash.length === 0) return { ...state, deck } // nothing to return
+        return {
+          ...state,
+          phase: 'STASH_RETURN_NOTICE',
+          deck,
+          currentCard: card,
+          toPlace: state.stash,
+          history: [
+            ...state.history,
+            { event: 'card', cardId: card.id, ts: Date.now() }
+          ]
+        }
+      }
       if (card.kind === 'death') {
         // Delay held (v4 notes §5.9): the ending becomes a choice, once.
         // Nothing joins the record yet — the event is written by whichever
@@ -358,43 +399,52 @@ export function deckReducer(state, action) {
         ]
       }
 
-      // End of Act I: the stash comes back — but through a beat, not straight
-      // into a live placement session (issue #51). STASH_RETURN_NOTICE is an
-      // interstitial the user must acknowledge with a click; only then does
-      // ACK_STASH_RETURN open the placement. The notice gets no Enter binding
-      // in Editor, so a double-press of the deal key can't blow through the
-      // re-encounter and commit the stash unseen (Skim's protection).
-      if (
-        roundsDealt >= TUNING.actOneRounds &&
-        !state.stashReturned &&
-        state.stash.length > 0
-      ) {
-        return { ...next, phase: 'STASH_RETURN_NOTICE', toPlace: state.stash }
+      // Skim's promise, owed by both shuffles below: a card just kept on top
+      // stays on top, so nothing may be slipped in ahead of it.
+      const keptTop = state.skim?.choice === 'kept'
+      // Whether the deck ran dry BEFORE anything was slipped in this commit —
+      // the death shuffle's fallback trigger, which the stash card must not
+      // silence (a deck holding only the stash card would otherwise leave the
+      // session with nothing to draw once the stash is placed).
+      const outOfCards = next.deck.length === 0
+
+      // End of Act I: the stash's return stops being scheduled and becomes a
+      // card (issue #88). One Stash Return card is slipped into the undealt
+      // deck at a uniformly random position — it may come next round, much
+      // later, or never (if the Coda surfaces first the stash is simply lost,
+      // and the session exports without it). It is visible in REMAINS like
+      // any other card: set-knowledge is free, only the Coda hides.
+      let deck = next.deck
+      let stashShuffled = state.stashShuffled
+      if (!stashShuffled && roundsDealt >= TUNING.actOneRounds && state.stash.length > 0) {
+        deck = shuffleIn(deck, { ...STASH_RETURN_CARD, kind: 'stash' }, keptTop)
+        stashShuffled = true
       }
+      const dealt = { ...next, deck, stashShuffled }
 
       // End of Act II (or an empty deck, if the knobs ever outrun it):
       // shuffle the death cards into whatever remains. From here the session
       // ends whenever one surfaces — odds rise naturally as the deck thins.
       const actsDone =
         roundsDealt >= TUNING.actOneRounds + TUNING.actTwoRounds
-      if (!state.deathShuffled && (actsDone || next.deck.length === 0)) {
+      if (!state.deathShuffled && (actsDone || outOfCards)) {
         // The death shuffle must not break Skim's promise: a card just
         // kept on top stays on top — the deaths join the deck behind it.
-        if (state.skim?.choice === 'kept' && next.deck.length > 0) {
-          const [kept, ...rest] = next.deck
+        if (keptTop && deck.length > 0) {
+          const [kept, ...rest] = deck
           return {
-            ...next,
+            ...dealt,
             deck: [kept, ...shuffle([...rest, ...deathCards()])],
             deathShuffled: true
           }
         }
         return {
-          ...next,
-          deck: shuffle([...next.deck, ...deathCards()]),
+          ...dealt,
+          deck: shuffle([...deck, ...deathCards()]),
           deathShuffled: true
         }
       }
-      return next
+      return dealt
     }
 
     case 'RESTART':
@@ -410,7 +460,7 @@ export function deckReducer(state, action) {
 // deck array directly — what these return is exactly what a user may know.
 
 const CARD_LABELS = Object.fromEntries(
-  [...MOD_CARDS, DEATH_CARD].map((c) => [c.id, c.label])
+  [...MOD_CARDS, DEATH_CARD, STASH_RETURN_CARD].map((c) => [c.id, c.label])
 )
 
 // The two families of modification card (v4): image cards act on the
@@ -450,15 +500,31 @@ export function spentCards(state) {
   return out
 }
 
-// The undealt modification cards as an unordered multiset — one entry per
-// design with a count, sorted by label. Death cards are filtered out and
-// order is stripped HERE, in deck logic, so the UI cannot leak what it
-// never receives: the Coda's place in the deck stays a genuine surprise
-// (that it is armed at all is already public via progressLabel).
+// The undealt deck as an unordered multiset — one entry per design with a
+// count, sorted by label. ONLY the Coda is filtered out, and order is
+// stripped HERE, in deck logic, so the UI cannot leak what it never
+// receives: the Coda's place in the deck stays a genuine surprise (that it
+// is armed at all is already public via progressLabel). Everything else is
+// set-knowledge, which is free — including the Stash Return card once it has
+// been shuffled in (issue #88): that it is coming is known, when is not.
 export function remainingCounts(state) {
+  return countsOf(state.deck, (card) => card.kind !== 'death')
+}
+
+// What a tutor may TAKE, which is narrower than what REMAINS may SHOW: mods
+// only. The Coda is out for the obvious reason; the Stash Return card is out
+// because when the stash comes home is meant to be chance (issue #88) — a
+// player-timed recall is a different mechanic (#18), not a side effect of
+// Searcher. The reducer's PICK_FROM_DECK enforces this too; this selector
+// just keeps the UI from offering a card it would refuse.
+export function findableCounts(state) {
+  return countsOf(state.deck, (card) => card.kind === 'mod')
+}
+
+function countsOf(deck, include) {
   const counts = new Map()
-  for (const card of state.deck) {
-    if (card.kind !== 'mod') continue
+  for (const card of deck) {
+    if (!include(card)) continue
     counts.set(card.id, (counts.get(card.id) ?? 0) + 1)
   }
   return [...counts.entries()]

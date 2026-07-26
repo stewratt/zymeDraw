@@ -33,8 +33,10 @@ Commitment is the central mechanic, not a missing feature.
 
 **The session arc**: opening pick (take two — strictly one *placed*, one
 *stashed*) → placement (move/scale/rotate + standing mask brush) → Act I
-(~4 mod cards) → stash return → Act II (death cards shuffle in; deal until
-one appears) → the **Coda**: complete, export at full resolution.
+(~4 mod cards) → the **Stash Return card** is shuffled into the remaining
+deck (it comes home when that card is drawn — next round, much later, or
+never) → Act II (death cards shuffle in; deal until one appears) → the
+**Coda**: complete, export at full resolution.
 
 **Card design rule: constraint outside, freedom inside.** No card simply
 *does something to the image* — a blur is a brush you compose with, not a

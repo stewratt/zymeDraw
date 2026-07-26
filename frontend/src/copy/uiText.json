@@ -92,6 +92,10 @@
       "name": "Shattered Transfer",
       "description": "The piece’s redraw shows through another image’s most shattered form."
     },
+    "stashReturn": {
+      "name": "Stash Return",
+      "description": "The image you held back comes home. Place it into the piece as it now stands."
+    },
     "coda": {
       "name": "Coda",
       "description": "The piece is finished. The session ends here."
@@ -372,7 +376,7 @@
   "deckPanel": {
     "openingTitle": "THE OPENING",
     "openingLoading": "Loading input folder…",
-    "openingHint": "Take **two** from the grid: one placed now, one stashed — it comes back after Act I.",
+    "openingHint": "Take **two** from the grid: one placed now, one stashed — its return card is shuffled into the deck after Act I, and the stash comes home when that card is drawn.",
     "inputErrorTitle": "INPUT FOLDER ERROR",
     "inputErrorHint": "Go back to setup to pick a different folder.",
     "noImagesTitle": "NO IMAGES FOUND",
@@ -380,7 +384,7 @@
     "placementTitle": "PLACEMENT",
     "placementHint": "Arrange your image.",
     "stashReturnNoticeTitle": "THE STASH RETURNS",
-    "stashReturnNoticeHint": "The image you held back returns — met by a piece that has moved on without it. Bring it in when you're ready to place it.",
+    "stashReturnNoticeHint": "The card has come up: the image you held back returns — met by a piece that has moved on without it. Bring it in when you're ready to place it.",
     "stashReturnNoticeButton": "Bring it in",
     "stashReturnTitle": "STASHED IMAGE RETURN",
     "stashReturnHint": "Your stashed image comes back — arrange it like the opening.",
@@ -471,7 +475,7 @@
         "opening": "**The opening** — take two images from the grid: one placed now, one stashed for later.",
         "placement": "**Placement** — arrange the image: drag to move, handles to scale and rotate, the mask brush to erase what shouldn't survive.",
         "actOne": "**Act I** — a handful of rounds, one dealt card each.",
-        "stash": "**The stash returns** — the image you held back comes home, met by a piece that has moved on without it.",
+        "stash": "**The stash returns** — after Act I its card is shuffled into the deck, and the image you held back comes home when that card is drawn: next round, much later, or never, if the Coda arrives first.",
         "actTwo": "**Act II** — the Coda is shuffled into the deck. Deal by deal, it is coming.",
         "coda": "**The Coda** — the piece is finished, and writes to your output folder at full resolution."
       },

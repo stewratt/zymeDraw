@@ -1,7 +1,7 @@
 // Searcher — the tutor (v4 notes §5.1). The deck overlay's remains view,
 // cashed in: while Searcher is in hand the undealt mods are laid out face
 // up and you take any one — that card becomes this round. The Coda is never
-// in the view and never pickable (remainingCounts filters it in deck.js,
+// in the view and never pickable (findableCounts filters the view in deck.js,
 // and the reducer only finds mods). (id `searcher`, was Cull.)
 //
 // Searcher never touches the canvas. The pick is a deck action
@@ -27,7 +27,9 @@ export async function beginSearcher(ctx) {
 }
 
 export function SearcherOverlay({ info, deckView, onDeckAction, workUrl }) {
-  const remaining = deckView?.remaining ?? []
+  // The findable subset, not the whole of REMAINS: the Coda was never in it,
+  // and the Stash Return card is visible there but not takeable (deck.js).
+  const remaining = deckView?.findable ?? []
   const [chosen, setChosen] = useState(null) // a card id, or null
 
   // Enter takes once a card is chosen; Esc puts it back — the same

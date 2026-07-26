@@ -40,7 +40,8 @@ function Card({
   useEffect(() => setAttempt(0), [id, activeSet, variant])
   const art = sources[attempt]
   // Mod cards split into two color-coded families (image vs deck) until
-  // the designed faces carry the distinction; the Coda stays its own thing.
+  // the designed faces carry the distinction; the Coda and the Stash Return
+  // card stay their own things (kind 'death' / 'stash').
   const family = kind === 'mod' && !faceDown ? cardFamily(id) : null
   const classes = [
     'card',
@@ -84,7 +85,13 @@ function Card({
       ) : (
         <div className="card-text-face">
           <span className="card-kind">
-            {kind !== 'mod' ? 'the deck is done' : family === 'deck' ? 'the deck' : 'modification'}
+            {kind === 'death'
+              ? 'the deck is done'
+              : kind === 'stash'
+                ? 'the stash'
+                : family === 'deck'
+                  ? 'the deck'
+                  : 'modification'}
           </span>
           <span className="card-label">{label}</span>
         </div>

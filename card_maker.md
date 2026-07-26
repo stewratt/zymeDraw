@@ -64,8 +64,8 @@ cast, commission*. All Foundry copy obeys the zyme register.
    paint over the name and it stays pristine — so there is no per-slot
    Press. (Full z-order + rationale in §3.5.)
 4. **Export — direct to the Deck.** A session opens on a
-   **commission**: which real card id (from `MOD_CARDS` + Coda) this
-   face is for. The Proof writes `frontend/src/assets/cards/<id>.png`
+   **commission**: which real card id (from `MOD_CARDS` + Coda + the
+   Stash Return) this face is for. The Proof writes `frontend/src/assets/cards/<id>.png`
    at 745×1040 plus a full-resolution master copy to the output folder.
 5. **Fonts — bundled curated set.** ~15–30 OFL-licensed fonts committed
    to the repo (serif, slab, blackletter, mono, display/grunge).
@@ -178,9 +178,9 @@ Shorter and tighter than a Deck session; a card face is a small piece.
 
 ```
 ── PHASE 1 · THE FOUNDATION (live, editable, alpha-composited) ──
-COMMISSION    choose the card id being cast (MOD_CARDS + coda).
-              Prefills the name (label), the type line (family:
-              image / deck / coda), the rarity tier (copies).
+COMMISSION    choose the card id being cast (MOD_CARDS + coda + the
+              stash return). Prefills the name (label), the type line
+              (family: image / deck / coda / stash), the rarity tier.
 PLATE_DEAL    deal 3 plates — a mix of folder plates and procedural
               plates — take one. The plate is a MATTE ON TOP: a frame
               with the image window punched through as alpha.
@@ -394,13 +394,17 @@ existing organ to borrow, so its rules are spelled out here:
 
 ## 5. Rarity
 
-Tier derives from the commission's real deck presence: **2 copies =
-common, 1 copy = scarce, Coda = singular** (names draft — zyme
-register, not TCG jargon). The mark is small and materially rendered
-(a punch, a stamp, a foil-ish blot — procedural, per-plate palette),
-never a star-rating UI. If a card's copies change in `deck.js`, the
-face doesn't retroactively lie: rarity is stamped at casting time,
-like a print run.
+Tier is a **hardcoded statement of the card's conceptual weirdness**
+(issue #42), set on the descriptor in `deck.js` — not derived from
+copies, deck presence, or print run: **common** (legible/everyday),
+**scarce** (strange/oblique), and **singular**, which is set by family
+rather than by descriptor — the Coda and the Stash Return, each of
+which exists at most once and is a beat in the session's structure
+rather than a modification you can stack. The mark is small and
+materially rendered (a punch, a stamp, a foil-ish blot — procedural,
+per-plate palette), never a star-rating UI. Rarity is stamped at
+casting time, like a print run, so a later change never makes an
+already-cast face lie.
 
 ---
 

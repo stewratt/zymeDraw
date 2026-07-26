@@ -15,12 +15,14 @@
 // It knows nothing about specific cards — it renders whatever Tools
 // component the current registry entry provides.
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { progressLabel } from './deck.js'
+import { playCardFlip } from './sound.js'
 import Card from './Card.jsx'
 import CardZoom from './CardZoom.jsx'
 import PlacementLayers from './PlacementLayers.jsx'
 import { ArrangeMaskControls, maskHint } from './cards/maskControls.jsx'
+import { StashReturnNotice } from './cards/stashReturn.jsx'
 import { UI, fmt } from '../copy/uiText.js'
 import { rich } from '../copy/rich.jsx'
 
@@ -58,7 +60,10 @@ function DeckPanel({
     case 'OPENING_PICK':
       return <OpeningPickPanel imageList={imageList} />
     case 'STASH_RETURN_NOTICE':
-      return <StashReturnNotice onAck={onAckStashReturn} />
+      // The beat belongs to the Stash Return card, so its panel lives with
+      // the card (cards/stashReturn.jsx) — this is a phase, not a branch on
+      // which card is in hand.
+      return <StashReturnNotice card={state.currentCard} onAck={onAckStashReturn} />
     case 'PLACEMENT':
     case 'STASH_RETURN':
       return (
@@ -217,6 +222,11 @@ function DeckDock({
 // of the deck. Motion only — both sides render through Card.jsx, which keeps
 // owning the geometry. Duration and easing are issue #59's to tune.
 function DealtCard({ card, onZoom }) {
+  // `dealKey` remounts this on every deal, so mounting *is* the turn over —
+  // the sound rides the animation rather than the click that started it.
+  useEffect(() => {
+    playCardFlip()
+  }, [])
   return (
     <div className="deal-flip">
       <div className="deal-flip-inner">
@@ -325,24 +335,6 @@ function Placement({
   )
 }
 
-// The stash-return beat (issue #51): an interstitial that must be clicked
-// before placement goes live. Deliberately click-only — Enter (the deal key)
-// has no binding in this phase — so a double-press can't blow through the
-// re-encounter and commit the stash unseen (Skim's protection).
-function StashReturnNotice({ onAck }) {
-  return (
-    <aside className="deck-panel">
-      <div className="panel-scroll">
-        <h2>{T.stashReturnNoticeTitle}</h2>
-        <p className="hint">{T.stashReturnNoticeHint}</p>
-      </div>
-      <button type="button" className="primary" onClick={onAck}>
-        {T.stashReturnNoticeButton}
-      </button>
-    </aside>
-  )
-}
-
 // Nothing in hand: the beat after a Coda is set aside, and the state the
 // session rests in if a deal ever finds an empty deck. One click on the deck
 // draws — there is nothing to commit first.
@@ -377,6 +369,11 @@ function AwaitingDeal({ state, onAdvance, onOpenHistory }) {
 function CodaChoice({ state, onAcceptCoda, onDelayCoda }) {
   const card = state.currentCard
   const [zoomed, setZoomed] = useState(false)
+  // The Coda is dealt like any other card — it just lands here instead of in
+  // the dock, and the turn should not be the one silent one.
+  useEffect(() => {
+    playCardFlip()
+  }, [])
   return (
     <aside className="deck-panel">
       {zoomed && (

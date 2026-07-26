@@ -20,7 +20,7 @@
 
 import { CARD_TEXT } from '../editor/cardText.js'
 import { UI, fmt } from '../copy/uiText.js'
-import { DEATH_CARD, MOD_CARDS } from '../editor/deck.js'
+import { DEATH_CARD, MOD_CARDS, STASH_RETURN_CARD } from '../editor/deck.js'
 
 // Every Foundry pacing number lives here. (The plate offer has no number:
 // every plate in the folder is on the table — chosen, never dealt. Stew,
@@ -54,8 +54,12 @@ export const PROOF_CARD = { id: 'proof', label: UI.foundry.proof.cardLabel }
 // What may be commissioned: every real card design in the Deck, the Coda
 // included — it has a face to cast like any other. `rarity` rides along
 // from the card descriptor (issue #42): a hardcoded weirdness tier, not
-// derived from copies. The Coda's 'singular' tier is set by family in
-// rarity.js, so it needs no rarity here.
+// derived from copies. The Coda's and the Stash Return's 'singular' tier is
+// set by family in rarity.js, so neither needs a rarity here.
+//
+// Family is a Foundry concern — it prints as the type line — so the two
+// non-mod cards get theirs here rather than on their deck.js descriptors,
+// where Deck's own image/deck split (cardFamily) would read them wrong.
 export const COMMISSIONS = [
   ...MOD_CARDS.map(({ id, label, copies, family, rarity }) => ({
     id,
@@ -64,7 +68,11 @@ export const COMMISSIONS = [
     family: family ?? 'image',
     rarity
   })),
-  { ...DEATH_CARD, copies: 0, family: 'coda' }
+  { ...DEATH_CARD, copies: 0, family: 'coda' },
+  // The stash's return is castable like any other face (Stew, 2026-07-26):
+  // it never joins a built deck, but the session deals it, so it needs a
+  // design — and a custom one may be cast for it like the rest.
+  { ...STASH_RETURN_CARD, copies: 0, family: 'stash' }
 ]
 
 // Fisher–Yates on a copy.
