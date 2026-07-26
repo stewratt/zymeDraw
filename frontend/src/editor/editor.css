@@ -457,14 +457,7 @@
 .grid-picker button.primary:hover {
   background: var(--fill-hover);
 }
-.deck-panel button.commit {
-  background: var(--fill);
-}
-.deck-panel button.commit:hover {
-  background: var(--fill-hover);
-}
-
-/* ---------- the deck dock (issue #87) ---------- */
+/* ---------- the deck dock (issues #87, #98 — both wings) ---------- */
 
 /* The deck is the button. It sits pinned at the foot of the panel — the one
    target the mouse returns to every round — with the card drawn from it lying

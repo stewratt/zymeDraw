@@ -10,6 +10,36 @@ Choices: any decisions the executor made on its own.
 Files: the main files touched.
 ```
 
+## [11] #98 — Foundry: adopt the deck-is-the-button draw dock (2026-07-26)
+What: the dock (deck left, dealt card right, click-to-deal with the flip) moved
+out of DeckPanel into its own shared module `editor/DeckDock.jsx`, and the
+Foundry's working rounds now render that exact component. One click commits the
+graffiti round and turns the next card; the Foundry's Deal button (dead since
+#87 removed its copy key, so it rendered blank) and its "End — commit" button
+are gone, along with the orphaned `deckPanel.endCommit` string and the
+`button.commit` CSS rule.
+Where: PR #101.
+Choices: (1) Parameterization — **plain props, no wing flag**. Everything that
+differs arrives as a prop, and the props for mechanics the Foundry lacks
+(`stashCount`, `delayHeld`) default to off so it simply omits them; the dock
+never learns which session it is in. Chosen over context/registry because the
+component was already prop-driven and CLAUDE.md bans per-wing branches in shared
+components. (2) Scope — only the WORKING rounds get the dock; the foundation
+phases (take the plate, continue to the type, the Press) keep their own primary
+buttons, since nothing is dealt at those crossings and the Press is deliberately
+click-only. (3) Copy — the Foundry reuses `UI.deckPanel`'s draw lines rather
+than getting its own, matching the existing "shared studio verbs read the same
+in both wings" rule already stated in FoundryPanel's header. (4) Keys — Enter is
+now one `handleAdvance` binding for both WORKING states, and the Foundry's
+leftover **Space → Deal** binding is removed (Enter-only, per hotkeys.md §5.6);
+recorded as decision 13 in hotkeys.md. (5) The Foundry's dealt card gained
+click-to-zoom (CardZoom) for parity, since the face left the panel body for the
+dock. (6) `handleCommit` split into `commitCurrentCard` (no dispatch) +
+`handleAdvance` (COMMIT then DEAL in one tick), mirroring Editor.jsx exactly.
+Files: frontend/src/editor/DeckDock.jsx (new), editor/DeckPanel.jsx,
+editor/editor.css, foundry/FoundryPanel.jsx, foundry/FoundryEditor.jsx,
+foundry/foundryDeck.js, copy/uiText.json, hotkeys.md.
+
 ## [10] #97 — Foundry: brush strokes double the image, offset toward top-left (2026-07-26)
 What: the shared reveal/stamp overlays in `brushCore.js` were seated with Deck's
 hardcoded 800×1000 artboard constants (a #53 change), so in the Foundry — whose

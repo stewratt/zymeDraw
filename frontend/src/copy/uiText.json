@@ -400,7 +400,6 @@
     "stashReturnHint": "Your stashed image comes back — arrange it like the opening.",
     "arrangeHint": "Drag to move, corner handles to scale, top handle to rotate.",
     "reorderHint": "Drag to reorder the stack.",
-    "endCommit": "End — commit",
     "loadingImages": "Loading images…",
     "deckTitle": "THE DECK",
     "cardsRemain": "{count} card{plural} remain",

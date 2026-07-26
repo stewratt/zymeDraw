@@ -457,8 +457,11 @@ function FoundryEditor({ onBackToSetup }) {
   }
 
   // End of a graffiti round: the card's commit hook, then the universal
-  // bake. Identical law to Deck (registry.jsx header).
-  async function handleCommit() {
+  // bake. Identical law to Deck (registry.jsx header). It does NOT advance
+  // the reducer — the COMMIT lands in handleAdvance beside the DEAL that
+  // follows it, so the round that ends and the card that turns over arrive
+  // in one render (Editor.commitCurrentCard, same reasoning).
+  async function commitCurrentCard() {
     if (!state.currentCard || committingRef.current) return
     const entry = foundryRegistry[state.currentCard.id]
     const canvas = canvasStageRef.current?.getCanvas()
@@ -489,7 +492,21 @@ function FoundryEditor({ onBackToSetup }) {
     cardSessionRef.current = null
     setCardControls({})
     setCardInfo({})
-    dispatch({ type: 'COMMIT' })
+  }
+
+  // The deck is the button (issue #98): one click on the dock ends the round
+  // in hand and turns the next card, exactly as it does in the composition
+  // wing (Editor.handleAdvance). With nothing in hand it simply deals.
+  // The foundation phases never reach here — they are not deals.
+  async function handleAdvance() {
+    if (committingRef.current) return
+    if (state.phase !== 'WORKING') return
+    if (state.currentCard) {
+      if (!cardReady) return
+      await commitCurrentCard()
+      dispatch({ type: 'COMMIT' })
+    }
+    dispatch({ type: 'DEAL' })
   }
 
   // Ink the type (typeLayer.inkSlot): the selected slot, or — with nothing
@@ -748,13 +765,11 @@ function FoundryEditor({ onBackToSetup }) {
     bindings.push({ key: 'n', run: handleRedealGrid })
   }
 
-  if (state.phase === 'WORKING' && !state.currentCard) {
-    bindings.push(
-      { code: 'Space', run: () => dispatch({ type: 'DEAL' }) },
-      { key: 'Enter', run: () => dispatch({ type: 'DEAL' }) }
-    )
-  } else if (state.phase === 'WORKING' && cardReady && !committing) {
-    bindings.push({ key: 'Enter', run: handleCommit })
+  // Enter is the deck click from the keyboard (issue #87, Foundry side #98):
+  // one key that commits the round and turns the next card. Deal is off
+  // Space entirely — Enter-only in both wings (hotkeys.md §5.6).
+  if (state.phase === 'WORKING' && (!state.currentCard || (cardReady && !committing))) {
+    bindings.push({ key: 'Enter', run: handleAdvance })
   } else if (state.phase === 'PANEL_PICK' && plateReady && artInHand) {
     // Before the pick, the grid overlay owns Enter (CardGridPicker's own
     // listener confirms the taken image); here Enter advances to the type.
@@ -878,8 +893,7 @@ function FoundryEditor({ onBackToSetup }) {
             onControlChange={handleControlChange}
             onEndPanel={() => dispatch({ type: 'END_PANEL' })}
             onPress={handlePress}
-            onDeal={() => dispatch({ type: 'DEAL' })}
-            onCommit={handleCommit}
+            onAdvance={handleAdvance}
             onRestart={handleRestart}
             onOpenOutput={handleOpenOutput}
           />

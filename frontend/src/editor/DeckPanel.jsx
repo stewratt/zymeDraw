@@ -10,15 +10,16 @@
 // ends the same way — one click on the deck dock pinned at the panel's foot,
 // which commits what's in hand and turns the next card over. There are no
 // End or Deal buttons. Only the Coda keeps its own finish/export flow;
-// nothing follows it, so the deck is not the exit there.
+// nothing follows it, so the deck is not the exit there. The dock itself is
+// shared with the Foundry (editor/DeckDock.jsx, issue #98).
 //
 // It knows nothing about specific cards — it renders whatever Tools
 // component the current registry entry provides.
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { progressLabel } from './deck.js'
-import { playCardFlip } from './sound.js'
 import Card from './Card.jsx'
+import DeckDock from './DeckDock.jsx'
 import CardZoom from './CardZoom.jsx'
 import PlacementLayers from './PlacementLayers.jsx'
 import { ArrangeMaskControls, maskHint } from './cards/maskControls.jsx'
@@ -149,102 +150,6 @@ function OpeningPickPanel({ imageList }) {
       <h2>{T.openingTitle}</h2>
       <p className="hint">{rich(T.openingHint)}</p>
     </aside>
-  )
-}
-
-// ---- the deck dock ----
-// The one way a turn ends. Pinned at the foot of the panel so it never moves
-// between phases: the deck of backs on the left, the drawn card face-up on
-// the right, the deck's own count and the standing instruction beneath.
-// `dealKey` changes on every deal — it remounts the flip so the animation
-// replays even when one card follows another with no empty beat between.
-function DeckDock({
-  card,
-  dealKey,
-  deckCount,
-  stashCount = 0,
-  hint,
-  actionLabel,
-  disabled,
-  delayHeld,
-  onDraw,
-  onZoomCard
-}) {
-  return (
-    <div className="deck-dock">
-      {/* Deck state, not card behavior: the right Delay granted, standing
-          with the deck it will be spent against. It lived at the old deal
-          panel — with no between-rounds beat left, the dock is where it is
-          always in view. */}
-      {delayHeld && (
-        <div className="delay-held">
-          <Card id="delay" label={UI.cards.delay.name} size="tile" />
-          <span className="hint">{T.delayHeld}</span>
-        </div>
-      )}
-      <div className="deck-pair">
-        <div className="deck-slot">
-          <button
-            type="button"
-            className="deck-stack"
-            onClick={onDraw}
-            disabled={disabled}
-            // Every keyed control names its key on hover (hotkeys.md §5).
-            title={`${actionLabel} — Enter`}
-            aria-label={actionLabel}
-          >
-            {/* Two backs behind the top one: the deck reads as a stack of
-                cards rather than a single one. Decorative — the whole
-                button is the target. */}
-            <span className="deck-stack-under deck-stack-under--2" aria-hidden="true">
-              <Card faceDown />
-            </span>
-            <span className="deck-stack-under deck-stack-under--1" aria-hidden="true">
-              <Card faceDown />
-            </span>
-            <Card faceDown />
-          </button>
-        </div>
-        {/* Empty until a card is drawn. The columns are fixed, so the deck
-            sits in the same place whether or not anything lies beside it. */}
-        <div className="deck-slot">
-          {card && (
-            <DealtCard key={dealKey} card={card} onZoom={onZoomCard} />
-          )}
-        </div>
-      </div>
-      <p className="hint deck-dock-line">
-        {fmt(T.cardsRemain, { count: deckCount, plural: deckCount === 1 ? '' : 's' })}
-        {stashCount > 0 ? ` ${fmt(T.stashedSuffix, { count: stashCount })}` : ''}
-      </p>
-      <p className="hint deck-dock-line">{hint}</p>
-    </div>
-  )
-}
-
-// The deal, made visible: the back and the face share one box and the wrapper
-// turns over, so what you see is the card you just drew flipping face-up out
-// of the deck. Motion only — both sides render through Card.jsx, which keeps
-// owning the geometry. Duration and easing are issue #59's to tune.
-function DealtCard({ card, onZoom }) {
-  // `dealKey` remounts this on every deal, so mounting *is* the turn over —
-  // the sound rides the animation rather than the click that started it.
-  useEffect(() => {
-    playCardFlip()
-  }, [])
-  return (
-    <div className="deal-flip">
-      <div className="deal-flip-inner">
-        <Card
-          id={card.id}
-          label={card.label}
-          kind={card.kind}
-          variant={card.variant}
-          onClick={onZoom}
-        />
-        <Card faceDown />
-      </div>
-    </div>
   )
 }
 
