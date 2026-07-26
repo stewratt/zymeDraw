@@ -58,12 +58,15 @@ async function restoreDetail(reframed, zoom) {
   return out
 }
 
-export function DeeperTools({ ready }) {
-  if (!ready) return <span className="hint">{UI.shared.preparing}</span>
+// `entered` is false while the card rests behind its entry gate (issue #92) —
+// see CloserTools; the pair reads the same.
+export function DeeperTools({ ready, entered }) {
+  if (entered && !ready) return <span className="hint">{UI.shared.preparing}</span>
   return (
     <div className="card-tools">
       <p className="hint">
-        {CARD_TEXT.deeper.description} {UI.cardHints.deeper.commitNote}
+        {CARD_TEXT.deeper.description}{' '}
+        {entered ? UI.cardHints.deeper.commitNote : UI.cardEntry.restingNote}
       </p>
     </div>
   )

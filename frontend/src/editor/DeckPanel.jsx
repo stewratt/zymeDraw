@@ -35,6 +35,8 @@ function DeckPanel({
   controls,
   info,
   ready,
+  entered,
+  onEnterCard,
   committing,
   placementReady,
   placedLayers,
@@ -90,6 +92,8 @@ function DeckPanel({
           controls={controls}
           info={info}
           ready={ready}
+          entered={entered}
+          onEnterCard={onEnterCard}
           committing={committing}
           onControlChange={onControlChange}
           onAdvance={onAdvance}
@@ -392,9 +396,16 @@ function CodaChoice({ state, onAcceptCoda, onDelayCoda }) {
 
 // The card in hand: its name and Tools stack above the pair, the face itself
 // lies in the dock beside the deck it came out of.
-function CardRevealed({ state, entry, controls, info, ready, committing, onControlChange, onAdvance }) {
+//
+// A card may declare an entry gate (registry `entryGate`): until its button is
+// pressed the round is at rest — the description stands, the entry button sits
+// at the foot of the panel just above the dock, and the deck says plainly that
+// drawing lets the card pass. All of it reads from the registry, so this is
+// still a panel that knows nothing about any particular card.
+function CardRevealed({ state, entry, controls, info, ready, entered, onEnterCard, committing, onControlChange, onAdvance }) {
   const card = state.currentCard
   const ToolsComponent = entry?.Tools
+  const gate = entered ? null : entry?.entryGate
   const commitDisabled = !ready || committing
   const [zoomed, setZoomed] = useState(false)
 
@@ -412,6 +423,7 @@ function CardRevealed({ state, entry, controls, info, ready, committing, onContr
               controls={controls}
               info={info}
               ready={ready}
+              entered={entered}
               onControlChange={onControlChange}
             />
           ) : (
@@ -419,6 +431,11 @@ function CardRevealed({ state, entry, controls, info, ready, committing, onContr
           )}
         </div>
       </div>
+      {gate && (
+        <button type="button" className="primary" onClick={onEnterCard}>
+          {gate.label}
+        </button>
+      )}
       <DeckDock
         card={card}
         // A card arrives either straight after a commit (roundsDealt just
@@ -427,8 +444,16 @@ function CardRevealed({ state, entry, controls, info, ready, committing, onContr
         dealKey={`${state.roundsDealt}:${card.id}:${card.variant ?? 1}`}
         deckCount={state.deck.length}
         stashCount={state.stash.length}
-        hint={committing ? T.committing : !ready ? T.settingUp : T.deckHintActive}
-        actionLabel={T.deckDrawAction}
+        hint={
+          committing
+            ? T.committing
+            : !ready
+              ? T.settingUp
+              : gate
+                ? T.deckHintGate
+                : T.deckHintActive
+        }
+        actionLabel={gate ? T.deckDrawGate : T.deckDrawAction}
         disabled={commitDisabled}
         delayHeld={state.delayHeld}
         onDraw={onAdvance}

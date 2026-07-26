@@ -39,6 +39,14 @@
 //     through `onDeckAction`. Editor builds its fence from this list — a
 //     card can never dispatch a deck action it hasn't declared, and the
 //     reducer's legality guards remain the real gate.
+//   - `entryGate`: { label } — the card deals into a RESTING state instead of
+//     straight into its session (the re-frame pair, issue #92). No begin hook
+//     runs, no Overlay renders and no card hotkey binds until the labelled
+//     button — rendered by DeckPanel at the foot of the description panel,
+//     above the deck dock — is pressed. Drawing from the deck before that is
+//     a skip: no commit hook, no bake, no state capture, next card. Tools get
+//     an `entered` prop (always true for an ungated card) so a card's own copy
+//     can speak to its resting state.
 //   - `hotkeys`: keyboard accents [{ key|code, shift?, run(ctx, e) }]
 //     (hotkeys.md §5.4). Editor dispatches them ahead of the shared scopes
 //     (keymap.js); run gets { controls, setControl, info, session, canvas }
@@ -64,6 +72,7 @@ import { RailsTools, beginRails, cleanupRails, commitRails, updateRails } from '
 import { CharTools, beginChar, cleanupChar, commitChar, updateChar } from './char.jsx'
 import { DeeperTools, beginDeeper, cleanupDeeper, commitDeeper } from './deeper.jsx'
 import { CloserTools, beginCloser, cleanupCloser, commitCloser } from './closer.jsx'
+import { frameEntryGate } from './frameCardFactory.jsx'
 import { LiftTools, beginLift, cleanupLift, commitLift, liftHotkeys } from './lift.jsx'
 import { FractureTools, beginFracture, cleanupFracture, commitFracture, updateFracture } from './fracture.jsx'
 import { RackTools, beginRack, cleanupRack, rackHotkeys, updateRack } from './rack.jsx'
@@ -162,11 +171,14 @@ export const cardRegistry = {
   },
 
   // ---- Re-frame (the master itself is the object) ----
+  // Both enter through the gate (issue #92): the frame is offered, not
+  // imposed — draw instead of entering and the card passes, uncommitted.
 
   deeper: {
     controls: [],
     defaultControls: {},
     Tools: DeeperTools,
+    entryGate: frameEntryGate,
     begin: beginDeeper,
     commit: commitDeeper,
     cleanup: cleanupDeeper
@@ -176,6 +188,7 @@ export const cardRegistry = {
     controls: [],
     defaultControls: {},
     Tools: CloserTools,
+    entryGate: frameEntryGate,
     begin: beginCloser,
     commit: commitCloser,
     cleanup: cleanupCloser
