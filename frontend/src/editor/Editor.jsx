@@ -405,7 +405,12 @@ function Editor({ config, deckSpec, onBackToSetup }) {
   // master. No card implements flattening; this is the v2 commitment step.
   // Commit hooks may be async (Deeper awaits the detail restore); the ref
   // is the re-entry guard, the state drives the "committing" UI.
-  async function handleCommit() {
+  //
+  // The impure half only — the reducer's COMMIT is dispatched by the caller
+  // (handleAdvance), right beside the DEAL that follows it, so the round
+  // that ends and the card that turns over land in ONE render. Split apart,
+  // a slow commit hook would let React paint the empty in-between state.
+  async function commitCurrentCard() {
     if (!state.currentCard || committingRef.current) return
     const entry = cardRegistry[state.currentCard.id]
     const canvas = canvasStageRef.current?.getCanvas()
@@ -439,7 +444,31 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     cardSessionRef.current = null
     setCardControls({})
     setCardInfo({})
-    dispatch({ type: 'COMMIT' })
+  }
+
+  // The deck is the button (issue #87): one gesture finishes what is in hand
+  // and turns the next card over. Everything that advances the session funnels
+  // through here — the deck click and Enter alike — so the commit semantics
+  // (the card's own commit hook, then the universal bake) can never diverge
+  // from the deal that follows. Each dispatch that can't legally apply is a
+  // no-op in the reducer, which is what lets this stay one straight path:
+  // a commit that hands the session to the stash-return beat leaves DEAL
+  // with nothing to do.
+  async function handleAdvance() {
+    if (committingRef.current) return
+    if (state.phase === 'PLACEMENT' || state.phase === 'STASH_RETURN') {
+      if (!placementReady) return
+      handleEndPlacement()
+      dispatch({ type: 'DEAL' })
+      return
+    }
+    if (state.phase !== 'WORKING') return
+    if (state.currentCard) {
+      if (!cardReady) return
+      await commitCurrentCard()
+      dispatch({ type: 'COMMIT' })
+    }
+    dispatch({ type: 'DEAL' })
   }
 
   // Reorder the placement layers panel (top-to-bottom). Restack the Fabric
@@ -610,16 +639,17 @@ function Editor({ config, deckSpec, onBackToSetup }) {
       { key: 'z', mod: true, shift: true, run: () => cardInfo.redo?.() }
     )
   }
-  if (state.phase === 'WORKING' && !state.currentCard) {
-    // Deal is Enter-only now — Space is the canvasNav pan-hold everywhere
-    // (issue #53). The two-press rhythm (End, then Deal) is unchanged.
-    bindings.push({ key: 'Enter', run: () => dispatch({ type: 'DEAL' }) })
-  } else if (state.phase === 'COMPLETE') {
+  // Enter is the deck click from the keyboard (issue #87): one key that
+  // commits what's in hand and turns the next card, wherever the session can
+  // advance. Space stays the canvasNav pan-hold everywhere (issue #53).
+  if (state.phase === 'COMPLETE') {
     bindings.push({ key: 'Enter', run: handleRestart })
-  } else if (inPlacement && placementReady) {
-    bindings.push({ key: 'Enter', run: handleEndPlacement })
-  } else if (cardUp && cardReady) {
-    bindings.push({ key: 'Enter', run: handleCommit })
+  } else if (
+    (inPlacement && placementReady) ||
+    (cardUp && cardReady) ||
+    (state.phase === 'WORKING' && !state.currentCard)
+  ) {
+    bindings.push({ key: 'Enter', run: handleAdvance })
   }
   bindings.push(
     // Restart is destructive with no confirm — a single letter was too
@@ -720,10 +750,8 @@ function Editor({ config, deckSpec, onBackToSetup }) {
             onMaskRedo={() => maskSessionRef.current?.redo()}
             exportState={exportState}
             onControlChange={handleControlChange}
-            onEndPlacement={handleEndPlacement}
+            onAdvance={handleAdvance}
             onAckStashReturn={() => dispatch({ type: 'ACK_STASH_RETURN' })}
-            onDeal={() => dispatch({ type: 'DEAL' })}
-            onCommit={handleCommit}
             onAcceptCoda={() => dispatch({ type: 'ACCEPT_CODA' })}
             onDelayCoda={() => dispatch({ type: 'DELAY_CODA' })}
             onRestart={handleRestart}

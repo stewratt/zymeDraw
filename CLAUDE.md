@@ -24,8 +24,8 @@
 
 **Deck** is a browser tool for digital collage driven by *drawing cards
 from a deck*. Each card constrains the UI to exactly one action; the user
-works within that constraint, then presses **End**, which commits the
-result permanently and deals the next card.
+works within that constraint, then **draws from the deck**, which commits
+the result permanently and deals the next card.
 
 **Core philosophy: destructive, commitment-based.** No undo across
 committed steps; every End flattens the canvas to a single image.
@@ -110,7 +110,7 @@ zymeDraw/
 │   ├── assets/plates/                   # Foundry blank plates 01–08.png (+ template/ geometry ref)
 │   └── editor/
 │       ├── Editor.jsx                   # registry dispatcher (no per-card logic!)
-│       ├── DeckPanel.jsx                # right sidebar: phase panels + Tools + End
+│       ├── DeckPanel.jsx                # right sidebar: phase panels + Tools + the deck dock
 │       ├── deck.js                      # PURE state machine + selectors
 │       ├── masterRaster.js              # offscreen 2400×3000 truth + universal bake
 │       ├── brushCore.js                 # stroke engine: mask + reveal sessions
@@ -179,8 +179,8 @@ and build on the shared modules, not on Editor special cases.
 - **Deck legibility**: set-knowledge is free; order-knowledge and
   order-control are never ambient (exceptions only as dealt/spent
   mechanics); the Coda never appears in REMAINS. `deck.js` enforces this.
-- **The two-press rhythm (End, then Deal) is the design** — auto-deal was
-  tried and reverted. Closing the tab loses in-progress work: by design.
+- **The deck is the button** — one click commits and deals; the flip is the
+  turn separator. Closing the tab still loses in-progress work: by design.
 - **All user-facing copy lives in `copy/uiText.json`** (edited via the
   copy editor at `:5174/copy-editor`) and obeys the §1 tone. Card names
   are pure copy — the **id** is the permanent key (files/registry/deck/
