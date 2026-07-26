@@ -161,10 +161,10 @@
       "choiceHint": "Leave it or bury it — you won't see what replaces it.",
       "keep": "Leave it — the next deal",
       "bury": "Bury it — somewhere back in the deck",
-      "kept": "It waits on top. End the round.",
-      "buried": "Gone — somewhere back in the deck. The next deal is unknown. End the round.",
+      "kept": "It waits on top. Draw to end the round.",
+      "buried": "Gone — somewhere back in the deck. The next deal is unknown. Draw to end the round.",
       "toolWaiting": "On the canvas: turn the top card, then leave it or bury it.",
-      "toolReady": "End the round."
+      "toolReady": "Draw to end the round."
     },
     "searcher": {
       "title": "Searcher",
@@ -173,30 +173,30 @@
       "footTakeOne": "take one",
       "confirm": "Continue with chosen card",
       "toolWaiting": "Take the card the piece needs.",
-      "toolReady": "The deck had nothing left to offer — a round with no modification. End it."
+      "toolReady": "The deck had nothing left to offer — a round with no modification. Draw to end it."
     },
     "delay": {
-      "toolSuffix": "The card waits at the deal panel. End the round."
+      "toolSuffix": "The right is held from here on. Draw to end the round."
     },
     "deeper": {
-      "commitNote": "End commits the re-frame and restores detail into the enlargement; that takes a few seconds."
+      "commitNote": "The draw commits the re-frame and restores detail into the enlargement; that takes a few seconds."
     },
     "closer": {
-      "commitNote": "End commits the re-frame as it stands — no restoration, no waiting."
+      "commitNote": "The draw commits the re-frame as it stands — no restoration, no waiting."
     },
     "char": {
       "subject": "the char"
     },
     "transfer": {
       "working": "The piece is being redrawn in another hand… a few seconds.",
-      "degraded": "The transfer service is unavailable — the piece stands as it is. End to move on."
+      "degraded": "The transfer service is unavailable — the piece stands as it is. Draw to move on."
     },
     "shatteredTransfer": {
       "pickTitle": "SHATTERED TRANSFER",
       "pickHint": "Six images. Take one — it won't be placed; it will be read as a stencil, and the piece's redraw shows through its shattered form.",
       "confirm": "Continue — read it as a stencil",
       "arrangeWaiting": "This image {reading} — place the stencil where the style should break through. The redraw is still arriving; the window opens when it lands.",
-      "degraded": "The transfer service is unavailable — the stencil is withdrawn and the piece stands as it is. End to move on.",
+      "degraded": "The transfer service is unavailable — the stencil is withdrawn and the piece stands as it is. Draw to move on.",
       "windowOpen": "The window is open{readingClause}. Drag, scale, rotate the stencil; the redraw shows through wherever it sits.",
       "readingClause": " — this image {reading}",
       "subject": "the styled fragments"
@@ -385,7 +385,6 @@
     "stashReturnTitle": "STASHED IMAGE RETURN",
     "stashReturnHint": "Your stashed image comes back — arrange it like the opening.",
     "arrangeHint": "Drag to move, corner handles to scale, top handle to rotate.",
-    "endBakes": "End bakes everything in for good.",
     "reorderHint": "Drag to reorder the stack.",
     "endCommit": "End — commit",
     "loadingImages": "Loading images…",
@@ -394,7 +393,11 @@
     "stashedSuffix": "· {count} stashed",
     "viewDeck": "View the deck",
     "delayHeld": "held — the first Coda can be set aside",
-    "deal": "Deal",
+    "deckHintPlacement": "Draw from the deck when the arrangement is right: it bakes in for good, and the next card turns over.",
+    "deckHintActive": "Draw from the deck when this round is done: it bakes in for good, and the next card turns over.",
+    "deckHintIdle": "Draw from the deck to turn the next card.",
+    "deckDrawAction": "Commit this round and draw",
+    "deckDrawIdle": "Draw the next card",
     "codaTitle": "THE CODA",
     "codaHint": "The deck says the piece is finished. You still hold Delay — accept the ending, or set the Coda aside. It slips back into the deck and the next deal is blind: it can come straight back, and the right is spent.",
     "codaSetAside": "Not yet — set it aside",
@@ -461,7 +464,7 @@
       "label": "the session",
       "what": {
         "title": "What this is",
-        "p1": "Zyme is a studio for digital collage, worked one card at a time. Each round deals a single card from a deck, and the card decides the one thing the bench can do — a brush to compose with, a frame to move, a bath to steep in. You work inside that constraint, then press **End**."
+        "p1": "Zyme is a studio for digital collage, worked one card at a time. Each round deals a single card from a deck, and the card decides the one thing the bench can do — a brush to compose with, a frame to move, a bath to steep in. You work inside that constraint, then draw from the deck — which commits the round and turns the next card in one gesture."
       },
       "arc": {
         "title": "The arc of a session",
@@ -474,13 +477,13 @@
       },
       "commitment": {
         "title": "Commitment",
-        "p1": "**End is permanent.** Every End bakes the canvas down to one flat image; there is no undo across rounds and no stepping back. Undo lives only inside a round, for brush strokes.",
+        "p1": "**The draw is permanent.** Every card you draw bakes the canvas down to one flat image; there is no undo across rounds and no stepping back. Undo lives only inside a round, for brush strokes.",
         "p2": "Closing the tab abandons the piece in progress. None of this is missing — commitment is the discipline the deck imposes."
       },
       "brush": {
         "title": "The brush",
         "p1": "Whenever an image is loose on the canvas, the mask brush is at hand: **erase** paints an image away, **restore** brings it back, **soften** feathers an edge. A mask belongs to its image — it travels through every move, scale, and rotation.",
-        "p2": "Cmd/Ctrl+Z takes back a stroke, Shift added redoes it — within the round only. No undo crosses an End."
+        "p2": "Cmd/Ctrl+Z takes back a stroke, Shift added redoes it — within the round only. No undo crosses a draw."
       },
       "deckCards": {
         "title": "Cards that work the deck",
@@ -489,7 +492,7 @@
       },
       "bearings": {
         "title": "Finding your way",
-        "p1": "The rhythm is two presses: **End** commits the round, **Deal** turns the next card. Enter presses whichever is lit.",
+        "p1": "The deck is the button: it waits at the foot of the panel, and one click on it commits the round and flips the next card face-up beside it. Enter does the same from the keyboard.",
         "p2": "Every control names its key when you hover it; the full map is behind **keys** in the header. **View the deck** shows what has been spent, in order — and what remains, in none."
       }
     },
@@ -535,7 +538,7 @@
     "close": "Click anywhere or press Esc to close.",
     "always": {
       "title": "Always",
-      "Enter": "The primary action — End, Deal, begin again. Never confirms the opening pick.",
+      "Enter": "The deck, from the keyboard — commit the round and turn the next card, or begin again. Never confirms the opening pick.",
       "Cmd/Ctrl + drag": "Pan — grab the canvas and move it, to work closer or farther.",
       "Hold Space + drag": "Pan, the same way. Whichever hold you reach for.",
       "Cmd/Ctrl + scroll": "Zoom toward the cursor.",
@@ -552,7 +555,7 @@
       "S": "Soften.",
       "X": "Swap Erase ↔ Restore.",
       "H": "Soft / hard.",
-      "Cmd/Ctrl+Z": "Undo a stroke — add Shift to redo. Never crosses an End."
+      "Cmd/Ctrl+Z": "Undo a stroke — add Shift to redo. Never crosses a draw."
     },
     "arranging": {
       "title": "Arranging",

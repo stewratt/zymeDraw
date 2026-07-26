@@ -138,7 +138,7 @@ is Deck's normal state.
 
 | Key | Action | Notes |
 |---|---|---|
-| **Enter** | Primary action | As today. Keep the opening-pick exception. **Now also the only Deal key** — Space moved to pan (§5.6, issue #53). |
+| **Enter** | Primary action | The deck click from the keyboard: it commits the round *and* turns the next card, in every phase that can advance (§5.7, issue #87). Keep the opening-pick exception. Space moved to pan (§5.6, issue #53). |
 | **Cmd/Ctrl + drag** | Pan the canvas | The canvas-navigation modifier: same key as the zoom, and the same gesture the 3D room already answers to (§5.6, issue #72). |
 | **Hold Space + drag** | Pan the canvas | Photoshop's grab hand, kept as an alias for the muscle memory. Space is no longer Deal — it's a pan-hold everywhere the working canvas is live (§5.6). |
 | **Cmd/Ctrl + scroll** | Zoom toward the cursor | Clamped 0.5×–8×; plain scroll does nothing (§5.6). |
@@ -161,8 +161,8 @@ attached to the canvas by Editor).
 | **0** | Reset to fit | Also reset automatically on every deal/End/phase transition. |
 
 **The one breaking change:** Deal moves off Space entirely and is
-**Enter-only** in every phase, freeing Space for the pan-hold. The two-press
-rhythm (End, then Deal) is unchanged — only the Deal key.
+**Enter-only** in every phase, freeing Space for the pan-hold. (The two-press
+rhythm this preserved was itself retired later — see §5.7.)
 
 **Viewport safety.** A leaked zoom/pan would bake wrong (CLAUDE.md §6:
 `toCanvasElement` bakes through the viewport). The universal bake now resets
@@ -171,6 +171,21 @@ End/commit is baked from the true unzoomed proxy no matter what left the view
 transformed. Etch already owns the viewport for its own zoom session; Editor
 suspends the global nav while any card with `ownsViewport` is live so the two
 never fight, and re-enables it when the card is gone.
+
+### 5.7 The deck is the button (issue #87, added 2026-07-26)
+
+The two-press rhythm is retired. There is no End button and no Deal button:
+a deck of card backs sits at the foot of the right panel and **one click on
+it commits the round and turns the next card**, which flips face-up in the
+slot beside it. The flip is the turn separator the second press used to be.
+
+| Key / gesture | Action | Notes |
+|---|---|---|
+| **Click the deck** | Commit + deal | Placement, the stash return, and every card round alike. From the waiting beat (nothing in hand) it simply deals. |
+| **Enter** | The same, from the keyboard | One binding for every advancing phase (`handleAdvance` in Editor). Still never confirms the opening pick; the Coda keeps its own click-only choice (§9.9), and the stash-return notice keeps its click-only acknowledgement. |
+
+Scope note: the deck is not the exit at the Coda — nothing follows it, so
+COMPLETE keeps Enter on "start a new composition".
 
 ### 5.2 The brush grammar (identical everywhere a brush exists)
 
@@ -317,3 +332,10 @@ These target the active/topmost placed object (Deeper: the frame rect).
     **non-destructive** — clearing the selection on arm would make every
     Cmd/Ctrl+Z deselect what you were working on, so only a real pan
     clears it.
+12. (2026-07-26, issue #87) **The deck is the button** (§5.7). The
+    two-press rhythm (End, then Deal) is **retired**: one click on the deck
+    commits and deals, and the drawn card's flip marks the turn boundary —
+    which is what the second press was really for. Enter keeps its place as
+    the same action from the keyboard, now bound once for every advancing
+    phase instead of one branch per phase. The two click-only beats stand:
+    the Coda choice and the stash-return notice.

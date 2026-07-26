@@ -185,9 +185,8 @@
   flex: 1 1 auto;
   min-height: 0;
   /* The panel itself never scrolls: content scrolls inside .panel-scroll and
-     the primary action button stays pinned below it — End and Deal land in
-     the exact same spot every round, so the two-press rhythm (End, then
-     Deal) is two clicks without moving the mouse. */
+     the deck dock stays pinned below it — the deck lands in the exact same
+     spot every round, so a whole session is worked from one click target. */
   overflow: hidden;
 }
 .panel-scroll {
@@ -439,6 +438,110 @@
 }
 .deck-panel button.commit:hover {
   background: var(--fill-hover);
+}
+
+/* ---------- the deck dock (issue #87) ---------- */
+
+/* The deck is the button. It sits pinned at the foot of the panel — the one
+   target the mouse returns to every round — with the card drawn from it lying
+   face-up alongside. The two columns are equal and fixed, so the deck stays
+   put whether or not a card lies beside it: placement, a card round and the
+   waiting beat all click in the same place. */
+.deck-dock {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.deck-pair {
+  display: grid;
+  /* minmax(0,·), not a bare 1fr: a card's min-content width is its art's
+     intrinsic width (745px), which would blow one column out and crush the
+     other. Same decoupling the canvas track needs. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: end;
+  /* Room for the offset backs of the stack, which sit outside the grid box. */
+  padding-bottom: 10px;
+}
+/* Cards in the dock fill their column; Card.jsx keeps the proportions. */
+.deck-dock .card {
+  width: 100%;
+  margin-inline: 0;
+}
+.deck-dock-line {
+  text-align: center;
+}
+.deck-stack {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+.deck-stack:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+/* The backs behind the top card, offset down-right: the deck reads as a
+   stack of cards rather than one. Purely decorative. */
+.deck-stack-under {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.deck-stack-under--1 {
+  transform: translate(3px, 4px);
+}
+.deck-stack-under--2 {
+  transform: translate(6px, 8px);
+}
+.deck-stack > .card {
+  position: relative;
+  transition: transform 140ms ease, border-color 140ms ease;
+}
+.deck-stack:not(:disabled):hover > .card {
+  transform: translateY(-5px);
+  border-color: var(--border-strong);
+}
+.deck-stack:not(:disabled):active > .card {
+  transform: translateY(-1px);
+}
+
+/* The deal, made visible: the drawn card's back and face share one box and
+   the wrapper turns over, so the card appears to come off the deck and flip
+   face-up in its slot. The flip is the turn separator — the rhythm the two
+   presses used to carry. Duration/easing are issue #59's to tune. */
+.deal-flip {
+  perspective: 900px;
+}
+.deal-flip-inner {
+  position: relative;
+  transform-style: preserve-3d;
+  animation: card-turn-over 560ms cubic-bezier(0.45, 0.05, 0.25, 1) both;
+}
+.deal-flip-inner > .card {
+  backface-visibility: hidden;
+}
+.deal-flip-inner > .card--back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+}
+@keyframes card-turn-over {
+  0% {
+    transform: translateX(48%) rotateY(180deg);
+  }
+  100% {
+    transform: translateX(0) rotateY(0deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .deal-flip-inner {
+    animation: none;
+  }
 }
 
 /* ---------- card face ---------- */
