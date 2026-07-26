@@ -7,6 +7,7 @@ import GuideSheet, { guideSeen } from './GuideSheet.jsx'
 import HistoryOverlay from './HistoryOverlay.jsx'
 import { TUNING, deckReducer, findableCounts, initialState, remainingCounts } from './deck.js'
 import { cardRegistry } from './cards/registry.jsx'
+import { StashReturnPreview } from './cards/stashReturn.jsx'
 import { placeImages, layerThumbUrl } from './placement.js'
 import { sampleImages } from './sampling.js'
 import { createMaskSession } from './brushCore.js'
@@ -753,6 +754,19 @@ function Editor({ config, deckSpec, onBackToSetup }) {
                 onConfirm={(placed, stashed) => dispatch({ type: 'CONFIRM_PICK', placed, stashed })}
               />
             )}
+          {/* The stash-return beat (issue #93): the held-back image fills the
+              canvas area before it becomes live, so the return is seen and
+              then accepted rather than discovered mid-placement. A PHASE
+              view, like the opening grid above and the plinth below — the
+              beat is a phase in deck.js (STASH_RETURN_NOTICE), never a
+              WORKING round, so this is not a branch on which card is in
+              hand. The page carries its own accept; there is no skip. */}
+          {state.phase === 'STASH_RETURN_NOTICE' && (
+            <StashReturnPreview
+              files={state.toPlace}
+              onAck={() => dispatch({ type: 'ACK_STASH_RETURN' })}
+            />
+          )}
           {CardOverlay && (
             <CardOverlay
               controls={cardControls}
@@ -797,7 +811,6 @@ function Editor({ config, deckSpec, onBackToSetup }) {
             exportState={exportState}
             onControlChange={handleControlChange}
             onAdvance={handleAdvance}
-            onAckStashReturn={() => dispatch({ type: 'ACK_STASH_RETURN' })}
             onAcceptCoda={() => dispatch({ type: 'ACCEPT_CODA' })}
             onDelayCoda={() => dispatch({ type: 'DELAY_CODA' })}
             onRestart={handleRestart}

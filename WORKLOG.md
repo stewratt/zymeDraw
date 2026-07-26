@@ -10,6 +10,39 @@ Choices: any decisions the executor made on its own.
 Files: the main files touched.
 ```
 
+## [09] #93 — Stash return deals into a preview page (2026-07-26)
+What: Drawing the Stash Return card now fills the canvas area with a full-view
+page — the card grids' chrome (head / fit area / foot), the stashed image shown
+whole, no grid and nothing to pick — so the image is seen before it becomes
+live. "Bring it in" sits in the page's foot and dispatches ACK_STASH_RETURN into
+the existing live placement session, unchanged.
+Where: PR #96.
+Choices: (1) Expressed as a PHASE view in Editor's canvas area
+(`state.phase === 'STASH_RETURN_NOTICE'`), rendered right beside the opening
+grid and the plinth — NOT as a card `Overlay` and not as an extension of #92's
+`entryGate`. The stash-return beat is already a phase in deck.js, never a
+WORKING round, so it has no registry lifecycle to gate; entryGate also carries a
+skip (draw to let the card pass), which the spec forbids here. This keeps
+Editor.jsx free of per-card branches: it branches on phase, as it already does.
+(2) The deck-click question: the dock is not rendered on this beat at all —
+inert would still show a deck that does nothing, and the two other full-page
+decisions (the opening pick, the Coda choice) both drop the dock and let the
+page own its one action. With no dock and no second button there is no
+interaction that could lose the image. (3) Following the opening pick's
+division, the page owns the action and the panel became a summary: the
+StashReturnNotice panel keeps the card face and its hint but no longer holds the
+button. (4) Still click-only — no Enter binding is added for this phase, so a
+fast double-press can't blow through the re-encounter (the rule #51/#88 set).
+(5) The image is displayed contained, not cropped square like a pick thumb —
+there is nothing to compare, so it is shown whole; new `.stash-preview-fit` /
+`.stash-preview` rules reuse `.grid-picker`'s page chrome. (6) Copy moved into
+`cardHints.stashReturn` (previewTitle / previewHint / previewFoot / confirm),
+matching how the stamp page keeps its own page copy; `deckPanel
+.stashReturnNoticeButton` is gone and the panel hint now points at the page.
+Files: frontend/src/editor/Editor.jsx, frontend/src/editor/DeckPanel.jsx,
+frontend/src/editor/cards/stashReturn.jsx, frontend/src/editor/editor.css,
+frontend/src/copy/uiText.json.
+
 ## [08] #92 — Closer and Deeper enter through a "Zoom In" button; drawing from the deck skips (2026-07-26)
 What: Added a generic `entryGate` field to the card registry shape and hung
 Closer and Deeper on it. A gated card deals into a resting state — no begin
