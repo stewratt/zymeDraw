@@ -187,6 +187,11 @@ slot beside it. The flip is the turn separator the second press used to be.
 Scope note: the deck is not the exit at the Coda — nothing follows it, so
 COMPLETE keeps Enter on "start a new composition".
 
+The Foundry runs the same dock (issue #98): its working rounds click and
+key the same way, on the same component. Its foundation phases — take the
+plate, continue to the type, the Press — keep their own primary buttons,
+because nothing is dealt at those crossings.
+
 ### 5.2 The brush grammar (identical everywhere a brush exists)
 
 The heart of the design. Learned once in the opening placement, it works
@@ -339,3 +344,12 @@ These target the active/topmost placed object (Deeper: the frame rect).
     the same action from the keyboard, now bound once for every advancing
     phase instead of one branch per phase. The two click-only beats stand:
     the Coda choice and the stash-return notice.
+13. (2026-07-26, issue #98) **The Foundry adopts the same dock.** Its
+    working rounds now end on one click of the *same component*
+    (`editor/DeckDock.jsx`), so the two wings can never drift apart. The
+    Foundry's Deal button (dead since #87 took its label) and its
+    "End — commit" button are gone, and **Space no longer deals there** —
+    Enter-only in both wings, as §5.6 already decided for the session. The
+    foundation phases (take the plate, continue to the type, the Press)
+    keep their own primary buttons: nothing is dealt at those crossings,
+    so there is no card to turn.

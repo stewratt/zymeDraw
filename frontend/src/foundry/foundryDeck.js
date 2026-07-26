@@ -11,7 +11,8 @@
 //   PANEL_PICK    place the image under the plate's alpha window (Phase 3)
 //   TYPE_SETTING  set the type above the plate (Phase 4)
 //   — the Press — seal the whole foundation to pixels (one commit)
-//   WORKING       graffiti rounds, deal/End, destructive
+//   WORKING       graffiti rounds, destructive — one click on the deck
+//                 commits the round in hand and deals the next (issue #98)
 //   COMPLETE      a Proof surfaced — the face is cast; export
 //
 // Phase-1 hollowness still standing: panel/type are pass-through, and the

@@ -2,20 +2,32 @@
 //   COMMISSION / PLATE_DEAL → a summary; the pick overlays live on the canvas
 //   PANEL_PICK / TYPE_SETTING → the live-foundation phases (stubs until
 //                               Phases 3–4) + Continue / the Press
-//   WORKING     → Deal, or the revealed card + Tools + End
+//   WORKING     → the deck dock: the drawn card + its Tools above it, or the
+//                 waiting beat with nothing in hand
 //   COMPLETE    → the Proof: export status + cast another
+//
+// The deck is the button here too (issue #98): the working rounds end on one
+// click of the same dock the composition wing uses (editor/DeckDock.jsx) —
+// it commits the round and turns the next card over, with the flip as the
+// separator. There is no Deal button and no End button. The foundation
+// phases keep their own primary buttons: nothing is dealt at the take, the
+// continue, or the Press, so there is no card to turn there.
 //
 // It knows nothing about specific cards — it renders whatever Tools
 // component the current foundryRegistry entry provides.
 
+import { useState } from 'react'
 import { foundryProgressLabel } from './foundryDeck.js'
 import Card from '../editor/Card.jsx'
+import CardZoom from '../editor/CardZoom.jsx'
+import DeckDock from '../editor/DeckDock.jsx'
 import { ArrangeMaskControls, maskHint } from '../editor/cards/maskControls.jsx'
 import { UI, fmt } from '../copy/uiText.js'
 import { rich } from '../copy/rich.jsx'
 
 // F is Foundry's own copy; T is Deck's panel copy — the shared studio verbs
-// (End — commit, Deal, THIS ROUND…) deliberately read the same in both apps.
+// (THIS ROUND, Committing…, and the dock's own draw lines) deliberately read
+// the same in both apps.
 const F = UI.foundry
 const T = UI.deckPanel
 
@@ -51,8 +63,7 @@ function FoundryPanel({
   onControlChange,
   onEndPanel,
   onPress,
-  onDeal,
-  onCommit,
+  onAdvance,
   onRestart,
   onOpenOutput
 }) {
@@ -197,20 +208,24 @@ function FoundryPanel({
           ready={ready}
           committing={committing}
           onControlChange={onControlChange}
-          onCommit={onCommit}
+          onAdvance={onAdvance}
         />
       ) : (
+        // Nothing in hand: the beat straight after the Press, and the state
+        // the cast rests in if a deal ever finds an empty deck. One click on
+        // the deck draws — there is nothing to commit first. (The count line
+        // is the dock's own; the panel keeps only where the run stands.)
         <aside className="deck-panel">
           <div className="panel-scroll">
             <h2>{F.working.title}</h2>
-            <p className="hint">
-              {fmt(T.cardsRemain, { count: state.deck.length, plural: state.deck.length === 1 ? '' : 's' })}
-            </p>
             <p className="hint">{foundryProgressLabel(state)}</p>
           </div>
-          <button type="button" className="primary" title="Space" onClick={onDeal}>
-            {T.deal}
-          </button>
+          <DeckDock
+            deckCount={state.deck.length}
+            hint={T.deckHintIdle}
+            actionLabel={T.deckDrawIdle}
+            onDraw={onAdvance}
+          />
         </aside>
       )
 
@@ -339,15 +354,22 @@ function InkControl({ inkTarget, onInk }) {
   )
 }
 
-function RoundPanel({ state, entry, controls, info, ready, committing, onControlChange, onCommit }) {
+// The card in hand: its name and Tools stack above the dock, the face itself
+// lies beside the deck it came out of — the composition wing's CardRevealed,
+// minus the mechanics the Foundry doesn't have (no stash, no Delay, and no
+// commit gate: every graffiti card ends on the deck click).
+function RoundPanel({ state, entry, controls, info, ready, committing, onControlChange, onAdvance }) {
   const card = state.currentCard
   const ToolsComponent = entry?.Tools
   const commitDisabled = !ready || committing
+  const [zoomed, setZoomed] = useState(false)
   return (
     <aside className="deck-panel">
+      {zoomed && (
+        <CardZoom id={card.id} label={card.label} kind={card.kind} onClose={() => setZoomed(false)} />
+      )}
       <div className="panel-scroll">
         <h2>{T.roundTitle}</h2>
-        <Card id={card.id} label={card.label} kind={card.kind} size="panel" flip />
         <p className="card-name">{card.label}</p>
         <div className="tool-area">
           {ToolsComponent ? (
@@ -362,15 +384,19 @@ function RoundPanel({ state, entry, controls, info, ready, committing, onControl
           )}
         </div>
       </div>
-      <button
-        type="button"
-        className="primary commit"
-        title="Enter"
-        onClick={onCommit}
+      <DeckDock
+        card={card}
+        // A card arrives on the round that deals it, so the round count and
+        // the id together are a different string for every card that turns
+        // over — including the same design dealt twice in one cast.
+        dealKey={`${state.roundsDone}:${card.id}`}
+        deckCount={state.deck.length}
+        hint={committing ? T.committing : !ready ? T.settingUp : T.deckHintActive}
+        actionLabel={T.deckDrawAction}
         disabled={commitDisabled}
-      >
-        {committing ? T.committing : commitDisabled ? T.settingUp : T.endCommit}
-      </button>
+        onDraw={onAdvance}
+        onZoomCard={() => setZoomed(true)}
+      />
     </aside>
   )
 }
