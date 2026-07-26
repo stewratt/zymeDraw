@@ -19,12 +19,16 @@ export const beginCloser = hooks.begin
 export const commitCloser = hooks.commit
 export const cleanupCloser = hooks.cleanup
 
-export function CloserTools({ ready }) {
-  if (!ready) return <span className="hint">{UI.shared.preparing}</span>
+// `entered` is false while the card rests behind its entry gate (issue #92):
+// the description stands either way, but what the draw does changes — before
+// entry it lets the card pass, after entry it commits the re-frame.
+export function CloserTools({ ready, entered }) {
+  if (entered && !ready) return <span className="hint">{UI.shared.preparing}</span>
   return (
     <div className="card-tools">
       <p className="hint">
-        {CARD_TEXT.closer.description} {UI.cardHints.closer.commitNote}
+        {CARD_TEXT.closer.description}{' '}
+        {entered ? UI.cardHints.closer.commitNote : UI.cardEntry.restingNote}
       </p>
     </div>
   )

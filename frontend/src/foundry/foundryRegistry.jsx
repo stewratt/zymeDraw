@@ -20,6 +20,9 @@
 //
 // Not yet carried over: `deckActions` (no deck-facing cards in Foundry) and
 // the rest of the graft family (Ghost, Stain) + Deeper — a later wave.
+// Nor `entryGate` (issue #92): no card in the roster below declares one, and
+// FoundryPanel/FoundryEditor would need the same generic treatment Deck's got
+// — the resting state, the entry button, the skip — before one is added.
 
 import { cardRegistry } from '../editor/cards/registry.jsx'
 

@@ -56,6 +56,22 @@ function Editor({ config, deckSpec, onBackToSetup }) {
   // can't bake a half-loaded arrangement.
   const [placementReady, setPlacementReady] = useState(true)
 
+  // The entry gate (registry `entryGate`, issue #92): a gated card deals
+  // into a resting state and only begins when its entry button is pressed.
+  // This holds the CARD OBJECT whose gate was opened rather than a boolean,
+  // so it resets itself the moment the next card turns over — the reducer
+  // hands out a distinct object per deal, which is why the begin effect can
+  // already key on it.
+  const [enteredCard, setEnteredCard] = useState(null)
+
+  // The one flag every generic consumer reads: has this card's session begun?
+  // Always true for a card with no gate, so nothing else in Editor needs to
+  // know that gates exist.
+  const cardEntered =
+    !state.currentCard ||
+    !cardRegistry[state.currentCard.id]?.entryGate ||
+    enteredCard === state.currentCard
+
   // The images being placed this session, top-to-bottom, for the layers
   // panel. Each: { id, name, thumb, img (the Fabric object) }. Reordering
   // restacks the Fabric objects; only meaningful with two or more images.
@@ -319,6 +335,18 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     if (entry.randomize) defaults = entry.randomize(defaults)
     setCardControls(defaults)
     setCardInfo({})
+
+    // The entry gate (issue #92): the card is dealt but its session has not
+    // begun — no begin hook, so the canvas rests on the committed piece
+    // exactly as the deal found it. Ready all the same: the deck stays
+    // clickable, and there it means skip (commitCurrentCard). Pressing the
+    // entry button re-runs this effect with the gate open.
+    if (!cardEntered) {
+      cardSessionRef.current = null
+      setCardReady(true)
+      return
+    }
+
     setCardReady(false)
 
     let cancelled = false
@@ -352,7 +380,7 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     return () => {
       cancelled = true
     }
-  }, [state.currentCard, imageList])
+  }, [state.currentCard, imageList, cardEntered])
 
   // Re-fit the camera on every card change and phase transition so no zoom/pan
   // ever leaks between rounds (the bake also resets — this keeps the *screen*
@@ -417,7 +445,11 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     committingRef.current = true
     setCommitting(true)
     try {
-      if (canvas) {
+      // A gated card whose gate never opened (issue #92) has begun nothing:
+      // no session to finalize and a canvas nobody touched, so the whole
+      // commit — hook, universal bake, state capture — is skipped and the
+      // draw is simply the next deal. Same shape as `skipBake`, one round up.
+      if (canvas && cardEntered) {
         if (entry?.commit) {
           await entry.commit({
             canvas,
@@ -520,6 +552,7 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     cardSessionRef.current = null
     setCardControls({})
     setCardInfo({})
+    setEnteredCard(null)
     setPlacementReady(true)
     setStates([])
     setExportState({ status: 'idle', savedPath: null, error: null, thumbDataUrl: null })
@@ -537,8 +570,9 @@ function Editor({ config, deckSpec, onBackToSetup }) {
 
   const currentEntry = state.currentCard ? cardRegistry[state.currentCard.id] : null
   // Cards can declare a canvas-area overlay (Ghost's grid pick) — rendered
-  // generically, same props as Tools.
-  const CardOverlay = state.phase === 'WORKING' ? currentEntry?.Overlay : null
+  // generically, same props as Tools. Never before an entry gate opens: the
+  // overlay belongs to the session, and the session hasn't started.
+  const CardOverlay = state.phase === 'WORKING' && cardEntered ? currentEntry?.Overlay : null
 
   // What a deck-facing card may know and do (v4 Wave 2). deckView carries
   // selector outputs only — the legibility policy stays enforced in deck.js.
@@ -567,10 +601,16 @@ function Editor({ config, deckSpec, onBackToSetup }) {
   const bindings = []
   const inPlacement = state.phase === 'PLACEMENT' || state.phase === 'STASH_RETURN'
   const cardUp = state.phase === 'WORKING' && !!state.currentCard
+  // A card in hand whose session is actually live: everything that reaches
+  // into the session (its accents, the brush and arrange grammars, its
+  // undo/redo) hangs off this, so a card resting behind its entry gate binds
+  // nothing. Enter stays on cardUp — it is the deck click, and before the
+  // gate opens the deck click is the skip.
+  const cardLive = cardUp && cardEntered
 
   // Card accents (§5.4): declared in the registry (`hotkeys`), live for the
   // whole card — even before ready (Etch's Enter advances the frame stage).
-  if (cardUp) {
+  if (cardLive) {
     for (const hk of currentEntry?.hotkeys ?? []) {
       bindings.push({
         ...hk,
@@ -607,7 +647,7 @@ function Editor({ config, deckSpec, onBackToSetup }) {
         { canArrange: true, hasMode: true, hasHardness: true }
       )
     )
-  } else if (cardUp && cardReady && currentEntry?.controls?.includes('size')) {
+  } else if (cardLive && cardReady && currentEntry?.controls?.includes('size')) {
     bindings.push(
       ...brushBindings(
         () => cardControls,
@@ -626,7 +666,7 @@ function Editor({ config, deckSpec, onBackToSetup }) {
   // interactive the transform simply finds no target.
   const arranging = inPlacement
     ? placementReady && maskControls.mode === 'arrange'
-    : cardUp && (!currentEntry?.controls?.includes('mode') || cardControls.mode === 'arrange')
+    : cardLive && (!currentEntry?.controls?.includes('mode') || cardControls.mode === 'arrange')
   if (arranging) bindings.push(...arrangeBindings(getCanvas))
 
   // Global (§5.1), including the one Cmd/Ctrl family we own. Enter never
@@ -637,7 +677,7 @@ function Editor({ config, deckSpec, onBackToSetup }) {
       { key: 'z', mod: true, shift: false, run: () => maskSessionRef.current?.undo() },
       { key: 'z', mod: true, shift: true, run: () => maskSessionRef.current?.redo() }
     )
-  } else if (cardUp) {
+  } else if (cardLive) {
     bindings.push(
       { key: 'z', mod: true, shift: false, run: () => cardInfo.undo?.() },
       { key: 'z', mod: true, shift: true, run: () => cardInfo.redo?.() }
@@ -741,6 +781,8 @@ function Editor({ config, deckSpec, onBackToSetup }) {
             controls={cardControls}
             info={cardInfo}
             ready={cardReady}
+            entered={cardEntered}
+            onEnterCard={() => setEnteredCard(state.currentCard)}
             committing={committing}
             placementReady={placementReady}
             placedLayers={placedLayers}

@@ -10,6 +10,41 @@ Choices: any decisions the executor made on its own.
 Files: the main files touched.
 ```
 
+## [08] #92 — Closer and Deeper enter through a "Zoom In" button; drawing from the deck skips (2026-07-26)
+What: Added a generic `entryGate` field to the card registry shape and hung
+Closer and Deeper on it. A gated card deals into a resting state — no begin
+hook, no Overlay, no card hotkeys — with its entry button ("Zoom In") pinned at
+the foot of the description panel just above the deck dock. Drawing from the
+deck before entry is a skip: no commit hook, no universal bake, no state
+capture, next card. Pressing Zoom In runs the existing frame session unchanged.
+Where: PR #95.
+Choices: (1) The pre-entry resting state shows the committed piece untouched —
+no frame rect, nothing added — matching the other resting states (AwaitingDeal,
+the beat after a Coda is set aside); begin simply never runs, so this needed no
+code of its own. (2) Gate state is held as the entered CARD OBJECT
+(`enteredCard`), not a boolean, so it resets itself when the next card turns
+over — the reducer hands out a distinct object per deal, which is why the begin
+effect already keys on it. (3) The entry button uses the existing
+`.deck-panel button.primary` style and sits between `.panel-scroll` and the
+dock, the same slot the Coda's accept button uses — no new CSS. (4) The skip
+still dispatches COMMIT, so a skipped card is recorded as spent in the deck
+overlay, like Delay and Searcher which also commit nothing. (5) Enter stays
+bound to the deck click pre-entry (it is the skip); only session-facing
+bindings — card accents, brush/arrange grammars, card undo/redo — wait for the
+gate, via a new `cardLive` flag. (6) Tools receive a generic `entered` prop
+(always true for an ungated card) so each card's own copy can speak to its
+resting state: the pair now shows a shared `cardEntry.restingNote` instead of
+their commitNote until entry. (7) Copy: `cardEntry.zoomIn` / `restingNote` plus
+`deckPanel.deckHintGate` / `deckDrawGate`, all in uiText.json. (8) Noted in
+foundryRegistry.jsx that `entryGate` is not carried over — no card in the
+Foundry roster declares one, and FoundryPanel would need the same generic
+treatment first.
+Files: frontend/src/editor/Editor.jsx, frontend/src/editor/DeckPanel.jsx,
+frontend/src/editor/cards/registry.jsx,
+frontend/src/editor/cards/frameCardFactory.jsx,
+frontend/src/editor/cards/closer.jsx, frontend/src/editor/cards/deeper.jsx,
+frontend/src/copy/uiText.json, frontend/src/foundry/foundryRegistry.jsx.
+
 ## [07] #91 — Flip the dock: deck on the left, drawn card on the right (2026-07-26)
 What: Swapped the two dock columns so the deck sits on the left and the card
 drawn from it lies face-up on the right. The stack's two under-cards now splay
