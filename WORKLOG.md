@@ -56,11 +56,25 @@ real face in the Foundry** — the id `stashReturn` is the permanent key, so
 replacing `assets/cards/stashReturn.png` is the whole job.
 (7) `stashReturned` stays (the record that the stash actually came home);
 `stashShuffled` is the new guard that the card has joined the deck.
+(8) **Castable in the Foundry** (added 2026-07-26, Stew): the placeholder in
+(6) is only replaceable if the face can be commissioned, so `stashReturn`
+joins `COMMISSIONS` alongside the Coda. Two values it lacked, both Stew's
+call: the type line reads **stash** (its own family — `Card.jsx`'s text face
+already calls it "the stash"), and the mark is the **singular** diamond punch,
+the Coda's class, on the grounds that both exist at most once and are beats in
+the session's structure rather than modifications you can stack. Family is
+assigned in `foundryDeck.js` rather than on the `deck.js` descriptor, mirroring
+the Coda — family is a Foundry concern (it prints as the type line), and Deck's
+own `cardFamily` image/deck split would misread it. The name and description
+needed nothing: `uiText.json` already carried them and `typeLayer.js` pulls the
+description by commission id.
 Files: frontend/src/editor/deck.js · frontend/src/editor/cards/stashReturn.jsx
 (new) · frontend/src/editor/cards/registry.jsx · frontend/src/editor/DeckPanel.jsx
 · frontend/src/editor/Editor.jsx · frontend/src/editor/cards/searcher.jsx ·
 frontend/src/editor/Card.jsx · frontend/src/copy/uiText.json ·
-frontend/src/assets/cards/stashReturn.png (new) · CLAUDE.md
+frontend/src/assets/cards/stashReturn.png (new) · CLAUDE.md ·
+frontend/src/foundry/foundryDeck.js · frontend/src/foundry/rarity.js ·
+frontend/src/foundry/FoundryEditor.jsx · card_maker.md
 
 ## [05] #87 — The deck is the button — one click commits and deals, with a flip (2026-07-26)
 What: Retired the two-press rhythm. A deck of card backs now sits in a dock

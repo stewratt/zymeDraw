@@ -15,8 +15,9 @@
 // It knows nothing about specific cards — it renders whatever Tools
 // component the current registry entry provides.
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { progressLabel } from './deck.js'
+import { playCardFlip } from './sound.js'
 import Card from './Card.jsx'
 import CardZoom from './CardZoom.jsx'
 import PlacementLayers from './PlacementLayers.jsx'
@@ -221,6 +222,11 @@ function DeckDock({
 // of the deck. Motion only — both sides render through Card.jsx, which keeps
 // owning the geometry. Duration and easing are issue #59's to tune.
 function DealtCard({ card, onZoom }) {
+  // `dealKey` remounts this on every deal, so mounting *is* the turn over —
+  // the sound rides the animation rather than the click that started it.
+  useEffect(() => {
+    playCardFlip()
+  }, [])
   return (
     <div className="deal-flip">
       <div className="deal-flip-inner">
@@ -363,6 +369,11 @@ function AwaitingDeal({ state, onAdvance, onOpenHistory }) {
 function CodaChoice({ state, onAcceptCoda, onDelayCoda }) {
   const card = state.currentCard
   const [zoomed, setZoomed] = useState(false)
+  // The Coda is dealt like any other card — it just lands here instead of in
+  // the dock, and the turn should not be the one silent one.
+  useEffect(() => {
+    playCardFlip()
+  }, [])
   return (
     <aside className="deck-panel">
       {zoomed && (

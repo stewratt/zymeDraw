@@ -5,7 +5,7 @@
 // face; the descriptor value rides through the commission as `rarity`.
 //
 // The mark is small and materially rendered — a punch, not a star rating:
-//   singular  a hard diamond punch (the Coda's own class, by family)
+//   singular  a hard diamond punch (by family: the Coda and the Stash Return)
 //   scarce    a filled blot, procedurally irregular per cast (strange/oblique)
 //   common    the same blot left open — an unfilled ring (legible/everyday)
 // Vector Fabric objects, so the Press bakes them crisp at 3×.
@@ -14,8 +14,12 @@ import * as fabric from 'fabric'
 
 const INK = '#141414'
 
+// The two singular families: one of each exists at most, and each is a beat
+// in the session's structure rather than a modification you can stack.
+const SINGULAR_FAMILIES = new Set(['coda', 'stash'])
+
 export function rarityTier(commission) {
-  if (commission.family === 'coda') return 'singular'
+  if (SINGULAR_FAMILIES.has(commission.family)) return 'singular'
   return commission.rarity === 'scarce' ? 'scarce' : 'common'
 }
 

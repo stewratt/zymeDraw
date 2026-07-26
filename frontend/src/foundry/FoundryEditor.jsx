@@ -878,6 +878,10 @@ function FoundryEditor({ onBackToSetup }) {
 
 // ---- arc overlays (session structure, not card behavior) ----
 
+// Families that aren't modifications render as their own kind of tile, the
+// way Deck renders them — a commission should look like the card it casts.
+const COMMISSION_KIND = { coda: 'death', stash: 'stash' }
+
 // The commission grid: every real Deck design as a card tile. Rendered over
 // the canvas area like the opening pick — the faces ARE the decision. (The
 // run size is no tile property: it's commissioned later, at the plate.)
@@ -893,7 +897,7 @@ function CommissionPick({ onChoose, onDeal }) {
               <Card
                 id={c.id}
                 label={c.label}
-                kind={c.family === 'coda' ? 'death' : 'mod'}
+                kind={COMMISSION_KIND[c.family] ?? 'mod'}
                 size="tile"
                 onClick={() => onChoose(c.id)}
                 title={`Cast ${c.label}`}
