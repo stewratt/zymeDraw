@@ -208,6 +208,12 @@
       "windowOpen": "The window is open{readingClause}. Drag, scale, rotate the stencil; the redraw shows through wherever it sits.",
       "readingClause": " — this image {reading}",
       "subject": "the styled fragments"
+    },
+    "stashReturn": {
+      "previewTitle": "THE STASH RETURNS",
+      "previewHint": "The image you held back, before it lands. Look at it against what the rounds since have made — then bring it in and place it.",
+      "previewFoot": "It comes home either way — there is no putting it back.",
+      "confirm": "Bring it in"
     }
   },
   "foundry": {
@@ -388,8 +394,7 @@
     "placementTitle": "PLACEMENT",
     "placementHint": "Arrange your image.",
     "stashReturnNoticeTitle": "THE STASH RETURNS",
-    "stashReturnNoticeHint": "The card has come up: the image you held back returns — met by a piece that has moved on without it. Bring it in when you're ready to place it.",
-    "stashReturnNoticeButton": "Bring it in",
+    "stashReturnNoticeHint": "The card has come up: the image you held back returns — met by a piece that has moved on without it. It waits on the page; bring it in when you're ready to place it.",
     "stashReturnTitle": "STASHED IMAGE RETURN",
     "stashReturnHint": "Your stashed image comes back — arrange it like the opening.",
     "arrangeHint": "Drag to move, corner handles to scale, top handle to rotate.",

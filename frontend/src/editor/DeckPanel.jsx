@@ -49,7 +49,6 @@ function DeckPanel({
   exportState,
   onControlChange,
   onAdvance,
-  onAckStashReturn,
   stashTone,
   onStashToneChange,
   onAcceptCoda,
@@ -64,8 +63,10 @@ function DeckPanel({
     case 'STASH_RETURN_NOTICE':
       // The beat belongs to the Stash Return card, so its panel lives with
       // the card (cards/stashReturn.jsx) — this is a phase, not a branch on
-      // which card is in hand.
-      return <StashReturnNotice card={state.currentCard} onAck={onAckStashReturn} />
+      // which card is in hand. No dock and no button: the preview page over
+      // the canvas holds the image and the one action (issue #93), the way
+      // the opening grid holds the pick and its confirm.
+      return <StashReturnNotice card={state.currentCard} />
     case 'PLACEMENT':
     case 'STASH_RETURN':
       return (
