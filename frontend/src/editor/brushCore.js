@@ -54,7 +54,7 @@
 // History never survives an End — commitment stays absolute.
 
 import * as fabric from 'fabric'
-import { ARTBOARD_WIDTH, ARTBOARD_HEIGHT } from './CanvasStage.jsx'
+import { MASTER_SCALE } from './masterRaster.js'
 
 // One range for every size slider AND the shift+drag clamp.
 export const BRUSH_SIZE_MIN = 6
@@ -617,10 +617,14 @@ export function createRevealSession(canvas, { applyEffect, master, getControls, 
     top: 0,
     originX: 'left',
     originY: 'top',
-    // Master-res composite → artboard footprint (scene units), NOT the buffer:
-    // in fill mode the buffer is the workspace, which would stretch it (#53).
-    scaleX: ARTBOARD_WIDTH / composite.width,
-    scaleY: ARTBOARD_HEIGHT / composite.height,
+    // Master-res composite → artboard footprint, seated exactly as the master
+    // itself is (masterRaster.showMaster): 1/MASTER_SCALE is one artboard unit
+    // per scene pixel. Deriving it from MASTER_SCALE — not from the buffer, and
+    // not from Deck's artboard constants — is what keeps it right in BOTH
+    // wings: the buffer is the whole workspace in Deck's fill mode (#53), and
+    // the Foundry's artboard is the 745×1040 card face, not 800×1000 (#97).
+    scaleX: 1 / MASTER_SCALE,
+    scaleY: 1 / MASTER_SCALE,
     selectable: false,
     evented: false
   })
@@ -766,10 +770,11 @@ export function createStampSession(canvas, { stampEl, master, getControls, onHis
     top: 0,
     originX: 'left',
     originY: 'top',
-    // Master-res composite → artboard footprint (scene units), NOT the buffer:
-    // in fill mode the buffer is the workspace, which would stretch it (#53).
-    scaleX: ARTBOARD_WIDTH / composite.width,
-    scaleY: ARTBOARD_HEIGHT / composite.height,
+    // Same seating as the reveal overlay above: 1/MASTER_SCALE, the master's
+    // own artboard footprint, so this is correct on the pasteboard (#53) and
+    // on the Foundry's card-face artboard alike (#97).
+    scaleX: 1 / MASTER_SCALE,
+    scaleY: 1 / MASTER_SCALE,
     selectable: false,
     evented: false
   })

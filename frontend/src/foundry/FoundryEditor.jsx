@@ -33,6 +33,19 @@ import './foundry.css'
 // Foundry canvas geometry (card_maker.md §2): the working canvas IS the
 // deliverable's size — 745×1040, the exact face Card.jsx renders — with a
 // master at the same 3× scale Deck uses.
+//
+// NAVIGATION MODEL (Stew's ruling, issue #97): the Foundry does NOT get the
+// pasteboard camera. Its canvas is FIXED — no `fill` on CanvasStage (the
+// buffer is the card face, CSS-scaled to fit), no attachCanvasNav, and the
+// viewport transform stays identity for the whole session. A card face is a
+// small fixed-format object you look at whole; the pan/zoom lens earns its
+// keep on Deck's 800×1000 artboard, not here. Two consequences shared code
+// must keep honoring: buffer == artboard here (so `canvas.getWidth()` is a
+// legitimate artboard read in FOUNDRY-only modules, but never in the shared
+// editor/ ones), and getZoom() is always 1 (screen pixels == scene units, so
+// the screen-constant brush of #71 needs nothing extra). Shared modules must
+// stay dimension-agnostic instead of assuming Deck's 800×1000 — that
+// assumption is exactly what broke the brush in #97.
 export const FACE_WIDTH = 745
 export const FACE_HEIGHT = 1040
 export const FACE_MASTER_WIDTH = FACE_WIDTH * 3 // 2235
