@@ -45,7 +45,9 @@ async function validateFolder(p, mode, { allowUrl = false } = {}) {
     }
     if (!remote.base) return { ok: false, error: 'That does not look like a valid URL.' }
     try {
-      const filenames = await listImages(remote)
+      // Never accept a URL on the strength of a cached listing — Setup has to
+      // prove the server is answering right now.
+      const filenames = await listImages(remote, { fresh: true })
       if (filenames.length === 0) {
         return { ok: false, error: 'That URL is readable but holds no images.' }
       }
@@ -175,7 +177,7 @@ app.get('/api/images/sample', async (req, res) => {
 app.get('/api/images/:filename', async (req, res) => {
   const { inputFolder } = await loadConfig()
   if (!inputFolder) return res.status(400).send('Input folder is not configured.')
-  await sendImage(inputSource(inputFolder), req.params.filename, res)
+  await sendImage(inputSource(inputFolder), req.params.filename, req, res)
 })
 
 // ---- Foundry: the output folder as an art source (Phase 3) ----
