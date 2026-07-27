@@ -7,6 +7,13 @@
      (.plinth, .grid-picker) keep their opaque --bg mask. Revert to
      `background: var(--bg)` to undo. */
   background: transparent;
+  /* The brush cursor is an absolutely-positioned div (brushCore.js) that spills
+     past the canvas when the brush is large. Unclipped, that spill reaches the
+     document, the page grows a scrollbar, the scrollbar's width reflows the
+     grid, the canvas re-fits smaller, the spill stops — a flicker loop. Clip at
+     the shell root: the circle still paints over the header and panel as it
+     always has, and is only cut at the window edge. */
+  overflow: clip;
 }
 
 /* ---------- header ---------- */
