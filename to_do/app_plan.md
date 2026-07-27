@@ -191,7 +191,28 @@ drips images into it) before building anything active.
    client machine — Samba/NFS/syncthing — and Setup points at the mount.
    This works *today* and should be the documented baseline. Latency and
    mount hygiene are the OS's problem, not ZYME's.
-2. **ZYME lives on the server (small code).** Run the productionized
+2. **HTTP folder — a URL in the input field (built 2026-07-26, #107).**
+   Setup accepts `http://host:9000/favorites/` wherever it accepts a path;
+   the backend lists and streams from that server instead of the disk. No
+   mount, no OS-level plumbing, works over Tailscale as-is. This turned
+   out cheaper than option 1 in practice — nothing to configure on the
+   client — and it is now the recommended way to tap a remote stream.
+
+   *The contract for a folder that wants to be readable:* publish an
+   `index.json` beside the images —
+   `{ "updated": ..., "count": N, "images": [{ "file": "a.jpg" }, ...] }`
+   (bare strings and a `name` key work too). Without one the backend
+   falls back to scraping `<a href>` out of a vanilla directory listing,
+   which covers Python `http.server`, nginx, Apache and Caddy autoindex.
+   Flat folders only, no recursion. Listings are cached 30s — short
+   enough that a folder still being filled feeds later grid picks.
+
+   *Why proxied, not redirected:* a cross-origin image taints the canvas
+   and `toDataURL()` throws, which would break export at the Coda — the
+   one action a session can't retry. Streaming through the backend keeps
+   every image same-origin, and works with servers that send no CORS
+   headers. The export folder stays local: we write and open files there.
+3. **ZYME lives on the server (small code).** Run the productionized
    build (Track 3, Option A) on the image server itself; Express binds
    to the LAN, anyone opens a browser. The input folder is a local path
    — no mount at all. Needs: a `--host` story, and a think about

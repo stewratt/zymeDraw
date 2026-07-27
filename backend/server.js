@@ -5,6 +5,7 @@ import path from 'path'
 import os from 'os'
 import { fileURLToPath, pathToFileURL } from 'url'
 import { loadConfig, saveConfig } from './config-store.js'
+import { IMAGE_EXTENSIONS, parseRemote, listImages, sendImage } from './image-source.js'
 
 const app = express()
 // Default JSON body limit is 100kb. The /api/export payload is a base64-
@@ -15,8 +16,6 @@ app.use(express.json({ limit: '64mb' }))
 // LAN (pick a port on the image server) and Electron (pick a free port at
 // launch). Plain `npm run dev` never sets it.
 const PORT = Number(process.env.PORT) || 5174
-
-const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp'])
 
 // "~/Pictures/foo" → "/home/you/Pictures/foo" (or the equivalent on
 // Mac/Windows). Saves users from having to type absolute home paths.
@@ -31,9 +30,31 @@ function expandTilde(p) {
 
 // One validator for both input and output folders. `mode` is 'read' or 'write'.
 // Returns `{ ok: true, resolved }` or `{ ok: false, error }`.
-async function validateFolder(p, mode) {
+//
+// `allowUrl` is opt-in per caller, not implied by 'read': the input folder can
+// be an http(s) folder, but the plates / cardsets / panel-art folders are read
+// with fs.readdir at their own routes and must stay local.
+async function validateFolder(p, mode, { allowUrl = false } = {}) {
   if (!p || typeof p !== 'string' || !p.trim()) {
     return { ok: false, error: 'Path is required.' }
+  }
+  const remote = parseRemote(p)
+  if (remote) {
+    if (!allowUrl) {
+      return { ok: false, error: 'This folder must be a folder on this machine, not a URL.' }
+    }
+    if (!remote.base) return { ok: false, error: 'That does not look like a valid URL.' }
+    try {
+      // Never accept a URL on the strength of a cached listing — Setup has to
+      // prove the server is answering right now.
+      const filenames = await listImages(remote, { fresh: true })
+      if (filenames.length === 0) {
+        return { ok: false, error: 'That URL is readable but holds no images.' }
+      }
+      return { ok: true, resolved: remote.base.href }
+    } catch (err) {
+      return { ok: false, error: `Cannot read that URL — ${err.message}.` }
+    }
   }
   const resolved = path.resolve(expandTilde(p.trim()))
   try {
@@ -67,7 +88,8 @@ app.get('/api/config', async (req, res) => {
 app.post('/api/config', async (req, res) => {
   const { inputFolder, outputFolder } = req.body ?? {}
   const [input, output] = await Promise.all([
-    validateFolder(inputFolder, 'read'),
+    // Only the input side may be a URL: exports are written and opened on disk.
+    validateFolder(inputFolder, 'read', { allowUrl: true }),
     validateFolder(outputFolder, 'write')
   ])
   if (!input.ok || !output.ok) {
@@ -105,17 +127,19 @@ app.post('/api/decks', async (req, res) => {
   res.json({ ok: true, decks: saved.decks })
 })
 
+// The input folder is a local folder or an http(s) one; image-source.js owns
+// that fork, so these three routes read the same either way.
+function inputSource(inputFolder) {
+  return parseRemote(inputFolder) ?? { kind: 'local', root: path.resolve(expandTilde(inputFolder)) }
+}
+
 app.get('/api/images', async (req, res) => {
   const { inputFolder } = await loadConfig()
   if (!inputFolder) {
     return res.status(400).json({ ok: false, error: 'Input folder is not configured.' })
   }
   try {
-    const entries = await fs.readdir(inputFolder, { withFileTypes: true })
-    const filenames = entries
-      .filter((e) => e.isFile() && IMAGE_EXTENSIONS.has(path.extname(e.name).toLowerCase()))
-      .map((e) => e.name)
-      .sort()
+    const filenames = await listImages(inputSource(inputFolder))
     res.json({ ok: true, filenames })
   } catch (err) {
     res.status(400).json({ ok: false, error: `Cannot read input folder: ${err.message}` })
@@ -132,10 +156,7 @@ app.get('/api/images/sample', async (req, res) => {
   }
   const n = Math.max(1, Math.min(64, parseInt(req.query.n, 10) || 1))
   try {
-    const entries = await fs.readdir(inputFolder, { withFileTypes: true })
-    const filenames = entries
-      .filter((e) => e.isFile() && IMAGE_EXTENSIONS.has(path.extname(e.name).toLowerCase()))
-      .map((e) => e.name)
+    const filenames = await listImages(inputSource(inputFolder))
     // Fisher–Yates, then take the first n (all of them if the folder holds fewer).
     for (let i = filenames.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1))
@@ -147,27 +168,16 @@ app.get('/api/images/sample', async (req, res) => {
   }
 })
 
-// Defence in depth: basename() strips any "../" before we resolve, and we
-// re-verify the resolved path is inside the configured folder. Together they
-// rule out path-traversal attacks even if one check is bypassed somehow.
+// Defence in depth (both branches, in image-source.js): basename() strips any
+// "../" before we resolve, and the local branch re-verifies the resolved path
+// is inside the configured folder. Together they rule out path-traversal
+// attacks even if one check is bypassed somehow. A remote folder is proxied
+// here rather than redirected to, so the image stays same-origin and the
+// canvas never gets tainted (which would break export).
 app.get('/api/images/:filename', async (req, res) => {
   const { inputFolder } = await loadConfig()
   if (!inputFolder) return res.status(400).send('Input folder is not configured.')
-
-  const safeName = path.basename(req.params.filename)
-  const folderRoot = path.resolve(inputFolder)
-  const resolved = path.resolve(folderRoot, safeName)
-  if (!resolved.startsWith(folderRoot + path.sep)) {
-    return res.status(400).send('Invalid filename.')
-  }
-  if (!IMAGE_EXTENSIONS.has(path.extname(resolved).toLowerCase())) {
-    return res.status(400).send('Not an image.')
-  }
-  res.sendFile(resolved, (err) => {
-    if (err && !res.headersSent) {
-      res.status(err.code === 'ENOENT' ? 404 : 500).send('Failed to send file.')
-    }
-  })
+  await sendImage(inputSource(inputFolder), req.params.filename, req, res)
 })
 
 // ---- Foundry: the output folder as an art source (Phase 3) ----

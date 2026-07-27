@@ -121,6 +121,7 @@ zymeDraw/
 │                                        #   placement.js · GridPicker.jsx · sessionBindings.js …
 └── backend/
     ├── server.js                        # all Express routes + /api/ml proxy
+    ├── image-source.js                  # input folder = local dir OR http(s) folder
     ├── config-store.js                  # ~/.deck-config.json (per-machine paths)
     └── ml/                              # sidecar: main.py · upscaler.py · models/
 ```

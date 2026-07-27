@@ -31,6 +31,13 @@ cards simply degrade. Setup keeps an entry to install them later.
 Then Setup asks for two folders — one of source images to draw from, one
 for finished exports. That's the whole install.
 
+The source folder can also be a **URL** — paste something like
+`http://100.95.12.41:9000/favorites/` and ZYME reads the images off that
+server instead of your disk, with no drive to mount. Any server that lists
+its files works (Python's `http.server`, nginx, Apache, Caddy); a folder can
+make itself explicit by publishing an `index.json` beside the images. The
+export folder is always a folder on your own machine.
+
 Everything below is for **developing ZYME from the repo**.
 
 ## Requirements
