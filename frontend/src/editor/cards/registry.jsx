@@ -238,9 +238,10 @@ export const cardRegistry = {
   dust: {
     // Playtest tuning (2026-07-04): Stew works these two brushes big and
     // faint — open there instead of small and full-strength.
-    // (2026-07-06): influence opens at 30% — 15% was too faint a start.
+    // (2026-07-26): influence opens back at 15% — 30% settles too much grain
+    // on the first stroke to build up from.
     controls: ['size', 'hardness', 'softness', 'intensity'],
-    defaultControls: { size: 180, hardness: 'soft', softness: 0.5, intensity: 0.3 },
+    defaultControls: { size: 180, hardness: 'soft', softness: 0.5, intensity: 0.15 },
     Tools: DustTools,
     ...dustHooks
   },
