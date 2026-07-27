@@ -304,9 +304,11 @@ function CodaChoice({ state, onAcceptCoda, onDelayCoda }) {
 // lies in the dock beside the deck it came out of.
 //
 // A card may declare a commit gate (registry `commitGate`): its session runs
-// as usual, but it commits on the labelled button at the foot of the panel —
-// just above the dock — instead of on the deck click. Until that press the
-// deck says plainly that drawing lets the card pass; after it the round rests
+// as usual, but it commits on the labelled button instead of on the deck
+// click. The button sits inside the tool area, under the card's description
+// and well clear of the dock — pinned at the panel foot it sat a few pixels
+// from the deck, and the near-miss dealt the next card instead. Until that
+// press the deck says plainly that drawing lets the card pass; after it the round rests
 // on its result and the deck is only the next deal. All of it reads from the
 // registry, so this is still a panel that knows nothing about any card.
 function CardRevealed({ state, entry, controls, info, ready, committed, onGateCommit, committing, onControlChange, onAdvance }) {
@@ -317,6 +319,24 @@ function CardRevealed({ state, entry, controls, info, ready, committed, onGateCo
   const commitDisabled = !ready || committing
   const [zoomed, setZoomed] = useState(false)
 
+  const tools = ToolsComponent ? (
+    <ToolsComponent
+      controls={controls}
+      info={info}
+      ready={ready}
+      committed={committed}
+      onControlChange={onControlChange}
+    />
+  ) : (
+    <span className="hint">{T.toolsPlaceholder}</span>
+  )
+
+  const gateButton = gateOpen && (
+    <button type="button" className="primary" onClick={onGateCommit} disabled={commitDisabled}>
+      {gate.label}
+    </button>
+  )
+
   return (
     <aside className="deck-panel">
       {zoomed && (
@@ -326,24 +346,16 @@ function CardRevealed({ state, entry, controls, info, ready, committed, onGateCo
         <h2>{T.roundTitle}</h2>
         <p className="card-name">{card.label}</p>
         <div className="tool-area">
-          {ToolsComponent ? (
-            <ToolsComponent
-              controls={controls}
-              info={info}
-              ready={ready}
-              committed={committed}
-              onControlChange={onControlChange}
-            />
+          {gateButton ? (
+            <div className="tool-gate">
+              {tools}
+              {gateButton}
+            </div>
           ) : (
-            <span className="hint">{T.toolsPlaceholder}</span>
+            tools
           )}
         </div>
       </div>
-      {gateOpen && (
-        <button type="button" className="primary" onClick={onGateCommit} disabled={commitDisabled}>
-          {gate.label}
-        </button>
-      )}
       <DeckDock
         card={card}
         // A card arrives either straight after a commit (roundsDealt just
