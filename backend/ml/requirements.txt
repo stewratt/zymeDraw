@@ -1,8 +1,16 @@
 # The Deck ML sidecar. Install into backend/ml/.venv — see README.md
 # ("The ML sidecar" section) for the three-machine setup steps.
-fastapi>=0.115
-uvicorn>=0.30
-rembg>=2.0.60
-onnxruntime>=1.20
-numpy>=1.26
-pillow>=10.0
+#
+# Bounds, not pins. One exact version set cannot serve all four targets:
+# numba dropped macOS x86_64 wheels at 0.63 and onnxruntime after 1.23, so
+# an Intel Mac must resolve older than Linux/Windows/Apple Silicon do. The
+# installer passes --only-binary=:all:, which makes pip pick the newest
+# release that ships a wheel for the machine in hand rather than falling
+# back to an sdist and compiling. The ceilings here only stop a surprise
+# major from arriving unannounced.
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+rembg>=2.0.60,<3
+onnxruntime>=1.20,<2
+numpy>=1.26,<3
+pillow>=10.0,<13
