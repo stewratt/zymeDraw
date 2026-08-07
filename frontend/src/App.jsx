@@ -24,8 +24,8 @@ function App() {
   useEffect(() => {
     loadCardSets() // populate the card-set store; faces resolve before Setup
     // Two questions before the shell opens: the folders, and (Electron only)
-    // whether the machine tools still need their first-launch install. A
-    // remembered "work without them" answers the second without asking again.
+    // whether the dependencies still need their first-launch install. A
+    // remembered "continue without them" answers the second without asking again.
     Promise.all([
       fetch('/api/config').then((r) => r.json()).catch(() => null),
       fetch('/api/ml/setup').then((r) => r.json()).catch(() => null)
