@@ -3,7 +3,7 @@ import { UI } from './copy/uiText.js'
 
 const T = UI.mlSetup
 
-// The first-launch machine-tools screen (Electron only). Mounting it starts
+// The first-launch dependency-install screen (Electron only). Mounting it starts
 // the install; it polls /api/ml/setup and leaves through one of three doors:
 // onDone when the environment is ready (or the user lets it finish in the
 // background), onSkip when they decline after a failure. The install itself
@@ -44,7 +44,7 @@ function MlSetup({ onDone, onSkip }) {
 
   const failed = status.state === 'error'
 
-  // One bar for the whole fitting: engine 0–35%, parts hold at 50% (pip
+  // One bar for the whole install: Python 0–35%, packages hold at 50% (pip
   // reports lines, not fractions — the bar pulses), models 50–100%.
   const fill =
     status.phase === 'python'

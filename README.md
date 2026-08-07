@@ -23,7 +23,7 @@ Pick your file:
   Rosetta, it just wastes the machine. Unsigned build: first launch is
   right-click → Open, then Open again.
 
-On first run the app offers to fit its **machine tools** — the models behind
+On first run the app offers to install its **dependencies** — the models behind
 the cutout and detail-restore cards. It's a one-time download of about
 400 MB (just under 1 GB once installed, kept in the app's own data folder,
 removed with the app). You can let it finish in the background, and if you

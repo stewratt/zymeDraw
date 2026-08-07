@@ -20,7 +20,7 @@ function Setup({ initial, deckName, deckSpec, onOpenDeckEditor, onOpenMlSetup, o
   // The Guide (issue #75), readable before the first session begins.
   const [guideOpen, setGuideOpen] = useState(false)
 
-  // Machine tools (Electron only): where the first-launch install stands.
+  // Dependencies (Electron only): where the first-launch install stands.
   // 'unmanaged' (browser/dev) hides the row; a background install re-polls
   // until it lands so the row flips to ready on its own.
   const [mlState, setMlState] = useState(null)
