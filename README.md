@@ -18,8 +18,10 @@ Pick your file:
   run it as `./ZYME-*.AppImage --appimage-extract-and-run`.
 - **Windows** — the `Setup-*.exe`. SmartScreen warns because the build is
   unsigned: choose *More info → Run anyway*.
-- **Mac** — the `-arm64.dmg` on Apple silicon (2020+), the plain `.dmg` on
-  Intel. Unsigned build: first launch is right-click → Open, then Open again.
+- **Mac** — the `-arm64.dmg` on Apple silicon (2020+), the `-x64.dmg` on
+  Intel. Take the right one: the Intel build *runs* on Apple silicon under
+  Rosetta, it just wastes the machine. Unsigned build: first launch is
+  right-click → Open, then Open again.
 
 On first run the app offers to fit its **machine tools** — the models behind
 the cutout and detail-restore cards. It's a one-time download of about
