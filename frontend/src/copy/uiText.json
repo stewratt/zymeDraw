@@ -2,11 +2,11 @@
   "cards": {
     "ghost": {
       "name": "Ghost",
-      "description": "Add screen blend mode image onto canvas. Only the light survives. "
+      "description": "Place a second image over the piece with a screen blend: only its light values survive."
     },
     "stain": {
       "name": "Stain",
-      "description": "Add an image overlay with a multiply blend mode onto the canvas. Darkness multiplies."
+      "description": "Place a second image over the piece with a multiply blend: only its dark values survive."
     },
     "stamp": {
       "name": "Stamp",
@@ -14,31 +14,31 @@
     },
     "reverberate": {
       "name": "Reverberate",
-      "description": "One subject, struck again and again — every stroke lays it down in echoes."
+      "description": "Cut out an image's subject and paint with it. Every stroke lays down repeated stamps along its path."
     },
     "rails": {
       "name": "Rails",
-      "description": "Adds a fractured monochromatic shard onto the canvas."
+      "description": "A random image is broken into fragments that arrive as a flat, single-color stencil. Arrange it, set the color, erase what you don't want."
     },
     "char": {
       "name": "Char",
-      "description": "The fragments keep the photo's tones as char — arrange them, darken them toward black."
+      "description": "A random image is broken into fragments that keep the photo's own pixels. Arrange them, then darken and desaturate them toward black."
     },
     "deeper": {
       "name": "Deeper",
-      "description": "The frame is the piece’s next edge. Move it, scale it from the corners, rotate it — whatever it holds becomes the whole canvas."
+      "description": "Frame a region of the piece and crop to go deeper into the image. Upscaling restores the pixel values by 4x."
     },
     "closer": {
       "name": "Closer",
-      "description": "The same frame, but honest — whatever it magnifies keeps only the pixels it started with. Zoom in and the grain shows."
+      "description": "Frame a region of the piece and crop to get closer into the image. No upscaling, faithful to the pixels."
     },
     "rack": {
       "name": "Rack",
-      "description": "The piece is racked to a new vessel: drag, scale, rotate. What leaves the frame is gone; what the frame exposes stays white."
+      "description": "The whole piece comes loose as one object: drag, scale, rotate, flip it. Whatever leaves the canvas is cut off; whatever the move uncovers stays white."
     },
     "lift": {
       "name": "Lift",
-      "description": "Copy a rectangle of the piece and stamp it down elsewhere. The source stays where it is — a second impression, cropped where it runs off the edge."
+      "description": "Copy a rectangle of the piece and stamp it down elsewhere. The source stays where it is: a second impression, cropped where it runs off the edge."
     },
     "fracture": {
       "name": "Fracture",
@@ -46,7 +46,7 @@
     },
     "dust": {
       "name": "Dust",
-      "description": "Paint where the dust should settle. Nothing changes until you paint."
+      "description": "Paint monochrome grain onto the piece. Nothing changes until you paint."
     },
     "bruise": {
       "name": "Bruise",
@@ -54,47 +54,47 @@
     },
     "blur": {
       "name": "Blur",
-      "description": "use a brush to blur the surface of the canvas."
+      "description": "Paint blur onto the piece with a brush. Nothing changes until you paint."
     },
     "steep": {
       "name": "Steep",
-      "description": "The piece steeps in a dye bath. Influence is steeping time."
+      "description": "Flood the whole canvas with one color - pick the dye and the blend mode. Influence is steeping time."
     },
     "hue": {
       "name": "Hue",
-      "description": "Apply HSV modification to the entire canvas."
+      "description": "Shift hue, saturation, and brightness across the whole canvas. Influence sets how strongly it applies."
     },
     "cure": {
       "name": "Cure",
-      "description": "The piece cures in its own bath — mids deepen, tone richens. Influence is how far the cure has gone."
+      "description": "The piece is blended over itself - contrast deepens, midtones richen. Influence is how far the cure has gone."
     },
     "etch": {
       "name": "Subliminal Etch",
-      "description": "Etch a small glyph at the grain. At full size it will be almost nothing."
+      "description": "Place a small frame, zoom to its pixels, and draw a glyph square by square. At full size it will be almost nothing."
     },
     "searcher": {
       "name": "Searcher",
-      "description": "Pick a card from the deck, this becomes your next turn."
+      "description": "Look through everything left in the deck and take any card. The chosen card is the next action."
     },
     "skim": {
       "name": "Skim",
-      "description": "Reveal the next card, choose to play it or re-shuffle it into the deck."
+      "description": "Turn the deck's top card face-up. Leave it on top for the next deal, or bury it back into the deck."
     },
     "delay": {
       "name": "Delay",
-      "description": "The first Coda card can be skipped. The Coda card is shuffled back into the deck when skipped. It may appear again next turn anyway."
+      "description": "The first Coda dealt can be set aside, once. It shuffles back into the deck and can return on the very next draw."
     },
     "transfer": {
       "name": "Transfer",
-      "description": "The whole piece has been redrawn. Erase to cut the original back through; influence sets how strongly the redraw sits."
+      "description": "The whole piece is redrawn in a painted style. Erase to cut the original back through; Influence sets how strongly the redraw sits."
     },
     "shatteredTransfer": {
       "name": "Shattered Transfer",
-      "description": "The piece’s redraw shows through another image’s most shattered form."
+      "description": "The piece is redrawn in a painted style, but the redraw shows through only where a stencil sits. The stencil is cut from another image's fragments. Drag it, scale it, erase through it."
     },
     "stashReturn": {
       "name": "Stash Return",
-      "description": "The image you held back comes home. Place it into the piece as it now stands."
+      "description": "The image you stashed returns. Place it into the piece as it now stands."
     },
     "coda": {
       "name": "Coda",
@@ -107,13 +107,13 @@
   "shared": {
     "preparing": "Preparing…",
     "takeOne": "Take one image from the grid.",
-    "shattering": "Reading the image for its most shattered form…",
+    "shattering": "Breaking the image into fragments…",
     "shatteredIntro": "This image {reading}.",
     "workGlance": "Image Status"
   },
   "cardGate": {
     "zoomIn": "Zoom In",
-    "passNote": "Draw from the deck instead and the card passes — it commits nothing.",
+    "passNote": "Draw from the deck instead and the card passes. It commits nothing.",
     "committedNote": "The re-frame is committed; the piece now stands as you see it. Draw from the deck for the next card."
   },
   "brush": {
@@ -126,28 +126,28 @@
   "cardHints": {
     "ghost": {
       "pickTitle": "GHOST",
-      "pickHint": "Eight images. Take one — it joins the piece as a second exposure: only its light survives.",
+      "pickHint": "Eight images. Take one, and it joins the piece as a second exposure: only its light survives.",
       "confirm": "Continue",
       "subject": "the ghost"
     },
     "stain": {
       "pickTitle": "STAIN",
-      "pickHint": "Eight images. Take one — it soaks into the piece: only its dark survives.",
+      "pickHint": "Eight images. Take one, and it soaks into the piece: only its dark survives.",
       "confirm": "Continue",
       "subject": "the stain"
     },
     "stamp": {
       "pickTitle": "STAMP",
-      "pickHint": "Six images. Take one — its subject is cut out and stamped onto the piece.",
-      "confirm": "Continue — cut it out",
+      "pickHint": "Six images. Take one, and its subject is cut out and stamped onto the piece.",
+      "confirm": "Continue: cut it out",
       "cutting": "Cutting out the subject… on a machine's first cutout this downloads the model and can take a minute.",
-      "degraded": "The cutout service is unavailable, so the whole image was placed — the erase brush is your scissors.",
+      "degraded": "The cutout service is unavailable, so the whole image was placed. The erase brush is your scissors.",
       "subject": "the stamp"
     },
     "reverberate": {
       "pickTitle": "REVERBERATE",
-      "pickHint": "Six images. Take one — its subject becomes the stamp your strokes repeat.",
-      "confirm": "Continue — cut it out",
+      "pickHint": "Six images. Take one, and its subject becomes the stamp your strokes repeat.",
+      "confirm": "Continue: cut it out",
       "cutting": "Cutting out the subject… on a machine's first cutout this downloads the model and can take a minute.",
       "degraded": "The cutout service is unavailable, so the whole image is the stamp."
     },
@@ -155,65 +155,65 @@
       "preparing": "Preparing the dust…"
     },
     "lift": {
-      "takeHint": "Drag a rectangle over the piece — on release a copy lifts free and follows your hand. Stamp as many as the round wants.",
-      "carryHint": "Click to stamp the copy where it hangs. Esc discards it."
+      "takeHint": "Drag a rectangle over the piece. On release a copy lifts free and follows your cursor. Stamp as many copies as you like before drawing.",
+      "carryHint": "A copy is following your cursor. Click to stamp it down. Esc discards it."
     },
     "etch": {
-      "frameHint": "Drag the small frame to where the mark should hide. Its size is fixed — about a hundred pixels of the piece.",
+      "frameHint": "Drag the small frame to where the mark should hide. Its size is fixed: about a hundred pixels of the piece.",
       "zoomIn": "Zoom in",
-      "grainHint": "You are at the grain — every square is one pixel of the piece. Etch a small glyph; Space-drag or Ctrl-scroll to move over it. At full size it will be almost nothing."
+      "grainHint": "You are at the grain: every square is one pixel of the piece. Etch a small glyph; Space-drag or Ctrl-scroll to move over it. At full size it will be almost nothing."
     },
     "skim": {
       "title": "SKIM",
       "turnTop": "Turn the top card",
-      "emptyDeck": "The deck is empty — there is nothing on top.",
-      "choiceHint": "Leave it or bury it — you won't see what replaces it.",
-      "keep": "Leave it — the next deal",
-      "bury": "Bury it — somewhere back in the deck",
+      "emptyDeck": "The deck is empty; there is nothing on top.",
+      "choiceHint": "Leave it or bury it. You won't see what replaces it.",
+      "keep": "Leave it: the next deal",
+      "bury": "Bury it: somewhere back in the deck",
       "kept": "It waits on top. Draw to end the round.",
-      "buried": "Gone — somewhere back in the deck. The next deal is unknown. Draw to end the round.",
+      "buried": "Gone, somewhere back in the deck. The next deal is unknown. Draw to end the round.",
       "toolWaiting": "On the canvas: turn the top card, then leave it or bury it.",
       "toolReady": "Draw to end the round."
     },
     "searcher": {
       "title": "Searcher",
-      "emptyDeck": "The deck has nothing left to offer.",
-      "footChosen": "take it — or click again to put it back",
+      "emptyDeck": "The deck is empty.",
+      "footChosen": "take it, or click again to put it back",
       "footTakeOne": "take one",
       "confirm": "Continue with chosen card",
-      "toolWaiting": "Take the card the piece needs.",
-      "toolReady": "The deck had nothing left to offer — a round with no modification. Draw to end it."
+      "toolWaiting": "Pick any card from the deck. It becomes this round's card.",
+      "toolReady": "The deck was empty, so this round changes nothing. Draw to end it."
     },
     "delay": {
-      "toolSuffix": "The right is held from here on. Draw to end the round."
+      "toolSuffix": "Delay is now held: when the first Coda is dealt, you can set it aside once. Draw to end the round."
     },
     "deeper": {
       "commitNote": "Zoom In commits the re-frame and restores detail into the enlargement; that takes a few seconds."
     },
     "closer": {
-      "commitNote": "Zoom In commits the re-frame as it stands — no restoration, no waiting."
+      "commitNote": "Zoom In commits the re-frame as it stands: no restoration, no waiting."
     },
     "char": {
       "subject": "the char"
     },
     "transfer": {
-      "working": "The piece is being redrawn in another hand… a few seconds.",
-      "degraded": "The transfer service is unavailable — the piece stands as it is. Draw to move on."
+      "working": "Redrawing the piece in a painted style… a few seconds.",
+      "degraded": "The transfer service is unavailable, so the piece stands as it is. Draw to move on."
     },
     "shatteredTransfer": {
       "pickTitle": "SHATTERED TRANSFER",
-      "pickHint": "Six images. Take one — it won't be placed; it will be read as a stencil, and the piece's redraw shows through its shattered form.",
-      "confirm": "Continue — read it as a stencil",
-      "arrangeWaiting": "This image {reading} — place the stencil where the style should break through. The redraw is still arriving; the window opens when it lands.",
-      "degraded": "The transfer service is unavailable — the stencil is withdrawn and the piece stands as it is. Draw to move on.",
-      "windowOpen": "The window is open{readingClause}. Drag, scale, rotate the stencil; the redraw shows through wherever it sits.",
-      "readingClause": " — this image {reading}",
+      "pickHint": "Six images. Take one; it isn't placed as pixels. Its fragments become a stencil, and the restyled piece shows through wherever the stencil sits.",
+      "confirm": "Continue: read it as a stencil",
+      "arrangeWaiting": "This image {reading}. Place the stencil where the restyled piece should show through. The redraw is still computing; the stencil goes live when it arrives.",
+      "degraded": "The transfer service is unavailable, so the stencil was removed and the piece is unchanged. Draw to move on.",
+      "windowOpen": "The redraw has arrived{readingClause}. Drag, scale, rotate the stencil. The restyled piece shows through wherever its fragments sit.",
+      "readingClause": ", and this image {reading}",
       "subject": "the styled fragments"
     },
     "stashReturn": {
       "previewTitle": "THE STASH RETURNS",
-      "previewHint": "The image you held back, before it lands. Look at it against what the rounds since have made — then bring it in and place it.",
-      "previewFoot": "It comes home either way — there is no putting it back.",
+      "previewHint": "This is the image you stashed at the opening. Compare it with the piece as it now stands, then bring it in and place it.",
+      "previewFoot": "It joins the piece either way; it can't be stashed again.",
       "confirm": "Bring it in"
     }
   },
@@ -225,8 +225,8 @@
     },
     "commission": {
       "title": "THE COMMISSION",
-      "panelHint": "A cast is one session for one face. Pick the card from the grid — its name and type line will follow it onto the plate.",
-      "pickHint": "Every cast opens on a commission — the card this face is for. Choose one, or let the deck decide.",
+      "panelHint": "A cast is one session for one face. Pick the card from the grid. Its name and type line will follow it onto the plate.",
+      "pickHint": "Every cast opens on a commission: the card this face is for. Choose one, or let the deck decide.",
       "dealButton": "Deal me a commission"
     },
     "plate": {
@@ -234,44 +234,44 @@
       "panelHint": "Casting **{label}**. Take one of the dealt plates from the table.",
       "readingFolder": "Reading the plates folder…",
       "chooseFolder": "Choose plates folder",
-      "setHint": "The full set of {count} plate{plural} — choose the one this face calls for. Its frame is the card's convention layer; the white window is the punched image panel, waiting for art.",
+      "setHint": "The full set of {count} plate{plural}: choose one. Its frame becomes the card's border art; the white window is where the image will go.",
       "runLabel": "Run",
-      "runHint": "Impressions this cast will pull — the same sealed base, deviating only after the Press. Taking the plate fixes the run."
+      "runHint": "How many versions this cast will produce. Each starts from the same sealed base and only diverges after the Press. Locked in when you take the plate."
     },
     "panel": {
       "title": "THE PANEL",
-      "pickPanelHint": "Take an image from the grid — it lands under the plate, and the window crops it.",
+      "pickPanelHint": "Take an image from the grid. It lands under the plate, and the window crops it.",
       "redealImages": "Re-deal the images",
       "artFromPrefix": "Panel art from",
-      "artFromFallback": "Panel art from the input + export folders — point it at a dedicated folder to curate the card imagery apart from the main pool.",
+      "artFromFallback": "Panel art from the input + export folders. Point it at a dedicated folder to curate the card imagery apart from the main pool.",
       "chooseArtFolder": "Choose panel art folder…",
-      "arrangeHint": "Arrange the art under the window — the plate's edge crops whatever crosses it.",
+      "arrangeHint": "Arrange the art under the window. The plate's edge crops whatever crosses it.",
       "liveUntilPress": "Everything stays live until the Press.",
-      "repick": "Put it back — re-pick",
+      "repick": "Put it back and re-pick",
       "subject": "the art",
       "mounting": "Mounting the plate…",
       "placingArt": "Placing the art…",
-      "continueType": "Continue — to the type",
-      "gridHint": "Take an image for the window — a hand dealt from your panel-art pool. It lands under the plate; the window crops it.",
+      "continueType": "Continue to the type",
+      "gridHint": "Take an image for the window, a hand dealt from your panel-art pool. It lands under the plate; the window crops it.",
       "gridConfirm": "Choose card image"
     },
     "type": {
       "title": "THE TYPE",
-      "hint": "The type is set — name upper-left, type line upper-right, the description in its box. **Double-click** a slot to edit its text; drag to nudge, handles to size. The description box resizes to fit the plate's text region.",
+      "hint": "The type is set: name upper-left, type line upper-right, the description in its box. **Double-click** a slot to edit its text; drag to nudge, handles to size. The description box resizes to fit the plate's text region.",
       "dealtStyle": "Dealt style:",
       "titleFontLine": "title · {name}",
       "bodyFontLine": "body · {name}",
       "redealFonts": "Re-deal the fonts",
-      "pressNote": "The Press seals the whole foundation — art, plate, and type flatten to pixels for good. After it, the graffiti deck works the sealed face.",
-      "pressButton": "Press — seal the foundation",
+      "pressNote": "The Press is the point of no return: art, plate, and type flatten to pixels for good. After it, a small deck of cards marks up the sealed face.",
+      "pressButton": "Press: seal the foundation",
       "settingType": "Setting the type…"
     },
     "plateTint": {
-      "hint": "The plate — re-color the frame itself. The art under the window keeps its own color.",
+      "hint": "The plate: re-color the frame itself. The art under the window keeps its own color.",
       "asPrinted": "As printed"
     },
     "ink": {
-      "prefix": "Ink — applies to",
+      "prefix": "Ink: applies to",
       "allSlots": "all slots",
       "selectNote": "(select a slot on the card to ink it alone)",
       "slotName": "the name",
@@ -283,23 +283,23 @@
     },
     "working": {
       "title": "THE WORKING DECK",
-      "placeholder": "(placeholder — this card's tools arrive in a later wave)"
+      "placeholder": "(placeholder: this card's tools arrive in a later wave)"
     },
     "proof": {
       "title": "THE PROOF",
       "titleRun": "THE PROOF · {i} OF {n}",
       "cardLabel": "Proof",
       "impressionCast": "Impression {i} of **{label}** is cast{tail}",
-      "tailNext": " — the base waits for the next.",
+      "tailNext": ". The base waits for the next.",
       "tailComplete": ". The run is complete.",
       "faceCast": "The face of **{label}** is cast.",
       "exporting": "Writing the cast to your casts folder…",
       "dropIn": "Drop-in ready: to put it in play, copy it to `assets/cards/{file}` and reload Deck. The full-res master sits alongside.",
-      "nextImpression": "Next impression — return to the base",
+      "nextImpression": "Next impression: return to the base",
       "castAnother": "Cast another"
     },
     "progress": {
-      "late": "late — the Proofs are in the deck",
+      "late": "late: the Proofs are in the deck",
       "round": "round {round} of {total}"
     }
   },
@@ -324,41 +324,41 @@
     "networkError": "Network error: {message}",
     "footnote": "Paths support a leading `~` for your home directory. Folders must exist before continuing.",
     "cardSetsLabel": "Card faces (optional)",
-    "cardSetsHint": "A folder of alternate deck designs — one subfolder per set, each holding PNGs named by card id. Leave empty for the built-in faces.",
+    "cardSetsHint": "A folder of alternate deck designs: one subfolder per set, each holding PNGs named by card id. Leave empty for the built-in faces.",
     "cardSetsPlaceholder": "absolute path to your card faces folder",
     "cardSetsSetLabel": "Active set",
     "cardSetsBuiltin": "Built-in faces",
-    "cardSetsEmpty": "No sets in that folder yet — add a subfolder of card PNGs.",
+    "cardSetsEmpty": "No sets in that folder yet. Add a subfolder of card PNGs.",
     "deckLabel": "Deck",
     "deckLine": "{name} · {count} cards",
     "deckEditorButton": "Deck editor",
-    "guideLink": "How Zyme works — the guide"
+    "guideLink": "How Zyme works: the guide"
   },
   "mlSetup": {
     "title": "Installing dependencies",
-    "body": "ZYME is downloading the models behind its cutout and detail-restore cards — a one-time download of about 400 MB (just under 1 GB installed). Everything else works without them.",
+    "body": "ZYME is downloading the models behind its cutout and detail-restore cards: a one-time download of about 400 MB (just under 1 GB installed). Everything else works without them.",
     "phasePython": "Downloading Python…",
     "phasePackages": "Installing packages…",
     "phaseWeights": "Downloading models…",
-    "continueBehind": "Continue — this finishes in the background",
+    "continueBehind": "Continue: this finishes in the background",
     "errorTitle": "The install didn't finish.",
-    "errorHint": "Check the connection and try again — or continue without them; every other card is unaffected. You can install them later from the setup screen.",
+    "errorHint": "Check the connection and try again, or continue without them; every other card is unaffected. You can install them later from the setup screen.",
     "retry": "Try again",
     "skip": "Continue without them",
     "setupLabel": "Dependencies",
-    "setupReady": "Installed — cutout and detail restore are on.",
-    "setupMissing": "Not installed — cutout and restore cards degrade.",
-    "setupError": "Last install didn't finish — cutout and restore cards degrade.",
+    "setupReady": "Installed: cutout and detail restore are on.",
+    "setupMissing": "Not installed: cutout and restore cards degrade.",
+    "setupError": "Last install didn't finish: cutout and restore cards degrade.",
     "setupRunning": "Installing in the background…",
-    "setupUnsupported": "No build for this platform — cutout and restore cards degrade.",
+    "setupUnsupported": "No build for this platform: cutout and restore cards degrade.",
     "setupInstall": "Install"
   },
   "deckEditor": {
     "title": "Deck editor",
-    "subtitle": "Assemble the deck the next session deals from. Codas are never edited here — three are always shuffled in late.",
+    "subtitle": "Assemble the deck the next session deals from. Codas are never edited here; three are always shuffled in late.",
     "countLine": "{count} of {cap} cards · minimum {floor}",
-    "tooFew": "Too few — add cards to reach the minimum.",
-    "tooMany": "Over the cap — remove cards.",
+    "tooFew": "Too few. Add cards to reach the minimum.",
+    "tooMany": "Over the cap. Remove cards.",
     "startingPointsLabel": "Starting points",
     "houseDeckName": "House deck",
     "customDeckName": "Custom deck",
@@ -387,7 +387,7 @@
   "deckPanel": {
     "openingTitle": "THE OPENING",
     "openingLoading": "Loading input folder…",
-    "openingHint": "Take **two** from the grid: one placed now, one stashed — its return card is shuffled into the deck after Act I, and the stash comes home when that card is drawn.",
+    "openingHint": "Take **two** from the grid: one placed now, one stashed. Its return card is shuffled into the deck after Act I, and the stash comes home when that card is drawn.",
     "inputErrorTitle": "INPUT FOLDER ERROR",
     "inputErrorHint": "Go back to setup to pick a different folder.",
     "noImagesTitle": "NO IMAGES FOUND",
@@ -395,9 +395,9 @@
     "placementTitle": "PLACEMENT",
     "placementHint": "Arrange your image.",
     "stashReturnNoticeTitle": "THE STASH RETURNS",
-    "stashReturnNoticeHint": "The card has come up: the image you held back returns — met by a piece that has moved on without it. It waits on the page; bring it in when you're ready to place it.",
-    "stashReturnTitle": "STASHED IMAGE RETURN",
-    "stashReturnHint": "Your stashed image comes back — arrange it like the opening.",
+    "stashReturnNoticeHint": "The Stash Return card has come up: the image you held back is ready to rejoin the piece. Bring it in when you're ready to place it.",
+    "stashReturnTitle": "THE STASH RETURNS",
+    "stashReturnHint": "Your stashed image comes back. Arrange it like the opening.",
     "arrangeHint": "Drag to move, corner handles to scale, top handle to rotate.",
     "reorderHint": "Drag to reorder the stack.",
     "loadingImages": "Loading images…",
@@ -405,20 +405,20 @@
     "cardsRemain": "{count} card{plural} remain",
     "stashedSuffix": "· {count} stashed",
     "viewDeck": "View the deck",
-    "delayHeld": "held — the first Coda can be set aside",
+    "delayHeld": "held: the first Coda can be set aside",
     "deckHintPlacement": "Draw from the deck when the arrangement is right: it bakes in for good, and the next card turns over.",
     "deckHintActive": "Draw from the deck when this round is done: it bakes in for good, and the next card turns over.",
     "deckHintIdle": "Draw from the deck to turn the next card.",
     "deckDrawAction": "Commit this round and draw",
     "deckDrawIdle": "Draw the next card",
-    "deckHintGate": "Nothing is committed yet. Draw from the deck to let this card pass — the piece is left exactly as it stands.",
+    "deckHintGate": "Nothing is committed yet. Draw from the deck to let this card pass; the piece is left exactly as it stands.",
     "deckDrawGate": "Let this card pass and draw",
     "codaTitle": "THE CODA",
-    "codaHint": "The deck says the piece is finished. You still hold Delay — accept the ending, or set the Coda aside. It slips back into the deck and the next deal is blind: it can come straight back, and the right is spent.",
-    "codaSetAside": "Not yet — set it aside",
-    "codaAccept": "Accept — the piece is finished",
+    "codaHint": "The Coda has been dealt. Accepting it finishes the piece and ends the session. You still hold Delay: set the Coda aside and it shuffles back into the deck. It can come straight back on the very next draw, and Delay only works once.",
+    "codaSetAside": "Not yet: set it aside",
+    "codaAccept": "Accept: the piece is finished",
     "roundTitle": "THIS ROUND",
-    "toolsPlaceholder": "(placeholder — this card's tools arrive in a later phase)",
+    "toolsPlaceholder": "(placeholder: this card's tools arrive in a later phase)",
     "committing": "Committing…",
     "settingUp": "Setting up…",
     "finishedTitle": "FINISHED",
@@ -431,7 +431,7 @@
   },
   "opening": {
     "title": "THE OPENING",
-    "hint": "Take two: one to *place now*, one to *stash for later* — or click the stashed one again to *place both*, holding nothing back.",
+    "hint": "Take two: one to *place now*, one to *stash for later*. Or click the stashed one again to *place both*, holding nothing back.",
     "dealing": "Dealing images…",
     "badgePlace": "PLACE",
     "badgeStash": "STASH",
@@ -443,13 +443,13 @@
     "footStashNone": "stash —",
     "footTakeOne": "take one",
     "footTaken": "1 taken",
-    "confirm": "Continue — begin placement"
+    "confirm": "Continue: begin placement"
   },
   "deckOverlay": {
     "title": "THE DECK",
-    "spentTitle": "Spent — in sequence",
-    "spentEmpty": "Nothing yet — the sequence begins with the first committed card.",
-    "remainsTitle": "Remains — in no order",
+    "spentTitle": "Spent, in sequence",
+    "spentEmpty": "Nothing yet. The sequence begins with the first committed card.",
+    "remainsTitle": "Remains, in no order",
     "onlyCoda": "Only the Coda remains.",
     "modsSpent": "The modifications are spent.",
     "codaSomewhere": "…and the Coda is somewhere in here.",
@@ -463,64 +463,64 @@
       "label": "setup",
       "folders": {
         "title": "The folders",
-        "p1": "**Input** is read-only — the images sessions deal from. **Output** is where finished pieces land at full resolution. Both must exist before a session begins; paths take a leading `~` for home.",
-        "p2": "**Card faces** is optional — a folder of alternate face sets, one subfolder per set. The built-in faces stand whenever it is empty."
+        "p1": "**Input** is read-only: the images sessions deal from. **Output** is where finished pieces land at full resolution. Both must exist before a session begins; paths take a leading `~` for home.",
+        "p2": "**Card faces** is optional: a folder of alternate face sets, one subfolder per set. The built-in faces stand whenever it is empty."
       },
       "deck": {
         "title": "The deck line",
         "p1": "The deck named here is the one the next session shuffles. The **Deck editor** is where decks are assembled, saved, and chosen."
       },
       "doors": {
-        "title": "The two doors",
-        "p1": "**Begin session** opens the studio. **Foundry** opens the wing that casts card faces. Each returns here when its work is done — and everything on this screen is remembered per machine."
+        "title": "The two ways in",
+        "p1": "**Begin session** opens the studio. **Foundry** opens the wing that casts card faces. Each returns here when its work is done, and everything on this screen is remembered per machine."
       }
     },
     "session": {
       "label": "the session",
       "what": {
         "title": "What this is",
-        "p1": "Zyme is a studio for digital collage, worked one card at a time. Each round deals a single card from a deck, and the card decides the one thing the bench can do — a brush to compose with, a frame to move, a bath to steep in. You work inside that constraint, then draw from the deck — which commits the round and turns the next card in one gesture."
+        "p1": "Zyme is a studio for digital collage, worked one card at a time. Each round deals a single card from a deck, and the card decides the one thing you can do that round: a brush to paint with, a frame to move, a color to soak the canvas in. You work inside that constraint, then draw from the deck, which commits the round and turns the next card in one gesture."
       },
       "arc": {
         "title": "The arc of a session",
-        "opening": "**The opening** — take two images from the grid: one placed now, one stashed for later.",
-        "placement": "**Placement** — arrange the image: drag to move, handles to scale and rotate, the mask brush to erase what shouldn't survive.",
-        "actOne": "**Act I** — a handful of rounds, one dealt card each.",
-        "stash": "**The stash returns** — after Act I its card is shuffled into the deck, and the image you held back comes home when that card is drawn: next round, much later, or never, if the Coda arrives first.",
-        "actTwo": "**Act II** — the Coda is shuffled into the deck. Deal by deal, it is coming.",
-        "coda": "**The Coda** — the piece is finished, and writes to your output folder at full resolution."
+        "opening": "**The opening**: take two images from the grid, one placed now, one stashed for later.",
+        "placement": "**Placement**: arrange the image. Drag to move, handles to scale and rotate, the mask brush to erase what shouldn't survive.",
+        "actOne": "**Act I**: a handful of rounds, one dealt card each.",
+        "stash": "**The stash returns**: after Act I its card is shuffled into the deck, and the image you held back comes home when that card is drawn. That could be next round, much later, or never, if the Coda arrives first.",
+        "actTwo": "**Act II**: the Coda is shuffled into the deck. Deal by deal, it is coming.",
+        "coda": "**The Coda**: the piece is finished, and writes to your output folder at full resolution."
       },
       "commitment": {
         "title": "Commitment",
         "p1": "**The draw is permanent.** Every card you draw bakes the canvas down to one flat image; there is no undo across rounds and no stepping back. Undo lives only inside a round, for brush strokes.",
-        "p2": "Closing the tab abandons the piece in progress. None of this is missing — commitment is the discipline the deck imposes."
+        "p2": "Closing the tab abandons the piece in progress. None of this is missing; commitment is the discipline the deck imposes."
       },
       "brush": {
         "title": "The brush",
-        "p1": "Whenever an image is loose on the canvas, the mask brush is at hand: **erase** paints an image away, **restore** brings it back, **soften** feathers an edge. A mask belongs to its image — it travels through every move, scale, and rotation.",
-        "p2": "Cmd/Ctrl+Z takes back a stroke, Shift added redoes it — within the round only. No undo crosses a draw."
+        "p1": "Whenever an image is loose on the canvas, the mask brush is at hand: **erase** paints an image away, **restore** brings it back, **soften** feathers an edge. A mask belongs to its image. It travels through every move, scale, and rotation.",
+        "p2": "Cmd/Ctrl+Z takes back a stroke, Shift added redoes it, within the round only. No undo crosses a draw."
       },
       "deckCards": {
         "title": "Cards that work the deck",
-        "p1": "Most cards work the piece; a few work the deck itself. **Skim** turns the top card, and you leave it or bury it. **Searcher** takes the card the piece needs. **Delay** grants a held right: the first Coda dealt can be set aside — once.",
+        "p1": "Most cards work the piece; a few work the deck itself. **Skim** turns the top card, and you leave it or bury it. **Searcher** takes the card the piece needs. **Delay** grants a held right: the first Coda dealt can be set aside, once.",
         "p2": "You always know *what* remains in the deck, never the order it arrives in. The Coda ends the session when it is accepted."
       },
       "bearings": {
         "title": "Finding your way",
         "p1": "The deck is the button: it waits at the foot of the panel, and one click on it commits the round and flips the next card face-up beside it. Enter does the same from the keyboard.",
-        "p2": "Every control names its key when you hover it; the full map is behind **keys** in the header. **View the deck** shows what has been spent, in order — and what remains, in none."
+        "p2": "Every control names its key when you hover it; the full map is behind **keys** in the header. **View the deck** shows what has been spent, in order, and what remains, in none."
       }
     },
     "deckEditor": {
       "label": "the deck editor",
       "what": {
         "title": "What a deck is",
-        "p1": "A deck is a recipe: which cards, and how many copies of each. A session shuffles that recipe and deals it — change the recipe and you change the kind of piece a session produces."
+        "p1": "A deck is a recipe: which cards, and how many copies of each. A session shuffles that recipe and deals it. Change the recipe and you change the kind of piece a session produces."
       },
       "rules": {
         "title": "The rules of assembly",
-        "p1": "A deck holds **12 to 20 cards**. The cap is the point: a deck small enough to know is a deck whose remains you can read at the table. Copies of one card are capped too — weight a deck toward a card, don't fill it with one.",
-        "p2": "The Codas are never edited here. Three are always shuffled in late, whatever the deck holds — the ending is not optional."
+        "p1": "A deck holds **12 to 20 cards**. The cap is the point: a small deck is one you can hold in your head, so you always know roughly what's left. Copies of one card are capped too: weight a deck toward a card, don't fill it with one.",
+        "p2": "The Codas are never edited here. Three are always shuffled in late, whatever the deck holds. The ending is not optional."
       },
       "saved": {
         "title": "Saving and using",
@@ -531,21 +531,21 @@
       "label": "the foundry",
       "what": {
         "title": "What the foundry is",
-        "p1": "The foundry is Zyme's second wing: sessions that cast the card faces themselves. A cast is one session for one face — worked under constraint and sealed for good, like any piece."
+        "p1": "The foundry is Zyme's second wing: sessions that cast the card faces themselves. A cast is one session for one face, worked under constraint and sealed for good, like any piece."
       },
       "arc": {
         "title": "The arc of a cast",
-        "commission": "**The commission** — the card this face is for. Choose it, or let the deck decide.",
-        "plate": "**The plate** — take one of the dealt blanks: its frame is the card's fixed anatomy, and the white window waits for art. Taking the plate also fixes the run — how many impressions this cast will pull.",
-        "panel": "**The panel** — take an image and arrange it under the window; the plate's edge crops whatever crosses it.",
-        "type": "**The type** — name, type line, and description are set on the face. Double-click to edit, drag to nudge, re-deal the fonts until it reads right.",
-        "press": "**The Press** — the foundry's one irreversible commit. Art, plate, and type flatten to pixels for good; after it, a working deck deals cards that mark the sealed face.",
-        "rounds": "**The working rounds** — each dealt card marks the sealed face its own way. The deck is the button here too: it waits at the foot of the panel, and one click on it commits the round in hand and turns the next card face-up beside it. Enter does the same.",
-        "proof": "**The Proof** — the finished cast writes to your casts folder, with the full-resolution master alongside. A run returns to the sealed base for the next impression."
+        "commission": "**The commission**: the card this face is for. Choose it, or let the deck decide.",
+        "plate": "**The plate**: take one of the dealt blanks. Its frame is the card's fixed anatomy, and the white window waits for art. Taking the plate also fixes the run: how many impressions this cast will pull.",
+        "panel": "**The panel**: take an image and arrange it under the window; the plate's edge crops whatever crosses it.",
+        "type": "**The type**: name, type line, and description are set on the face. Double-click to edit, drag to nudge, re-deal the fonts until it reads right.",
+        "press": "**The Press**: the foundry's one irreversible commit. Art, plate, and type flatten to pixels for good; after it, a working deck deals cards that mark the sealed face.",
+        "rounds": "**The working rounds**: each dealt card marks the sealed face its own way. The deck is the button here too: it waits at the foot of the panel, and one click on it commits the round in hand and turns the next card face-up beside it. Enter does the same.",
+        "proof": "**The Proof**: the finished cast writes to your casts folder, with the full-resolution master alongside. A run returns to the sealed base for the next impression."
       },
       "play": {
         "title": "Putting a face in play",
-        "p1": "A cast comes into play through a card-faces set: a folder of PNGs named by card id, one subfolder per set. Point Setup's *card faces* field at that folder and choose the set — every deal after that wears your faces."
+        "p1": "A cast comes into play through a card-faces set: a folder of PNGs named by card id, one subfolder per set. Point Setup's *card faces* field at that folder and choose the set. Every deal after that wears your faces."
       }
     }
   },
@@ -554,30 +554,30 @@
     "close": "Click anywhere or press Esc to close.",
     "always": {
       "title": "Always",
-      "Enter": "The deck, from the keyboard — commit the round and turn the next card, or begin again. Never confirms the opening pick.",
-      "Cmd/Ctrl + drag": "Pan — grab the canvas and move it, to work closer or farther.",
+      "Enter": "The deck, from the keyboard: commit the round and turn the next card, or begin again. Never confirms the opening pick.",
+      "Cmd/Ctrl + drag": "Pan: grab the canvas and move it, to work closer or farther.",
       "Hold Space + drag": "Pan, the same way. Whichever hold you reach for.",
       "Cmd/Ctrl + scroll": "Zoom toward the cursor.",
-      "0": "Reset the view — back to fit.",
+      "0": "Reset the view, back to fit.",
       "Shift+R": "Restart. It destroys the piece, so it takes two keys.",
       "Esc": "Back out: deselect, put a grid pick back, discard a copy in hand, close this."
     },
     "brush": {
       "title": "Brush in hand",
-      "[ ]": "Brush size, steps of 5 — 10 with Shift. Shift+drag on the canvas also resizes.",
-      "W": "Arrange — where there is something to arrange.",
+      "[ ]": "Brush size, steps of 5 (10 with Shift). Shift+drag on the canvas also resizes.",
+      "W": "Arrange, where there is something to arrange.",
       "E": "Erase.",
       "R": "Restore.",
       "S": "Soften.",
       "X": "Swap Erase ↔ Restore.",
       "H": "Soft / hard.",
-      "Cmd/Ctrl+Z": "Undo a stroke — add Shift to redo. Never crosses a draw."
+      "Cmd/Ctrl+Z": "Undo a stroke; add Shift to redo. Never crosses a draw."
     },
     "arranging": {
       "title": "Arranging",
-      "Arrows": "Nudge 1px — 10 with Shift.",
-      ", .": "Rotate 1° — 15° with Shift.",
-      "- =": "Scale 2% — 10% with Shift."
+      "Arrows": "Nudge 1px (10 with Shift).",
+      ", .": "Rotate 1° (15° with Shift).",
+      "- =": "Scale 2% (10% with Shift)."
     },
     "certainCards": {
       "title": "On certain cards",
@@ -591,12 +591,12 @@
     }
   },
   "progress": {
-    "late": "late — the Coda is in the deck",
+    "late": "late: the Coda is in the deck",
     "actOne": "Act I · round {round} of {total}",
     "actTwo": "Act II · round {round} of {total}"
   },
   "plinth": {
-    "leafHint": "C — leaf through the states",
-    "stateCaption": "state {n} of {total} — {label}"
+    "leafHint": "C: step through earlier states",
+    "stateCaption": "state {n} of {total} · {label}"
   }
 }
