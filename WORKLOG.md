@@ -10,6 +10,40 @@ Choices: any decisions the executor made on its own.
 Files: the main files touched.
 ```
 
+## [13] #11 — The release workflow stops lying about success (2026-08-08)
+What: v0.2.1 went out Mac-only, and not because Linux and Windows failed —
+all three legs built fine and all three were *refused* the upload. A published
+pre-release already sat on the tag; electron-builder can only fill a draft, so
+it logged `skipped publishing` for every artifact and exited 0. Three green
+jobs, an empty release, and the Mac dmgs uploaded by hand afterwards. Added a
+guard on each side of the build. Cut 0.2.2 to carry it.
+Where: main.
+Choices: (1) The pre-flight blocks only on `isDraft == false`. A *draft* on the
+tag is normal — the first leg to finish creates it, the other two append to it,
+and a `workflow_dispatch` retry needs to find it — so blocking on any existing
+release would break the retry path the workflow exists to provide. (2) Both
+guards read the tag from `package.json`, not `github.ref_name`: on a dispatch
+retry the ref is a branch, while electron-builder always aims at `v${version}`.
+Deriving it the same way is what keeps the guards pointed where the upload
+goes. (3) The post-build assertion is the load-bearing one. The pre-flight only
+catches the failure we have already seen; asking the release what it actually
+holds catches every other way an upload can be refused, since exit 0 proves
+nothing here. Each leg checks only its own artifacts, so the three stay
+independent. (4) Left `node-version: 20` and the v4 actions alone — the runner
+deprecation notice is about the actions' own Node runtime, not our build's, and
+a release commit is the wrong place to move the toolchain. (5) Bumped only the
+two version strings in `package-lock.json` by hand: `npm install` under the
+local npm 11 / node 25 strips `peer` markers off five optional dev deps that
+02ee4c4 had added, which would have quietly reverted that commit for no gain.
+`npm ci --dry-run` agrees with the lock either way.
+Verified: the guard was run against the live releases before committing —
+v0.2.1 blocks, v0.2.2 proceeds — and the assertion's matching logic against
+four asset lists including the empty-release shape that is exactly v0.2.1's.
+Also built the Linux AppImage locally and Stew confirmed the #85 ML installer
+through the packaged upgrade path (`setupVersion` 1 → 2), which no Linux build
+had ever exercised.
+Files: .github/workflows/release.yml, package.json, package-lock.json.
+
 ## [12] #99 — Foundry regression audit (2026-07-26)
 What: read-audited every Foundry surface against the post-overhaul shell —
 entry, plates, panel pick, type, the Press, all nine roster cards, run size,

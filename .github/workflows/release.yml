@@ -3,6 +3,9 @@
 # uploads it to a DRAFT GitHub release — nothing goes public until Stew
 # reviews the draft and publishes it (as a pre-release for testing rounds).
 # workflow_dispatch exists so a failed leg can be retried without re-tagging.
+# Two guards bracket the build, because electron-builder refuses an upload
+# without failing: one before, on the state of the release; one after, on what
+# is actually attached to it.
 name: release
 
 on:
@@ -25,6 +28,34 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      # The tag electron-builder targets comes from package.json, not from the
+      # ref — so a workflow_dispatch retry off a branch aims at the same place
+      # a tag push would.
+      - name: Read the version
+        shell: bash
+        run: |
+          version=$(node -p "require('./package.json').version")
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          echo "TAG=v$version" >> "$GITHUB_ENV"
+
+      # v0.2.1 shipped Mac-only because a *published* pre-release already sat
+      # on the tag: electron-builder can only fill a draft, so it skipped every
+      # upload — and still exited 0, so all three legs went green with nothing
+      # attached. A draft on the tag is fine and expected: that is what the
+      # other legs create, and what a dispatch retry appends to.
+      - name: Refuse a tag that already has a published release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          draft=$(gh release view "$TAG" --json isDraft -q .isDraft 2>/dev/null || echo absent)
+          if [ "$draft" = "false" ]; then
+            echo "::error::$TAG already has a published release. electron-builder only fills drafts, so every upload would be silently skipped. Delete the release (keep the tag) and re-run."
+            exit 1
+          fi
+          echo "release at $TAG: $draft"
+
       - run: npm ci
       - run: npm ci --prefix frontend
       - run: npm ci --prefix backend
@@ -34,3 +65,28 @@ jobs:
           # No Apple certificate yet — stop electron-builder from hunting for
           # one. The dmg ships unsigned (right-click → Open on first launch).
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      # electron-builder reports a refused upload as a log line and exits 0, so
+      # a green run proves nothing. Ask the release what it actually holds.
+      - name: Verify this leg's installers landed on the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          case "${{ runner.os }}" in
+            Linux)   expected="ZYME-$VERSION.AppImage latest-linux.yml" ;;
+            Windows) expected="ZYME-Setup-$VERSION.exe latest.yml" ;;
+            macOS)   expected="ZYME-$VERSION-x64.dmg ZYME-$VERSION-arm64.dmg latest-mac.yml" ;;
+          esac
+          attached=$(gh release view "$TAG" --json assets -q '.assets[].name' || true)
+          missing=
+          for name in $expected; do
+            printf '%s\n' "$attached" | grep -qxF "$name" || missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::${{ runner.os }} built but did not publish:$missing"
+            echo "attached to $TAG:"
+            printf '%s\n' "$attached"
+            exit 1
+          fi
+          echo "${{ runner.os }} published:$(printf ' %s' $expected)"
