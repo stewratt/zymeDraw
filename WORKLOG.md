@@ -10,6 +10,30 @@ Choices: any decisions the executor made on its own.
 Files: the main files touched.
 ```
 
+## [19] #118 — Rumination: visual indicator of card classes (2026-08-11)
+What: Talked through with Stew; he wants more time on the taxonomy before
+deciding anything — cosmetic, no urgency. Parked, not developed, not dead.
+Where: parked (label swapped approved→parked), context comment on the issue.
+Choices: none — deliberately deferred.
+Files: none.
+
+## [18] #117 — Rumination: Skim resolves in the sidebar (2026-08-11)
+What: Converged with Stew: Skim leaves the canvas overlay and resolves at the
+deck dock — the top card flips in place (modest enlarge, name line above),
+keep/bury in the sidebar, canvas stays visible, work-glance retired. No
+special Coda staging.
+Where: spawned #120 ([21], large); rumination closed.
+Choices: dock over sidebar-panel; the weight-of-interruption argument declined.
+Files: none (spec only).
+
+## [17] #116 — Rumination: feel the session arc (2026-08-11)
+What: Converged with Stew: no persistent arc meter — the arc is felt at its
+hinges. Two quiet non-blocking transition beats: Act II begins, and the Coda
+joins the deck. Fuller motion stays with #52.
+Where: spawned #119 ([20], small); rumination closed.
+Choices: transition-beats-only over arc strip / ambient tone shift.
+Files: none (spec only).
+
 ## [13] #11 — The release workflow stops lying about success (2026-08-08)
 What: v0.2.1 went out Mac-only, and not because Linux and Windows failed —
 all three legs built fine and all three were *refused* the upload. A published
