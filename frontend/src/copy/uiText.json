@@ -78,7 +78,7 @@
     },
     "skim": {
       "name": "Skim",
-      "description": "Turn the deck's top card face-up. Leave it on top for the next deal, or bury it back into the deck."
+      "description": "Turn the deck's top card face-up. Keep it on top for the next deal, or bury it back into the deck."
     },
     "delay": {
       "name": "Delay",
@@ -167,12 +167,12 @@
       "title": "SKIM",
       "turnTop": "Turn the top card",
       "emptyDeck": "The deck is empty; there is nothing on top.",
-      "choiceHint": "Leave it or bury it. You won't see what replaces it.",
-      "keep": "Leave it: the next deal",
+      "choiceHint": "Keep it or bury it. You won't see what replaces it.",
+      "keep": "Keep it: the next deal",
       "bury": "Bury it: somewhere back in the deck",
       "kept": "It waits on top. Draw to end the round.",
       "buried": "Gone, somewhere back in the deck. The next deal is unknown. Draw to end the round.",
-      "toolWaiting": "On the canvas: turn the top card, then leave it or bury it.",
+      "toolWaiting": "On the canvas: turn the top card, then keep it or bury it.",
       "toolReady": "Draw to end the round."
     },
     "searcher": {
@@ -502,7 +502,7 @@
       },
       "deckCards": {
         "title": "Cards that work the deck",
-        "p1": "Most cards work the piece; a few work the deck itself. **Skim** turns the top card, and you leave it or bury it. **Searcher** takes the card the piece needs. **Delay** grants a held right: the first Coda dealt can be set aside, once.",
+        "p1": "Most cards work the piece; a few work the deck itself. **Skim** turns the top card, and you keep it or bury it. **Searcher** takes the card the piece needs. **Delay** grants a held right: the first Coda dealt can be set aside, once.",
         "p2": "You always know *what* remains in the deck, never the order it arrives in. The Coda ends the session when it is accepted."
       },
       "bearings": {

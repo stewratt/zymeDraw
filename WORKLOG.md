@@ -10,6 +10,21 @@ Choices: any decisions the executor made on its own.
 Files: the main files touched.
 ```
 
+## [13] #112 — Skim: the keep action says "Keep it", not "Leave it" (2026-08-11)
+What: Renamed Skim's keep action to active phrasing — "Leave it" read as
+passive when it is in fact a commitment to that card. All five user-facing
+Skim lines now use the keep/bury pair: the button, the choice hint, the card
+description, `toolWaiting`, and the Guide's deck-cards paragraph.
+Where: main (direct commit, size:S).
+Choices: kept the secondary lines' existing sentence shapes and swapped only
+the verb, so the change reads as a correction rather than a rewrite —
+description "Keep it on top for the next deal", toolWaiting "…then keep it or
+bury it", Guide "…and you keep it or bury it". Also updated the SKIM_KEEP
+comment in `deck.js` ("Keep it where it lies") so the code's language matches
+the UI's; not user-facing, no behavior change. Left the unrelated "leave"
+uses in Lift's description and the card-sets Setup hint alone.
+Files: `frontend/src/copy/uiText.json`, `frontend/src/editor/deck.js`.
+
 ## [19] #118 — Rumination: visual indicator of card classes (2026-08-11)
 What: Talked through with Stew; he wants more time on the taxonomy before
 deciding anything — cosmetic, no urgency. Parked, not developed, not dead.

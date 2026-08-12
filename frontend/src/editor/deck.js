@@ -364,7 +364,7 @@ export function deckReducer(state, action) {
     }
 
     case 'SKIM_KEEP': {
-      // Leave it where it lies — the next deal. The deck doesn't move.
+      // Keep it where it lies — the next deal. The deck doesn't move.
       if (!state.skim?.card || state.skim.choice) return state
       return { ...state, skim: { ...state.skim, choice: 'kept' } }
     }
