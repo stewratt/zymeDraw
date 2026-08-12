@@ -1,0 +1,5 @@
+# throwaway MVP workspace — only the scripts are tracked
+.venv/
+ml-sharp/
+input/
+out/
