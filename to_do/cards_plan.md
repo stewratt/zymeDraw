@@ -106,7 +106,9 @@ screenshot: one stamp, dragged, becomes a braided rope of copies).*
 
 *Kid Pix reference: the truck tool — a rectangle of the canvas grabbed,
 dragged, and set down elsewhere. A smudge brush with no smudge: cut,
-move, drop.*
+move, drop.* (**The smudge itself arrived 2026-08-12 as Smieer**, issue
+#123 — `editor/smieerSession.js`, a new primitive. The two are siblings
+now: Lift relocates pixels intact, Smieer drags them until they blend.)
 
 - **The constraint**: relocation only. Nothing new enters the piece;
   nothing is painted; pixels change *address*, not value.

@@ -31,7 +31,10 @@ import { cardRegistry } from '../editor/cards/registry.jsx'
 // FOUNDRY_CARDS). Stamp brings the first `Overlay` (its grid pick) and
 // degrades gracefully when the ML sidecar is down: the whole image places
 // and the erase brush takes over.
-const ROSTER = ['stamp', 'dust', 'bruise', 'blur', 'steep', 'hue', 'cure', 'char', 'rails']
+// Smieer joins on the same terms (Stew, 2026-08-12): it reads nothing but the
+// master and derives its overlay's seating from MASTER_SCALE, so the card
+// face's 2235×3120 master needs no special case — the one thing #97 was about.
+const ROSTER = ['stamp', 'dust', 'bruise', 'blur', 'smieer', 'steep', 'hue', 'cure', 'char', 'rails']
 
 export const foundryRegistry = Object.fromEntries(
   ROSTER.map((id) => [id, cardRegistry[id]])

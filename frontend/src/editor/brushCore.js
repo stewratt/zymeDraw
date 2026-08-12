@@ -86,7 +86,10 @@ export function clearLayer(layer) {
 // Softness (0–1) shapes the soft dab's falloff: the solid core shrinks from
 // 25% of the radius toward 0 and the fade eases from linear toward cubic —
 // at 0 the dab is exactly the pre-slider soft brush; at 1 it's all feather.
-function drawDab(ctx, x, y, radiusX, radiusY, hardness, softness) {
+// Exported for card-owned sessions that stamp their own dabs rather than
+// accumulating a mask (smieerSession's pickup buffer) — the falloff must be
+// the SAME curve everywhere, or "soft" would mean two different things.
+export function drawDab(ctx, x, y, radiusX, radiusY, hardness, softness) {
   ctx.save()
   ctx.translate(x, y)
   ctx.scale(radiusX, radiusY)
@@ -689,7 +692,7 @@ export function createRevealSession(canvas, { applyEffect, master, getControls, 
 // re-rolled at replay would repaint a DIFFERENT rope than the one the user
 // chose to keep. So each stroke snapshots a seed, and every impression takes
 // its wobble from this deterministic stream, in landing order.
-function mulberry32(seed) {
+export function mulberry32(seed) {
   let a = seed >>> 0
   return function () {
     a = (a + 0x6d2b79f5) | 0
