@@ -110,7 +110,7 @@ import { DelayTools } from './delay.jsx'
 import { DustTools, dustHooks } from './dust.jsx'
 import { BlurTools, blurHooks } from './blur.jsx'
 import { BruiseTools, bruiseHooks } from './bruise.jsx'
-import { SmearTools, beginSmear, cleanupSmear, commitSmear, updateSmear } from './smear.jsx'
+import { SmieerTools, beginSmieer, cleanupSmieer, commitSmieer, updateSmieer } from './smieer.jsx'
 import { SteepTools, beginSteep, cleanupSteep, updateSteep } from './steep.jsx'
 import { HueTools, beginHue, cleanupHue, updateHue } from './hue.jsx'
 import { CureTools, beginCure, cleanupCure, updateCure } from './cure.jsx'
@@ -273,19 +273,19 @@ export const cardRegistry = {
     ...bruiseHooks
   },
 
-  // ---- Smear brush (the piece dragged into itself) ----
+  // ---- Smieer brush (the piece dragged into itself) ----
 
-  smear: {
+  smieer: {
     // No `mode`, so no E/R/S keys — the brush has one op. `size`, `hardness`
     // and `strength` carry their usual contracts, so brackets, Shift+drag and
     // H arrive unasked.
     controls: ['size', 'hardness', 'softness', 'strength'],
     defaultControls: { size: 120, hardness: 'soft', softness: 0.5, strength: 0.6 },
-    Tools: SmearTools,
-    begin: beginSmear,
-    update: updateSmear,
-    commit: commitSmear,
-    cleanup: cleanupSmear
+    Tools: SmieerTools,
+    begin: beginSmieer,
+    update: updateSmieer,
+    commit: commitSmieer,
+    cleanup: cleanupSmieer
   },
 
   // ---- Washes (whole-canvas, influence mandatory) ----

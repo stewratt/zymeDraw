@@ -56,8 +56,8 @@
       "name": "Blur",
       "description": "Paint blur onto the piece with a brush. Nothing changes until you paint."
     },
-    "smear": {
-      "name": "Smear",
+    "smieer": {
+      "name": "Smieer",
       "description": "Drag the piece into itself with a brush. Nothing new arrives and nothing is coloured — colour only travels along your stroke, and Strength is how far it carries."
     },
     "steep": {

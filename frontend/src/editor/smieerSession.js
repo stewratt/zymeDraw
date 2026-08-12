@@ -1,4 +1,4 @@
-// The smear session — the classic smudge brush, on the whole piece.
+// The smieer session — the classic smudge brush, on the whole piece.
 //
 // A fourth consumer of brushCore's stroke engine, living outside brushCore
 // because that file already carries three built-ins and its header names
@@ -6,10 +6,10 @@
 // composites). Structurally this is the stamp session's twin: one full-canvas
 // Fabric image at master resolution, left in place for the universal bake.
 //
-// WHAT MAKES SMEAR DIFFERENT from every other brush here: it reads its own
+// WHAT MAKES SMIEER DIFFERENT from every other brush here: it reads its own
 // output. The mask and reveal sessions are order-agnostic — a stroke's result
 // depends only on its own settings — so they can composite a stroke's pixels
-// at any time. A smear dab drags whatever the PREVIOUS dab just left behind,
+// at any time. A smieer dab drags whatever the PREVIOUS dab just left behind,
 // so dabs must run in sequence, into a single `working` canvas that starts as
 // a copy of the master and is deformed in place. Everywhere the hand hasn't
 // been, `working` is pixel-identical to the master, so the bake is seamless.
@@ -32,7 +32,7 @@
 // only get the soft skirt — the stroke comes out banded at exactly the dab
 // interval (the first build did this; the stripes were unmistakable). Laying
 // each dab down at a fraction instead lets ~30 overlapping dabs accumulate
-// into a full smear with no periodic signature. Both FLOW and `retain` are
+// into a full smudge with no periodic signature. Both FLOW and `retain` are
 // therefore quoted PER RADIUS TRAVELLED and converted to per-dab figures
 // here, so spacing is free to change without altering how the brush behaves.
 //
@@ -55,7 +55,7 @@ import { createStrokeEngine, drawDab, makeLayer, mulberry32 } from './brushCore.
 import { MASTER_SCALE } from './masterRaster.js'
 
 // Dab spacing as a fraction of the brush radius. Far tighter than the mask
-// engine's 0.35 — a smear reads as a drag only if the dabs pile up. Not
+// engine's 0.35 — a smudge reads as a drag only if the dabs pile up. Not
 // tighter still, deliberately: every step this shrinks also shrinks the
 // per-dab leak alpha, and canvas compositing is 8-bit, so below roughly 0.05
 // the pickup stops updating at all across gentle gradients (the rounding
@@ -63,7 +63,7 @@ import { MASTER_SCALE } from './masterRaster.js'
 const SPACING = 0.08
 
 // How much of the piece a dab's core has replaced after the brush travels one
-// radius. Just under 1: the smear must be able to reach full strength, but
+// radius. Just under 1: the smudge must be able to reach full strength, but
 // arrive there over many dabs rather than in one.
 const COVER = 0.97
 
@@ -111,7 +111,7 @@ function dabsFor(stroke) {
   return out
 }
 
-export function createSmearSession(canvas, { master, getControls, onHistoryChange, onSizeChange }) {
+export function createSmieerSession(canvas, { master, getControls, onHistoryChange, onSizeChange }) {
   const working = makeLayer(master.width, master.height)
   const strokeMask = makeLayer(master.width, master.height) // engine scratch; dabs never read it
 

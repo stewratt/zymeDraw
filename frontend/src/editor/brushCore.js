@@ -87,7 +87,7 @@ export function clearLayer(layer) {
 // 25% of the radius toward 0 and the fade eases from linear toward cubic —
 // at 0 the dab is exactly the pre-slider soft brush; at 1 it's all feather.
 // Exported for card-owned sessions that stamp their own dabs rather than
-// accumulating a mask (smearSession's pickup buffer) — the falloff must be
+// accumulating a mask (smieerSession's pickup buffer) — the falloff must be
 // the SAME curve everywhere, or "soft" would mean two different things.
 export function drawDab(ctx, x, y, radiusX, radiusY, hardness, softness) {
   ctx.save()

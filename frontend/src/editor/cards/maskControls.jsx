@@ -11,7 +11,7 @@
 //
 // BrushSliders — the sliders WITHOUT any op row (size · strength · soft/hard
 // · softness · undo), exported for a card whose brush has only one op and so
-// has nothing to switch between (Smear). The mask sliders are its exact
+// has nothing to switch between (Smieer). The mask sliders are its exact
 // control set; a private copy in that card would be the same block, drifting.
 //
 // Naming: the op's code key stays `conceal` everywhere (engine, controls,

@@ -45,7 +45,7 @@ export const FOUNDRY_CARDS = [
   { id: 'dust', copies: 1 }, // Reveal × deposit
   { id: 'bruise', copies: 1 }, // Reveal × Bruise
   { id: 'blur', copies: 1 }, // Reveal × blur
-  { id: 'smear', copies: 1 }, // Smear — the face dragged into itself
+  { id: 'smieer', copies: 1 }, // Smieer — the face dragged into itself
   { id: 'steep', copies: 1 }, // Wash × Sink
   { id: 'hue', copies: 1 }, // Wash (hue)
   { id: 'cure', copies: 1 } // Wash × Cure
