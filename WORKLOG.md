@@ -16,7 +16,7 @@ work-glance thumbnail) is retired; the deck dock's own top card turns face-up in
 place, named above the face, and the turn/keep/bury buttons live in the sidebar
 panel with the rest of the card's Tools. The canvas is fully visible for the
 whole round — which is the point: keep or bury is a question about the piece.
-Where: PR #121.
+Where: PR #122.
 Choices: the registry field is `dockCard: (deckView) => card|null` — "which card
 this round turns face-up ON TOP OF THE DECK". DeckPanel calls it and hands the
 result to DeckDock as `topCard`; Editor now threads `deckView` / the fenced
