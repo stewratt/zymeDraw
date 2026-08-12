@@ -26,6 +26,15 @@
 //     actions: Searcher's pick, Skim's choices), and `workUrl` (the latest
 //     committed state as an image — overlays cover the canvas, so a card
 //     whose decision is about the piece shows the piece).
+//     `Tools` gets `deckView` and `onDeckAction` too, on the same fence — a
+//     deck-facing card whose round resolves in the panel (Skim) needs no
+//     overlay at all.
+//   - `dockCard`: (deckView) => card|null — the card this round turns FACE-UP
+//     ON TOP OF THE DECK. Declaring it is how a card says its reveal resolves
+//     at the dock instead of over the canvas (Skim, issue #120): DeckPanel
+//     hands the result to DeckDock, which turns the deck's top card over in
+//     place, a touch larger than dock scale, with its name above the face.
+//     The canvas stays visible for the whole round.
 //   - `randomize`: (defaults) => defaults, applied when the card is dealt
 //     — for cards that open on a random setting (Bruise's hue), beyond
 //     the automatic `color` re-roll.
@@ -96,7 +105,7 @@ import {
   updateReverberate
 } from './reverberate.jsx'
 import { SearcherOverlay, SearcherTools, beginSearcher } from './searcher.jsx'
-import { SkimOverlay, SkimTools, beginSkim } from './skim.jsx'
+import { SkimTools, beginSkim, skimDockCard } from './skim.jsx'
 import { DelayTools } from './delay.jsx'
 import { DustTools, dustHooks } from './dust.jsx'
 import { BlurTools, blurHooks } from './blur.jsx'
@@ -304,11 +313,13 @@ export const cardRegistry = {
     skipBake: true
   },
 
+  // No Overlay: the reveal happens on the deck itself (dockCard) and the
+  // choice in the panel, so the canvas is never covered (issue #120).
   skim: {
     controls: [],
     defaultControls: {},
     Tools: SkimTools,
-    Overlay: SkimOverlay,
+    dockCard: skimDockCard,
     begin: beginSkim,
     deckActions: ['SKIM', 'SKIM_KEEP', 'SKIM_BURY'],
     skipBake: true

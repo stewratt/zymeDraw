@@ -52,6 +52,8 @@ function DeckPanel({
   onMaskRedo,
   exportState,
   dockNotice,
+  deckView,
+  onDeckAction,
   onControlChange,
   onAdvance,
   stashTone,
@@ -105,6 +107,8 @@ function DeckPanel({
           committed={committed}
           onGateCommit={onGateCommit}
           committing={committing}
+          deckView={deckView}
+          onDeckAction={onDeckAction}
           onControlChange={onControlChange}
           onAdvance={onAdvance}
         />
@@ -339,10 +343,16 @@ function CodaChoice({ state, onAcceptCoda, onDelayCoda }) {
 // press the deck says plainly that drawing lets the card pass; after it the round rests
 // on its result and the deck is only the next deal. All of it reads from the
 // registry, so this is still a panel that knows nothing about any card.
-function CardRevealed({ state, dockNotice, entry, controls, info, ready, committed, onGateCommit, committing, onControlChange, onAdvance }) {
+//
+// A card may also declare `dockCard` (Skim, issue #120): its round resolves at
+// the deck instead of over the canvas, so the dock turns the deck's own top
+// card face-up and Tools asks the question beside it. Read from the registry
+// like everything else here.
+function CardRevealed({ state, dockNotice, entry, controls, info, ready, committed, onGateCommit, committing, deckView, onDeckAction, onControlChange, onAdvance }) {
   const card = state.currentCard
   const ToolsComponent = entry?.Tools
   const gate = entry?.commitGate
+  const topCard = entry?.dockCard?.(deckView) ?? null
   const gateOpen = !!gate && !committed // the button is up; the deck would pass
   const commitDisabled = !ready || committing
   const [zoomed, setZoomed] = useState(false)
@@ -353,6 +363,8 @@ function CardRevealed({ state, dockNotice, entry, controls, info, ready, committ
       info={info}
       ready={ready}
       committed={committed}
+      deckView={deckView}
+      onDeckAction={onDeckAction}
       onControlChange={onControlChange}
     />
   ) : (
@@ -386,6 +398,7 @@ function CardRevealed({ state, dockNotice, entry, controls, info, ready, committ
       </div>
       <DeckDock
         card={card}
+        topCard={topCard}
         // A card arrives either straight after a commit (roundsDealt just
         // moved) or by being searched out mid-round (the id changes) — so
         // this pair is a different string for every card that turns over.
@@ -395,7 +408,11 @@ function CardRevealed({ state, dockNotice, entry, controls, info, ready, committ
         hint={
           committing
             ? T.committing
-            : !ready
+            : topCard
+              ? // A card is turned over on the deck: the round is waiting on
+                // the answer, not on setup, so say so where the deck is.
+                T.deckHintTurned
+              : !ready
               ? T.settingUp
               : gateOpen
                 ? T.deckHintGate

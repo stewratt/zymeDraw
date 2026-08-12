@@ -10,6 +10,44 @@ Choices: any decisions the executor made on its own.
 Files: the main files touched.
 ```
 
+## [21] #120 — Skim resolves at the deck dock — the canvas stays visible (2026-08-11)
+What: Skim's round no longer covers the canvas. `SkimOverlay` (and with it the
+work-glance thumbnail) is retired; the deck dock's own top card turns face-up in
+place, named above the face, and the turn/keep/bury buttons live in the sidebar
+panel with the rest of the card's Tools. The canvas is fully visible for the
+whole round — which is the point: keep or bury is a question about the piece.
+Where: PR #121.
+Choices: the registry field is `dockCard: (deckView) => card|null` — "which card
+this round turns face-up ON TOP OF THE DECK". DeckPanel calls it and hands the
+result to DeckDock as `topCard`; Editor now threads `deckView` / the fenced
+`onDeckAction` into DeckPanel too, and `Tools` gets them alongside `Overlay` (the
+same fence — `deckActions` is still the gate), so a deck-facing card can resolve
+in the panel with no overlay at all. Generic on both sides: no card id is named
+in Editor.jsx or DeckPanel.jsx. `dockCard` returns the card only while the choice
+is open — once made, the card goes back down, so a buried card never sits face-up
+on a deck it is no longer on. Flip: reuses the dock's own `DealtCard` with an
+`inPlace` flag, i.e. the same 560ms turn and the same flip sound minus the
+translateX travel out of the deck (`card-turn-in-place`); reduced-motion already
+covered it. Size: the stack grows by WIDTH (`116%`, `margin-left: -8%`) rather
+than by transform, so aspect-ratio carries the height and the name above rides up
+on normal flow — the bottom edge and the deck's column are untouched and the 8%
+either side lands in the panel padding / the column gap, never on the dealt card
+beside it. The deck is disabled for the whole reveal (End waits on the choice),
+so `.deck-slot--turned .deck-stack:disabled` keeps full opacity — the reveal has
+to be readable — and a new generic dock line (`deckPanel.deckHintTurned`, chosen
+on `topCard`, not on any card id) replaces the "Setting up…" the dock would
+otherwise have shown while the user is deciding. Click-only holds: no key binding
+was added, Enter still only deals. Copy retired as orphans: `cardHints.skim.title`
+(the overlay head), `toolWaiting` (it said "On the canvas"), `toolReady` (the
+kept/buried lines already say "Draw to end the round"). CSS retired: `.skim-body`,
+`.skim-stage`, `.skim-name`, `.card--reveal`; `.skim-choices` now stacks the two
+buttons vertically, since the labels name what each choice costs and the sidebar
+is 292px wide. deck.js is untouched — SKIM / SKIM_KEEP / SKIM_BURY are unchanged.
+Files: `frontend/src/editor/cards/skim.jsx`, `frontend/src/editor/cards/registry.jsx`,
+`frontend/src/editor/DeckDock.jsx`, `frontend/src/editor/DeckPanel.jsx`,
+`frontend/src/editor/Editor.jsx`, `frontend/src/editor/editor.css`,
+`frontend/src/copy/uiText.json`.
+
 ## [20] #119 — Arc beats: name the hinges — Act II begins, the Coda joins the deck (2026-08-11)
 What: The session now announces its two turns. When `roundsDealt` crosses
 `TUNING.actOneRounds` a line says Act II has begun; when `deathShuffled` flips,

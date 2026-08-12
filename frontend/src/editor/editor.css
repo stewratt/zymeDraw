@@ -349,8 +349,9 @@
   background: var(--surface-2);
 }
 
-/* The work, glanced at while choosing (Searcher, Skim): the deck-facing cards
-   cover the canvas, so the piece stands beside the decision instead.
+/* The work, glanced at while choosing (Searcher): its remains view covers the
+   canvas, so the piece stands beside the decision instead. (Skim no longer
+   needs this — it resolves at the dock, with the canvas itself in view.)
    Width-driven: the figure takes a fixed share of the row and the image
    follows at 4:5 (the max-height is a short-window backstop). */
 .work-glance {
@@ -410,27 +411,18 @@
   color: var(--pick-place);
 }
 
-/* Skim (the scry): one card, center stage, one choice — the work beside. */
-.skim-body {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  gap: 24px;
-}
-.skim-stage {
-  flex: 1;
-  min-height: 0;
+/* Skim (the scry): the reveal is on the deck itself (issue #120), so all the
+   panel holds is the question and the two answers — stacked, because the
+   labels say what each choice costs and the sidebar is narrow. */
+.skim-tools {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
+  gap: 12px;
 }
 .skim-choices {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .deck-panel h2 {
@@ -524,16 +516,57 @@
 .deck-stack-under--2 {
   transform: translate(-6px, 8px);
 }
-.deck-stack > .card {
+.deck-stack > .card,
+.deck-stack > .deal-flip {
   position: relative;
   transition: transform 140ms ease, border-color 140ms ease;
 }
-.deck-stack:not(:disabled):hover > .card {
+.deck-stack:not(:disabled):hover > .card,
+.deck-stack:not(:disabled):hover > .deal-flip {
   transform: translateY(-5px);
   border-color: var(--border-strong);
 }
-.deck-stack:not(:disabled):active > .card {
+.deck-stack:not(:disabled):active > .card,
+.deck-stack:not(:disabled):active > .deal-flip {
   transform: translateY(-1px);
+}
+
+/* The deck's own top card, turned face-up where it lies (Skim, issue #120).
+   The stack grows by width — aspect-ratio takes the height with it, so the
+   slot itself gets taller and the name above rides up on normal flow. The
+   bottom edge and the deck's column are untouched: the click target the
+   whole session returns to stays exactly where it was. The 8% either side
+   overflows into the panel padding on the left and the column gap on the
+   right, so nothing collides with the dealt card beside it. */
+.deck-slot--turned .deck-stack {
+  width: 116%;
+  margin-left: -8%;
+}
+/* The deck is disabled for the whole reveal — the round can't end until the
+   choice is made — but the turned card is the one thing that has to be
+   readable, so it keeps full strength. The dock line says why it won't draw. */
+.deck-slot--turned .deck-stack:disabled {
+  opacity: 1;
+}
+.deck-turn-name {
+  margin: 0 0 10px;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  color: var(--text-title);
+}
+/* Turned, not dealt: the same flip, minus the travel out of the deck. */
+.deal-flip--place .deal-flip-inner {
+  animation-name: card-turn-in-place;
+}
+@keyframes card-turn-in-place {
+  0% {
+    transform: rotateY(180deg);
+  }
+  100% {
+    transform: rotateY(0deg);
+  }
 }
 
 /* The deal, made visible: the drawn card's back and face share one box and
@@ -604,11 +637,6 @@
 .card--zoom {
   width: min(440px, calc((100vh - 140px) * 745 / 1040), calc(100vw - 80px));
 }
-/* The revealed card (Skim): center stage in the canvas area, with room
-   left for the hint and the choice below it. */
-.card--reveal {
-  width: min(300px, calc((100vh - 370px) * 745 / 1040));
-}
 .card--death {
   border-color: var(--border-strong);
 }
@@ -673,17 +701,6 @@
   object-fit: cover;
   display: block;
   user-select: none;
-}
-/* The reveal names itself (issue #50): the name floats above the revealed
-   face — off the art, so it never covers what the choice is about. A plain
-   name in the studio register, not a HUD (§1). Skim-only. */
-.skim-name {
-  margin: 0;
-  text-align: center;
-  font-size: 1.05rem;
-  font-weight: 300;
-  letter-spacing: 0.06em;
-  color: var(--text);
 }
 .card-text-face {
   position: absolute;

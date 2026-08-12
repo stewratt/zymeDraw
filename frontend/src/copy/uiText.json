@@ -164,16 +164,13 @@
       "grainHint": "You are at the grain: every square is one pixel of the piece. Etch a small glyph; Space-drag or Ctrl-scroll to move over it. At full size it will be almost nothing."
     },
     "skim": {
-      "title": "SKIM",
       "turnTop": "Turn the top card",
       "emptyDeck": "The deck is empty; there is nothing on top.",
       "choiceHint": "Keep it or bury it. You won't see what replaces it.",
       "keep": "Keep it: the next deal",
       "bury": "Bury it: somewhere back in the deck",
       "kept": "It waits on top. Draw to end the round.",
-      "buried": "Gone, somewhere back in the deck. The next deal is unknown. Draw to end the round.",
-      "toolWaiting": "On the canvas: turn the top card, then keep it or bury it.",
-      "toolReady": "Draw to end the round."
+      "buried": "Gone, somewhere back in the deck. The next deal is unknown. Draw to end the round."
     },
     "searcher": {
       "title": "Searcher",
@@ -414,6 +411,7 @@
     "deckHintIdle": "Draw from the deck to turn the next card.",
     "deckDrawAction": "Commit this round and draw",
     "deckDrawIdle": "Draw the next card",
+    "deckHintTurned": "The top card is turned over. Make the choice above; the deck deals again after.",
     "deckHintGate": "Nothing is committed yet. Draw from the deck to let this card pass; the piece is left exactly as it stands.",
     "deckDrawGate": "Let this card pass and draw",
     "codaTitle": "THE CODA",

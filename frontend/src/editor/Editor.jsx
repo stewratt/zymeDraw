@@ -886,6 +886,10 @@ function Editor({ config, deckSpec, onBackToSetup }) {
             onMaskRedo={() => maskSessionRef.current?.redo()}
             exportState={exportState}
             dockNotice={dockNotice}
+            // The panel side of the same fenced channel the overlays get: a
+            // deck-facing card can resolve its round here instead (issue #120).
+            deckView={deckView}
+            onDeckAction={handleDeckAction}
             onControlChange={handleControlChange}
             onAdvance={handleAdvance}
             onAcceptCoda={() => dispatch({ type: 'ACCEPT_CODA' })}

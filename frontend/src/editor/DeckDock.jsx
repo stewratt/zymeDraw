@@ -17,6 +17,11 @@
 //
 // `dealKey` changes on every deal — it remounts the flip so the animation
 // replays even when one card follows another with no empty beat between.
+//
+// `topCard` turns the DECK'S OWN top card face-up in place (issue #120): the
+// deck-facing cards whose round is a look at what's next (Skim) resolve here
+// rather than over the canvas. Another prop for a mechanic one wing has and
+// the other doesn't — the Foundry simply omits it.
 
 import { useEffect } from 'react'
 import Card from './Card.jsx'
@@ -29,6 +34,7 @@ const T = UI.deckPanel
 
 function DeckDock({
   card,
+  topCard = null,
   dealKey,
   deckCount,
   stashCount = 0,
@@ -59,7 +65,11 @@ function DeckDock({
         </div>
       ) : null}
       <div className="deck-pair">
-        <div className="deck-slot">
+        <div className={`deck-slot${topCard ? ' deck-slot--turned' : ''}`}>
+          {/* The turned card names itself above the face — art may bury its
+              own name (issue #50) and the choice needs to know what it is
+              deciding on. */}
+          {topCard && <p className="deck-turn-name">{topCard.label}</p>}
           <button
             type="button"
             className="deck-stack"
@@ -78,7 +88,14 @@ function DeckDock({
             <span className="deck-stack-under deck-stack-under--1" aria-hidden="true">
               <Card faceDown />
             </span>
-            <Card faceDown />
+            {topCard ? (
+              // Turned in place: the same flip the dealt card uses, minus the
+              // travel — this card is not coming off the deck, it is being
+              // looked at. Not clickable: the whole stack is still the draw.
+              <DealtCard key={topCard.id} card={topCard} inPlace />
+            ) : (
+              <Card faceDown />
+            )}
           </button>
         </div>
         {/* Empty until a card is drawn. The columns are fixed, so the deck
@@ -100,14 +117,17 @@ function DeckDock({
 // turns over, so what you see is the card you just drew flipping face-up out
 // of the deck. Motion only — both sides render through Card.jsx, which keeps
 // owning the geometry. Duration and easing are issue #59's to tune.
-function DealtCard({ card, onZoom }) {
+//
+// `inPlace` is the same turn without the travel: the deck's own top card,
+// looked at where it lies (issue #120).
+function DealtCard({ card, onZoom, inPlace }) {
   // `dealKey` remounts this on every deal, so mounting *is* the turn over —
   // the sound rides the animation rather than the click that started it.
   useEffect(() => {
     playCardFlip()
   }, [])
   return (
-    <div className="deal-flip">
+    <div className={`deal-flip${inPlace ? ' deal-flip--place' : ''}`}>
       <div className="deal-flip-inner">
         <Card
           id={card.id}
