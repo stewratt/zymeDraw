@@ -11,7 +11,7 @@
 // PARAMETERIZED BY PROPS ONLY — there is no `wing` flag and no branch on who
 // is rendering it. Everything that differs between the two wings arrives as a
 // prop, and the props for mechanics one wing doesn't have (`stashCount`,
-// `delayHeld`) default to off, so the Foundry simply omits them. The dock
+// `delayHeld`, `notice`) default to off, so the Foundry simply omits them. The dock
 // knows what is in hand and what a click means; it never knows which session
 // it is in.
 //
@@ -36,21 +36,26 @@ function DeckDock({
   actionLabel,
   disabled,
   delayHeld = false,
+  notice = null,
   onDraw,
   onZoomCard
 }) {
   return (
     <div className="deck-dock">
-      {/* Deck state, not card behavior: the right Delay granted, standing
-          with the deck it will be spent against. It lived at the old deal
-          panel — with no between-rounds beat left, the dock is where it is
-          always in view. */}
-      {delayHeld && (
+      {/* One slot for the held right (issue #114): the token while it stands,
+          and the notice that takes its place the moment it is spent, so the
+          dock announces the loss instead of silently emptying. Deck state,
+          not card behavior — the right Delay granted, standing with the deck
+          it will be spent against. It lived at the old deal panel; with no
+          between-rounds beat left, the dock is where it is always in view. */}
+      {notice ? (
+        <p className="hint dock-notice">{notice}</p>
+      ) : delayHeld ? (
         <div className="delay-held">
           <Card id="delay" label={UI.cards.delay.name} size="tile" />
           <span className="hint">{T.delayHeld}</span>
         </div>
-      )}
+      ) : null}
       <div className="deck-pair">
         <div className="deck-slot">
           <button

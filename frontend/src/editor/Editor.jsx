@@ -122,6 +122,13 @@ function Editor({ config, deckSpec, onBackToSetup }) {
   // transitions to COMPLETE. Reset on Restart.
   const [exportState, setExportState] = useState({ status: 'idle', savedPath: null, error: null })
 
+  // A one-shot line for the deck dock (issue #114). Setting a Coda aside
+  // spends Delay: the token leaves the dock, and this puts the reason in its
+  // place instead of letting the dock go quiet. It is a passing beat, not
+  // deck state — the reducer doesn't know about it — and it clears on the
+  // next draw, so the announcement is always read before it goes.
+  const [dockNotice, setDockNotice] = useState(null)
+
   // The Keys reference overlay (header button). While open it blocks the
   // whole keymap itself (KeysReference swallows keys at the capture phase).
   const [keysOpen, setKeysOpen] = useState(false)
@@ -505,6 +512,9 @@ function Editor({ config, deckSpec, onBackToSetup }) {
   // with nothing to do.
   async function handleAdvance() {
     if (committingRef.current) return
+    // Any draw is the next action: whatever the dock was announcing has been
+    // seen by now.
+    setDockNotice(null)
     if (state.phase === 'PLACEMENT' || state.phase === 'STASH_RETURN') {
       if (!placementReady) return
       handleEndPlacement()
@@ -574,6 +584,7 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     setCardInfo({})
     setGateCommitted(null)
     setPlacementReady(true)
+    setDockNotice(null)
     setStates([])
     setExportState({ status: 'idle', savedPath: null, error: null, thumbDataUrl: null })
     dispatch({ type: 'RESTART' })
@@ -828,10 +839,16 @@ function Editor({ config, deckSpec, onBackToSetup }) {
             onMaskUndo={() => maskSessionRef.current?.undo()}
             onMaskRedo={() => maskSessionRef.current?.redo()}
             exportState={exportState}
+            dockNotice={dockNotice}
             onControlChange={handleControlChange}
             onAdvance={handleAdvance}
             onAcceptCoda={() => dispatch({ type: 'ACCEPT_CODA' })}
-            onDelayCoda={() => dispatch({ type: 'DELAY_CODA' })}
+            onDelayCoda={() => {
+              // The reducer is untouched — the notice is the UI's own record
+              // that the right just left the dock.
+              setDockNotice(UI.deckPanel.delaySpent)
+              dispatch({ type: 'DELAY_CODA' })
+            }}
             onRestart={handleRestart}
             onOpenOutput={handleOpenOutput}
             onOpenHistory={() => setHistoryOpen(true)}

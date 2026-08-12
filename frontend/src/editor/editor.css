@@ -746,6 +746,35 @@
 .delay-held .card {
   width: 64px;
 }
+/* The same slot, the moment the right is spent: the token leaves and says
+   why (issue #114). Bordered so it reads as the token's replacement rather
+   than another line of standing dock text, which the hints beneath already
+   are. It clears on the next draw. */
+.dock-notice {
+  margin-top: 14px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--surface-2);
+  color: var(--text-title);
+  text-align: center;
+  animation: dock-notice-in 320ms ease both;
+}
+@keyframes dock-notice-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dock-notice {
+    animation: none;
+  }
+}
 .card-count {
   position: absolute;
   right: 6px;

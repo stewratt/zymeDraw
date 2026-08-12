@@ -406,6 +406,7 @@
     "stashedSuffix": "· {count} stashed",
     "viewDeck": "View the deck",
     "delayHeld": "held: the first Coda can be set aside",
+    "delaySpent": "Delay is spent — the next Coda ends the piece.",
     "deckHintPlacement": "Draw from the deck when the arrangement is right: it bakes in for good, and the next card turns over.",
     "deckHintActive": "Draw from the deck when this round is done: it bakes in for good, and the next card turns over.",
     "deckHintIdle": "Draw from the deck to turn the next card.",

@@ -10,6 +10,30 @@ Choices: any decisions the executor made on its own.
 Files: the main files touched.
 ```
 
+## [15] #114 — Delay is legible: a held token in the dock, a notice when it's spent (2026-08-11)
+What: Setting a Coda aside used to empty the dock's held-right slot in silence
+(read by a friend as "the card thumbnail was gone"). The slot now announces the
+loss: the Delay token departs and "Delay is spent — the next Coda ends the
+piece." takes its place, clearing on the next draw. The token itself was
+already in the dock from #98 and is unchanged.
+Where: main (direct commit, size:S).
+Choices: the notice is a one-shot `dockNotice` string held in Editor state,
+not deck state — the reducer is untouched per the spec, and the deck's record
+already has its `delayed` event. Dismissal is next-action rather than timed, so
+the announcement can't be missed by a user looking at the canvas; `handleAdvance`
+clears it at the top (any draw counts) and `handleRestart` resets it. Threaded
+to `AwaitingDeal` only: DELAY_CODA lands on WORKING-with-nothing-in-hand and
+nowhere else, so that is the one panel that can carry it. In `DeckDock` the
+notice reuses the held-token's slot as an either/or, keeping the dock's normal
+states untouched and the Foundry's omitted props defaulting off as before.
+Styled as a bordered strip on `--surface-2` so it doesn't read as another
+standing dock hint, with a short fade-in and a `prefers-reduced-motion` opt-out
+matching the deal-flip's.
+Verified: `npx vite build` passes.
+Files: `frontend/src/editor/Editor.jsx`, `frontend/src/editor/DeckPanel.jsx`,
+`frontend/src/editor/DeckDock.jsx`, `frontend/src/editor/editor.css`,
+`frontend/src/copy/uiText.json`.
+
 ## [14] #113 — Stash Return joins the opening shuffle (2026-08-11)
 What: The Stash Return card is now slipped into the whole deck the moment the
 opening pick commits with a stash, instead of being scheduled for the end of

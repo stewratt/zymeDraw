@@ -48,6 +48,7 @@ function DeckPanel({
   onMaskUndo,
   onMaskRedo,
   exportState,
+  dockNotice,
   onControlChange,
   onAdvance,
   stashTone,
@@ -101,7 +102,12 @@ function DeckPanel({
           onAdvance={onAdvance}
         />
       ) : (
-        <AwaitingDeal state={state} onAdvance={onAdvance} onOpenHistory={onOpenHistory} />
+        <AwaitingDeal
+          state={state}
+          dockNotice={dockNotice}
+          onAdvance={onAdvance}
+          onOpenHistory={onOpenHistory}
+        />
       )
     case 'CODA_CHOICE':
       return <CodaChoice state={state} onAcceptCoda={onAcceptCoda} onDelayCoda={onDelayCoda} />
@@ -248,7 +254,10 @@ function Placement({
 // Nothing in hand: the beat after a Coda is set aside, and the state the
 // session rests in if a deal ever finds an empty deck. One click on the deck
 // draws — there is nothing to commit first.
-function AwaitingDeal({ state, onAdvance, onOpenHistory }) {
+//
+// This is also the only beat DELAY_CODA can land on, so it is the one panel
+// that carries the dock notice: the round the held right was spent in.
+function AwaitingDeal({ state, dockNotice, onAdvance, onOpenHistory }) {
   return (
     <aside className="deck-panel">
       <div className="panel-scroll">
@@ -265,6 +274,7 @@ function AwaitingDeal({ state, onAdvance, onOpenHistory }) {
         hint={T.deckHintIdle}
         actionLabel={T.deckDrawIdle}
         delayHeld={state.delayHeld}
+        notice={dockNotice}
         onDraw={onAdvance}
       />
     </aside>
