@@ -25,10 +25,19 @@ export function createMaster(width = MASTER_WIDTH, height = MASTER_HEIGHT) {
   const el = document.createElement('canvas')
   el.width = width
   el.height = height
-  const ctx = el.getContext('2d')
-  ctx.fillStyle = '#ffffff'
-  ctx.fillRect(0, 0, width, height)
-  return el
+  return fillMaster(el, '#ffffff')
+}
+
+// Flood the master with one flat color. The ground (issue #115) rides this:
+// painting the master IS setting the canvas ground, so it shows live under
+// the placement (the proxy draws the master as its background) and the
+// universal bake carries it at full resolution with no special case. Only
+// safe on a master with nothing committed yet — it overwrites every pixel.
+export function fillMaster(master, color) {
+  const ctx = master.getContext('2d')
+  ctx.fillStyle = color
+  ctx.fillRect(0, 0, master.width, master.height)
+  return master
 }
 
 // Show the master on the working canvas as the ARTBOARD: a fixed rectangle

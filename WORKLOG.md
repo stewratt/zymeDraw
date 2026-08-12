@@ -10,6 +10,40 @@ Choices: any decisions the executor made on its own.
 Files: the main files touched.
 ```
 
+## [16] #115 — Placement: a background color beneath the start image (2026-08-11)
+What: The opening placement now chooses the ground the image sits on — a
+curated swatch row (Paper · Bone · Ash · Slate · Ink · Clay · Moss · Indigo)
+plus a custom color input, defaulting to today's white. The color shows live
+behind the placed images, and the first draw bakes it in at 2400×3000, so the
+export carries it and later rounds uncover it as ordinary pixels.
+Where: PR (branch `feature/16-placement-bg-color`).
+Choices: the mechanism is "the ground IS the master fill" — `fillMaster` (new,
+in `masterRaster.js`, and what `createMaster` now uses for its white) floods the
+offscreen master and Editor reseats it with `showMaster`. Nothing was added to
+`bake()`: the master is already the proxy's background, so the universal bake
+carries the ground at full resolution with no new path and no filter-flush
+concern, and it is pixels from End onward exactly as the spec asks. Editor holds
+one `ground` state string reset by Restart, threaded to the placement panel the
+way `stashTone` already is; the panel renders it only when `!returning`, so the
+Stash Return session is untouched (by then the ground is baked pixels the piece
+was built against). The control is its own module, `GroundPicker.jsx`, following
+the `PlacementLayers.jsx` precedent rather than growing DeckPanel; it sits under
+the brush tools, above the layers — the same slot the stash-tone block uses.
+Swatch ids are permanent keys with names in `uiText.json` (`ground.*`), so the
+palette obeys the copy rule. CSS: the dead `.grade-*` swatch block (no JSX
+referenced it) was replaced by the `.ground-*` block rather than adding a second
+swatch style; the chosen chip is marked with an outline, since the chip is its
+own color and a border swap would vanish on white or black.
+Flagged, not changed: Rack's description still ends "whatever the move uncovers
+stays white." That stays accurate — Rack lifts the whole baked piece, ground
+pixels included, so what it exposes is still the empty canvas, not the chosen
+ground. Nothing else in the copy promises white.
+Verified: `npx vite build` passes; dev server serves the new module.
+Files: `frontend/src/editor/GroundPicker.jsx` (new),
+`frontend/src/editor/masterRaster.js`, `frontend/src/editor/Editor.jsx`,
+`frontend/src/editor/DeckPanel.jsx`, `frontend/src/editor/editor.css`,
+`frontend/src/copy/uiText.json`.
+
 ## [15] #114 — Delay is legible: a held token in the dock, a notice when it's spent (2026-08-11)
 What: Setting a Coda aside used to empty the dock's held-right slot in silence
 (read by a friend as "the card thumbnail was gone"). The slot now announces the

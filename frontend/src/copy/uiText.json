@@ -430,6 +430,21 @@
     "exportFailed": "Export failed: {error}",
     "restart": "Start a new composition"
   },
+  "ground": {
+    "title": "GROUND",
+    "custom": "Custom",
+    "hint": "The color under the image. It bakes in with the arrangement when you draw.",
+    "names": {
+      "paper": "Paper",
+      "bone": "Bone",
+      "ash": "Ash",
+      "slate": "Slate",
+      "ink": "Ink",
+      "clay": "Clay",
+      "moss": "Moss",
+      "indigo": "Indigo"
+    }
+  },
   "opening": {
     "title": "THE OPENING",
     "hint": "Take two: one to *place now*, one to *stash for later*. Or click the stashed one again to *place both*, holding nothing back.",

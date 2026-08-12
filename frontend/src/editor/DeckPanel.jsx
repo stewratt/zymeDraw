@@ -22,6 +22,7 @@ import Card from './Card.jsx'
 import DeckDock from './DeckDock.jsx'
 import CardZoom from './CardZoom.jsx'
 import PlacementLayers from './PlacementLayers.jsx'
+import GroundPicker from './GroundPicker.jsx'
 import { ArrangeMaskControls, maskHint } from './cards/maskControls.jsx'
 import { StashReturnNotice } from './cards/stashReturn.jsx'
 import { UI, fmt } from '../copy/uiText.js'
@@ -44,6 +45,8 @@ function DeckPanel({
   onReorderLayer,
   maskControls,
   maskHistory,
+  ground,
+  onGroundChange,
   onMaskControlsChange,
   onMaskUndo,
   onMaskRedo,
@@ -79,6 +82,8 @@ function DeckPanel({
           onReorderLayer={onReorderLayer}
           maskControls={maskControls}
           maskHistory={maskHistory}
+          ground={ground}
+          onGroundChange={onGroundChange}
           stashTone={stashTone}
           onStashToneChange={onStashToneChange}
           onMaskControlsChange={onMaskControlsChange}
@@ -166,6 +171,8 @@ function Placement({
   onReorderLayer,
   maskControls,
   maskHistory,
+  ground,
+  onGroundChange,
   stashTone,
   onStashToneChange,
   onMaskControlsChange,
@@ -191,6 +198,11 @@ function Placement({
             onControlChange={(key, value) => onMaskControlsChange({ [key]: value })}
           />
         </div>
+
+        {/* The ground (issue #115): the opening sets what the image sits on.
+            Opening only — by the stash return the ground is baked pixels the
+            piece has been built against, so there is nothing left to choose. */}
+        {!returning && <GroundPicker color={ground} onChange={onGroundChange} />}
 
         {/* The stash was chosen against a piece that has moved on — tone
             controls ease it into what the rounds since have made. */}
