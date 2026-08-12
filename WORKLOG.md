@@ -37,12 +37,15 @@ purpose — canvas compositing is 8-bit, and below ~0.05 the per-dab leak rounds
 away on gentle gradients and colour drags further than Strength promises.
 Shared rather than copied: `drawDab` and `mulberry32` are now exported from
 brushCore (one falloff curve, one PRNG), and `BrushSliders` from maskControls —
-its block is exactly Smear's control set. Not added to the Foundry ROSTER;
-that's a Foundry design call, one word if wanted.
+its block is exactly Smear's control set. Carried into the Foundry too (Stew's
+call at PR review): both homes, since ROSTER only wires the behavior and
+FOUNDRY_CARDS is what deals it — the shared behavior file runs unmodified on
+the 2235×3120 card-face master, which is what deriving the overlay's seating
+from MASTER_SCALE (#97) buys.
 Files: editor/smearSession.js (new), editor/cards/smear.jsx (new),
 editor/brushCore.js, editor/cards/maskControls.jsx, editor/cards/registry.jsx,
-editor/deck.js, copy/uiText.json, tools/copy-editor.html, card_anatomy.md,
-to_do/cards_plan.md.
+editor/deck.js, foundry/foundryDeck.js, foundry/foundryRegistry.jsx,
+copy/uiText.json, tools/copy-editor.html, card_anatomy.md, to_do/cards_plan.md.
 
 ## [21] #120 — Skim resolves at the deck dock — the canvas stays visible (2026-08-11)
 What: Skim's round no longer covers the canvas. `SkimOverlay` (and with it the
