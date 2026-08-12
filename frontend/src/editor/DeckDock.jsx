@@ -44,7 +44,9 @@ function DeckDock({
     <div className="deck-dock">
       {/* One slot for the held right (issue #114): the token while it stands,
           and the notice that takes its place the moment it is spent, so the
-          dock announces the loss instead of silently emptying. Deck state,
+          dock announces the loss instead of silently emptying. The same slot
+          carries the arc beats (issue #119) — one line at a time, the newest
+          one, and the token comes back when the line clears. Deck state,
           not card behavior — the right Delay granted, standing with the deck
           it will be spent against. It lived at the old deal panel; with no
           between-rounds beat left, the dock is where it is always in view. */}

@@ -147,6 +147,31 @@ function Editor({ config, deckSpec, onBackToSetup }) {
   // next draw, so the announcement is always read before it goes.
   const [dockNotice, setDockNotice] = useState(null)
 
+  // The arc's two hinges (issue #119). There is no arc meter: the shape of a
+  // session is felt where it turns, and it turns twice — Act I ends, and
+  // later the Coda joins the deck. Both are announced through the same
+  // one-shot dock line above, so a beat is a passing remark, not a phase:
+  // nothing blocks, nothing is acknowledged, and the next draw clears it.
+  //
+  // Presentation only — the reducer stays pure and knows nothing about this.
+  // The beats are read off transitions in deck state it already keeps, by
+  // comparing the previous render's values with this one. A beat overwrites
+  // whatever line was standing (it is the newer news), and the death shuffle
+  // outranks the Act II line in the impossible case that both land at once.
+  const arcRef = useRef({ roundsDealt: state.roundsDealt, deathShuffled: state.deathShuffled })
+  useEffect(() => {
+    const prev = arcRef.current
+    arcRef.current = { roundsDealt: state.roundsDealt, deathShuffled: state.deathShuffled }
+    if (!prev.deathShuffled && state.deathShuffled) {
+      setDockNotice(UI.deckPanel.codaInDeck)
+    } else if (
+      prev.roundsDealt < TUNING.actOneRounds &&
+      state.roundsDealt >= TUNING.actOneRounds
+    ) {
+      setDockNotice(UI.deckPanel.actTwoBegins)
+    }
+  }, [state.roundsDealt, state.deathShuffled])
+
   // The Keys reference overlay (header button). While open it blocks the
   // whole keymap itself (KeysReference swallows keys at the capture phase).
   const [keysOpen, setKeysOpen] = useState(false)

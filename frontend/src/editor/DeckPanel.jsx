@@ -77,6 +77,7 @@ function DeckPanel({
       return (
         <Placement
           state={state}
+          dockNotice={dockNotice}
           placementReady={placementReady}
           placedLayers={placedLayers}
           onReorderLayer={onReorderLayer}
@@ -96,6 +97,7 @@ function DeckPanel({
       return state.currentCard ? (
         <CardRevealed
           state={state}
+          dockNotice={dockNotice}
           entry={entry}
           controls={controls}
           info={info}
@@ -166,6 +168,7 @@ function OpeningPickPanel({ imageList }) {
 
 function Placement({
   state,
+  dockNotice,
   placementReady,
   placedLayers,
   onReorderLayer,
@@ -257,6 +260,7 @@ function Placement({
         actionLabel={T.deckDrawAction}
         disabled={!placementReady}
         delayHeld={state.delayHeld}
+        notice={dockNotice}
         onDraw={onAdvance}
       />
     </aside>
@@ -267,8 +271,10 @@ function Placement({
 // session rests in if a deal ever finds an empty deck. One click on the deck
 // draws — there is nothing to commit first.
 //
-// This is also the only beat DELAY_CODA can land on, so it is the one panel
-// that carries the dock notice: the round the held right was spent in.
+// This is also the only beat DELAY_CODA can land on, so the dock notice
+// naming the spent right lands here. Every panel with a dock passes the
+// notice through, though — the arc beats (issue #119) fire on a commit, and
+// by the time they show, the next card is usually already face-up.
 function AwaitingDeal({ state, dockNotice, onAdvance, onOpenHistory }) {
   return (
     <aside className="deck-panel">
@@ -333,7 +339,7 @@ function CodaChoice({ state, onAcceptCoda, onDelayCoda }) {
 // press the deck says plainly that drawing lets the card pass; after it the round rests
 // on its result and the deck is only the next deal. All of it reads from the
 // registry, so this is still a panel that knows nothing about any card.
-function CardRevealed({ state, entry, controls, info, ready, committed, onGateCommit, committing, onControlChange, onAdvance }) {
+function CardRevealed({ state, dockNotice, entry, controls, info, ready, committed, onGateCommit, committing, onControlChange, onAdvance }) {
   const card = state.currentCard
   const ToolsComponent = entry?.Tools
   const gate = entry?.commitGate
@@ -400,6 +406,7 @@ function CardRevealed({ state, entry, controls, info, ready, committed, onGateCo
         actionLabel={gateOpen ? T.deckDrawGate : committed ? T.deckDrawIdle : T.deckDrawAction}
         disabled={commitDisabled}
         delayHeld={state.delayHeld}
+        notice={dockNotice}
         onDraw={onAdvance}
         onZoomCard={() => setZoomed(true)}
       />

@@ -10,6 +10,31 @@ Choices: any decisions the executor made on its own.
 Files: the main files touched.
 ```
 
+## [20] #119 — Arc beats: name the hinges — Act II begins, the Coda joins the deck (2026-08-11)
+What: The session now announces its two turns. When `roundsDealt` crosses
+`TUNING.actOneRounds` a line says Act II has begun; when `deathShuffled` flips,
+another says the Coda is in the deck. Both are quiet one-shot lines in the deck
+dock — no phase, no ACK, nothing blocked.
+Where: main.
+Choices: reused #114's `dockNotice` channel rather than opening a second one,
+so one line at a time ever occupies the dock slot. The beats are derived, not
+dispatched: an effect in Editor compares the previous render's `roundsDealt` /
+`deathShuffled` against this one (`arcRef`), so deck.js is untouched and stays
+pure. Precedence, since the slot holds one line: a beat overwrites whatever was
+standing there (it is the newer news — the effect runs after the handler that
+set a Delay notice), and the death shuffle outranks the Act II line if both ever
+land on one commit. Dismissal follows the existing notice exactly — it stands
+until the next draw clears it, no timer, so a beat is always read before it goes;
+while it shows it stands in place of the Delay token, which returns after.
+Placement (#5) and CardRevealed docks now pass `notice` through too, not just
+AwaitingDeal: a beat fires on the commit, and by the time it renders the next
+card is usually already face-up (and if the stash-return beat follows, the
+notice survives to the placement dock). Copy: `deckPanel.actTwoBegins` /
+`deckPanel.codaInDeck` in uiText.json, studio register, set-knowledge only —
+"The Coda is in the deck. Any draw from here could finish the piece."
+Files: `frontend/src/editor/Editor.jsx`, `frontend/src/editor/DeckPanel.jsx`,
+`frontend/src/editor/DeckDock.jsx`, `frontend/src/copy/uiText.json`.
+
 ## [16] #115 — Placement: a background color beneath the start image (2026-08-11)
 What: The opening placement now chooses the ground the image sits on — a
 curated swatch row (Paper · Bone · Ash · Slate · Ink · Clay · Moss · Indigo)
