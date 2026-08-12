@@ -387,7 +387,7 @@
   "deckPanel": {
     "openingTitle": "THE OPENING",
     "openingLoading": "Loading input folder…",
-    "openingHint": "Take **two** from the grid: one placed now, one stashed. Its return card is shuffled into the deck after Act I, and the stash comes home when that card is drawn.",
+    "openingHint": "Take **two** from the grid: one placed now, one stashed. Its return card is shuffled into the deck straight away, and the stash comes home when that card is drawn.",
     "inputErrorTitle": "INPUT FOLDER ERROR",
     "inputErrorHint": "Go back to setup to pick a different folder.",
     "noImagesTitle": "NO IMAGES FOUND",
@@ -486,7 +486,7 @@
         "opening": "**The opening**: take two images from the grid, one placed now, one stashed for later.",
         "placement": "**Placement**: arrange the image. Drag to move, handles to scale and rotate, the mask brush to erase what shouldn't survive.",
         "actOne": "**Act I**: a handful of rounds, one dealt card each.",
-        "stash": "**The stash returns**: after Act I its card is shuffled into the deck, and the image you held back comes home when that card is drawn. That could be next round, much later, or never, if the Coda arrives first.",
+        "stash": "**The stash returns**: its card is shuffled into the deck as soon as you stash, and the image you held back comes home when that card is drawn. That could be the very first round, much later, or never, if the Coda arrives first.",
         "actTwo": "**Act II**: the Coda is shuffled into the deck. Deal by deal, it is coming.",
         "coda": "**The Coda**: the piece is finished, and writes to your output folder at full resolution."
       },

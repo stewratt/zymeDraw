@@ -10,6 +10,36 @@ Choices: any decisions the executor made on its own.
 Files: the main files touched.
 ```
 
+## [14] #113 — Stash Return joins the opening shuffle (2026-08-11)
+What: The Stash Return card is now slipped into the whole deck the moment the
+opening pick commits with a stash, instead of being scheduled for the end of
+Act I — so the stash can come home on round 1, much later, or never. Place
+both and no card is made. Death-card timing is untouched (still the commit of
+round `actOneRounds + actTwoRounds`, or a dry deck).
+Where: main (direct commit, size:S).
+Choices: put the insert in the CONFIRM_PICK case rather than a helper — it is
+one field of an atomic transition, the reducer's house style. Deleted the
+`stashShuffled` flag entirely rather than leaving it set-once dead state (it
+was read nowhere but its own guard); `stashReturned` stays as the record that
+the stash actually came home. Dropped `shuffleIn`'s `keepTop` parameter: the
+only remaining call runs before any card is dealt, so no Skim promise can
+exist to protect, and the death shuffle already guards its own inline.
+Rewrote the death shuffle's dry-deck fallback as "no `kind: 'mod'` card
+left" — it used to compute `deck.length === 0` *before* the stash insert to
+avoid a lone Stash Return card silencing the trigger; with the insert gone
+from COMMIT that ordering trick no longer existed, and the kind test states
+the actual invariant (the session always has something that costs a round).
+Also corrected the two copy strings that promised "after Act I"
+(`deckPanel.openingHint`, Guide `arc.stash`) and the CLAUDE.md session-arc
+line, since both now contradicted the mechanic.
+Verified: `npx vite build` passes, plus a 3000-session reducer simulation
+(esbuild-bundled, scratchpad only) — stash surfaces on rounds 1–19 with no
+stuck sessions, never appears in place-both sessions, and the death shuffle
+still fires at round 6. Return rate improved from 35% (old rule, earliest
+round 5) to 47%.
+Files: `frontend/src/editor/deck.js`, `frontend/src/copy/uiText.json`,
+`CLAUDE.md`.
+
 ## [13] #112 — Skim: the keep action says "Keep it", not "Leave it" (2026-08-11)
 What: Renamed Skim's keep action to active phrasing — "Leave it" read as
 passive when it is in fact a commitment to that card. All five user-facing
