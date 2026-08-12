@@ -17,9 +17,11 @@ import { dispatchKey } from './keymap.js'
 import { arrangeBindings, brushBindings } from './sessionBindings.js'
 import { randomHexColor, randomizeColors } from './colorSeed.js'
 import { UI, fmt } from '../copy/uiText.js'
+import { GROUND_DEFAULT } from './GroundPicker.jsx'
 import {
   bake,
   createMaster,
+  fillMaster,
   masterThumbDataUrl,
   masterToPngDataUrl,
   showMaster
@@ -89,6 +91,22 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     maskControlsRef.current = maskControls
     maskSessionRef.current?.setActive(maskControls.mode !== 'arrange')
   }, [maskControls])
+
+  // The ground (issue #115): the color the opening placement sits on. It is
+  // held here only until the first bake — the effect below paints it straight
+  // onto the master, so from End onward it is pixels like anything else.
+  const [ground, setGround] = useState(GROUND_DEFAULT)
+
+  useEffect(() => {
+    if (state.phase !== 'PLACEMENT') return // opening only; nothing to repaint later
+    const canvas = canvasStageRef.current?.getCanvas()
+    const master = masterRef.current
+    if (!canvas || !master) return
+    fillMaster(master, ground)
+    // Reseat the background: Fabric drew the master through its own image
+    // object, so repainting the element behind its back isn't enough.
+    showMaster(canvas, master)
+  }, [ground, state.phase])
 
   // Stash-return tone: the stash was chosen rounds ago, against a piece
   // that has since moved on — hue/saturation lets it ease into the
@@ -579,6 +597,7 @@ function Editor({ config, deckSpec, onBackToSetup }) {
       masterRef.current = createMaster()
       showMaster(canvas, masterRef.current)
     }
+    setGround(GROUND_DEFAULT)
     cardSessionRef.current = null
     setCardControls({})
     setCardInfo({})
@@ -833,6 +852,8 @@ function Editor({ config, deckSpec, onBackToSetup }) {
             onReorderLayer={handleReorderLayer}
             maskControls={maskControls}
             maskHistory={maskHistory}
+            ground={ground}
+            onGroundChange={setGround}
             stashTone={stashTone}
             onStashToneChange={(patch) => setStashTone((prev) => ({ ...prev, ...patch }))}
             onMaskControlsChange={(patch) => setMaskControls((prev) => ({ ...prev, ...patch }))}

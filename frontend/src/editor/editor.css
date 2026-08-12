@@ -1083,42 +1083,35 @@
   white-space: nowrap;
 }
 
-/* ---------- color grade swatches ---------- */
+/* ---------- placement: the ground swatches (issue #115) ---------- */
 
-.grade-swatches {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+.ground-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+.ground-swatches {
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 }
-.grade-swatch {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 6px;
-  background: var(--surface-2);
+.ground-swatch {
+  width: 26px;
+  height: 26px;
+  padding: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  color: var(--text-value);
-  font-size: 0.72rem;
   cursor: pointer;
-  text-align: left;
 }
-.grade-swatch:hover {
+.ground-swatch:hover {
   border-color: var(--border-strong);
 }
-.grade-swatch.selected {
-  border-color: var(--sel-border);
-  background: var(--sel-bg);
-}
-.swatch-chip {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  flex-shrink: 0;
-}
-.swatch-label {
-  letter-spacing: 0.05em;
+/* An outline rather than a border swap: the chip IS its color, so the mark
+   of the chosen one must sit outside it and read on white through black. */
+.ground-swatch.selected {
+  outline: 1px solid var(--text-value);
+  outline-offset: 2px;
 }
 
 /* ---------- placement: mode toggle + brush tools ---------- */
