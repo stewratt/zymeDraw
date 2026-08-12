@@ -10,6 +10,40 @@ Choices: any decisions the executor made on its own.
 Files: the main files touched.
 ```
 
+## [22] #123 — Smear — the classic smudge brush, on the whole piece (2026-08-12)
+What: a new canvas card, `smear`, and the new primitive under it: a smudge
+brush that drags the committed piece into itself. Nothing enters and nothing is
+coloured — existing pixels only move and blend along the stroke.
+Where: PR #124. Pool-only at 0 copies, per the standing rule.
+Choices: the machinery is `editor/smearSession.js`, a card-owned consumer of
+the exported `createStrokeEngine`, NOT a fourth mode inside brushCore (already
+862 lines, and its header names this escape hatch). Smear is the first brush
+that reads its own output — it deforms one master-resolution `working` canvas
+in place, seeded from the master, so untouched areas stay pixel-identical and
+the bake is seamless. That order-dependence still fits the engine:
+`clearCommitted` re-copies the master and `bakeStroke` replays a stroke's dabs,
+so `rebuild()` gives within-card undo/redo free; the live stroke applies
+straight into `working`, so release finishes the tail rather than re-applying
+(Reverberate's `live.drawn` counter). Algorithm is the standard pickup buffer:
+per dab, leak the canvas into the pickup, shape it through the dab mask, stamp
+it back — three `drawImage`s on dab-sized canvases, so cost rides brush area,
+not canvas area (fractureField's master-wide `getImageData` would be ~100× the
+work per dab). Deposit is a FRACTION per dab, not the whole dab: the first
+build stamped at full strength and came out visibly banded at the dab interval,
+because every dab core hard-replaced the canvas. Both that flow and the
+pickup's retention are quoted per radius travelled and converted per-dab in one
+place, so spacing is free to tune. Spacing bottoms out at 0.08 of radius on
+purpose — canvas compositing is 8-bit, and below ~0.05 the per-dab leak rounds
+away on gentle gradients and colour drags further than Strength promises.
+Shared rather than copied: `drawDab` and `mulberry32` are now exported from
+brushCore (one falloff curve, one PRNG), and `BrushSliders` from maskControls —
+its block is exactly Smear's control set. Not added to the Foundry ROSTER;
+that's a Foundry design call, one word if wanted.
+Files: editor/smearSession.js (new), editor/cards/smear.jsx (new),
+editor/brushCore.js, editor/cards/maskControls.jsx, editor/cards/registry.jsx,
+editor/deck.js, copy/uiText.json, tools/copy-editor.html, card_anatomy.md,
+to_do/cards_plan.md.
+
 ## [21] #120 — Skim resolves at the deck dock — the canvas stays visible (2026-08-11)
 What: Skim's round no longer covers the canvas. `SkimOverlay` (and with it the
 work-glance thumbnail) is retired; the deck dock's own top card turns face-up in

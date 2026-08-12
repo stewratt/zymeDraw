@@ -9,6 +9,11 @@
 // always in hand (Transfer — nothing to arrange, so no Arrange button; the
 // op row still offers erase/restore/soften).
 //
+// BrushSliders — the sliders WITHOUT any op row (size · strength · soft/hard
+// · softness · undo), exported for a card whose brush has only one op and so
+// has nothing to switch between (Smear). The mask sliders are its exact
+// control set; a private copy in that card would be the same block, drifting.
+//
 // Naming: the op's code key stays `conceal` everywhere (engine, controls,
 // masks); its UI name became **Erase** in the hotkeys revision (decided
 // with Stew, 2026-07-05) — E is its key and its name.
@@ -102,7 +107,7 @@ function OpButtons({ controls, onControlChange, extra = [] }) {
   )
 }
 
-function BrushSliders({ controls, info, onControlChange }) {
+export function BrushSliders({ controls, info, onControlChange }) {
   return (
     <>
       <label className="ctrl" title="[ and ] — or Shift+drag on the canvas">

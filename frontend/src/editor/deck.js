@@ -76,6 +76,7 @@ export const MOD_CARDS = [
   { id: 'dust', copies: 2, rarity: 'common' }, // Reveal × deposit
   { id: 'bruise', copies: 1, rarity: 'common' }, // Reveal × Bruise
   { id: 'blur', copies: 2, rarity: 'common' }, // Reveal × blur — provisional (§6.3)
+  { id: 'smear', copies: 0, rarity: 'common' }, // Smear — the piece dragged into itself (pool-only)
   { id: 'steep', copies: 1, rarity: 'common' }, // Wash × Sink
   { id: 'hue', copies: 1, rarity: 'common' }, // Wash (hue)
   { id: 'cure', copies: 1, rarity: 'common' }, // Wash × Cure

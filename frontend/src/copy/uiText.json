@@ -56,6 +56,10 @@
       "name": "Blur",
       "description": "Paint blur onto the piece with a brush. Nothing changes until you paint."
     },
+    "smear": {
+      "name": "Smear",
+      "description": "Drag the piece into itself with a brush. Nothing new arrives and nothing is coloured — colour only travels along your stroke, and Strength is how far it carries."
+    },
     "steep": {
       "name": "Steep",
       "description": "Flood the whole canvas with one color - pick the dye and the blend mode. Influence is steeping time."
