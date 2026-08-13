@@ -86,7 +86,7 @@ import { CloserTools, beginCloser, cleanupCloser, commitCloser } from './closer.
 import { frameCommitGate } from './frameCardFactory.jsx'
 import { LiftTools, beginLift, cleanupLift, commitLift, liftHotkeys } from './lift.jsx'
 import { FractureTools, beginFracture, cleanupFracture, commitFracture, updateFracture } from './fracture.jsx'
-import { GwarpTools, beginGwarp, cleanupGwarp, updateGwarp } from './gwarp.jsx'
+import { GwarpTools, beginGwarp, cleanupGwarp, commitGwarp, updateGwarp } from './gwarp.jsx'
 import { RackTools, beginRack, cleanupRack, rackHotkeys, updateRack } from './rack.jsx'
 import { EtchTools, beginEtch, cleanupEtch, commitEtch, etchHotkeys, updateEtch } from './etch.jsx'
 import {
@@ -245,9 +245,9 @@ export const cardRegistry = {
   },
 
   // ---- Gwarp (the sheet bends on a control lattice) ----
-  // No commit hook: the overlay is already the warped piece, so End just bakes
-  // it. Phase 2 adds the lattice handles and the drag; Phase 3 the reset,
-  // per-gesture undo and the hide-lattice key.
+  // commit only takes the lattice overlay off — the warped image below it IS
+  // the result, so the universal bake wants it left alone. Phase 3 adds the
+  // surface grab, the grid resample, reset, per-gesture undo and the hide key.
 
   gwarp: {
     controls: ['grid'],
@@ -255,6 +255,7 @@ export const cardRegistry = {
     Tools: GwarpTools,
     begin: beginGwarp,
     update: updateGwarp,
+    commit: commitGwarp,
     cleanup: cleanupGwarp
   },
 
