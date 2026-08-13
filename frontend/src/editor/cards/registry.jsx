@@ -86,6 +86,7 @@ import { CloserTools, beginCloser, cleanupCloser, commitCloser } from './closer.
 import { frameCommitGate } from './frameCardFactory.jsx'
 import { LiftTools, beginLift, cleanupLift, commitLift, liftHotkeys } from './lift.jsx'
 import { FractureTools, beginFracture, cleanupFracture, commitFracture, updateFracture } from './fracture.jsx'
+import { GwarpTools, beginGwarp, cleanupGwarp, updateGwarp } from './gwarp.jsx'
 import { RackTools, beginRack, cleanupRack, rackHotkeys, updateRack } from './rack.jsx'
 import { EtchTools, beginEtch, cleanupEtch, commitEtch, etchHotkeys, updateEtch } from './etch.jsx'
 import {
@@ -241,6 +242,20 @@ export const cardRegistry = {
     update: updateFracture,
     commit: commitFracture,
     cleanup: cleanupFracture
+  },
+
+  // ---- Gwarp (the sheet bends on a control lattice) ----
+  // No commit hook: the overlay is already the warped piece, so End just bakes
+  // it. Phase 2 adds the lattice handles and the drag; Phase 3 the reset,
+  // per-gesture undo and the hide-lattice key.
+
+  gwarp: {
+    controls: ['grid'],
+    defaultControls: { grid: 3 },
+    Tools: GwarpTools,
+    begin: beginGwarp,
+    update: updateGwarp,
+    cleanup: cleanupGwarp
   },
 
   // ---- Reveal brushes (paint the effect where it belongs) ----
