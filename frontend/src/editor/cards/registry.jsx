@@ -86,6 +86,7 @@ import { CloserTools, beginCloser, cleanupCloser, commitCloser } from './closer.
 import { frameCommitGate } from './frameCardFactory.jsx'
 import { LiftTools, beginLift, cleanupLift, commitLift, liftHotkeys } from './lift.jsx'
 import { FractureTools, beginFracture, cleanupFracture, commitFracture, updateFracture } from './fracture.jsx'
+import { GwarpTools, beginGwarp, cleanupGwarp, commitGwarp, gwarpHotkeys, updateGwarp } from './gwarp.jsx'
 import { RackTools, beginRack, cleanupRack, rackHotkeys, updateRack } from './rack.jsx'
 import { EtchTools, beginEtch, cleanupEtch, commitEtch, etchHotkeys, updateEtch } from './etch.jsx'
 import {
@@ -241,6 +242,23 @@ export const cardRegistry = {
     update: updateFracture,
     commit: commitFracture,
     cleanup: cleanupFracture
+  },
+
+  // ---- Gwarp (the sheet bends on a control lattice) ----
+  // commit only takes the lattice overlay off — the warped image below it IS
+  // the result, so the universal bake wants it left alone. `grid` is not one
+  // of the conventional control names, so no keyboard grammar is inherited and
+  // the card's two accents (G, Esc) have the keys to themselves.
+
+  gwarp: {
+    controls: ['grid'],
+    defaultControls: { grid: 3 },
+    Tools: GwarpTools,
+    hotkeys: gwarpHotkeys,
+    begin: beginGwarp,
+    update: updateGwarp,
+    commit: commitGwarp,
+    cleanup: cleanupGwarp
   },
 
   // ---- Reveal brushes (paint the effect where it belongs) ----

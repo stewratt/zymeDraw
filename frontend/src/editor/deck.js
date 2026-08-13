@@ -73,6 +73,10 @@ export const MOD_CARDS = [
   // piece strewn by a scatter brush. Medium rarity on the weirdness dial —
   // 1 is a suggested balance, not a cap; the Deck editor may run more.
   { id: 'fracture', copies: 0, rarity: 'scarce' }, // Grid displacement × mask brush — the piece slides apart
+  // The fracture family's liquid sibling (issue #125): the same piece, bent on
+  // a control lattice instead of broken on hard seams. Pool-only like the rest
+  // of the family.
+  { id: 'gwarp', copies: 0, rarity: 'scarce' }, // Mesh warp — the whole sheet bends, nothing is cut
   { id: 'dust', copies: 2, rarity: 'common' }, // Reveal × deposit
   { id: 'bruise', copies: 1, rarity: 'common' }, // Reveal × Bruise
   { id: 'blur', copies: 2, rarity: 'common' }, // Reveal × blur — provisional (§6.3)
