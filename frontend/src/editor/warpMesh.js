@@ -86,6 +86,39 @@ export function createLattice(cells) {
   return { cells, nodes }
 }
 
+// Re-express the CURRENT surface on a lattice of a different density: every
+// new node takes the position the surface already holds at its own (u,v). So
+// changing the grid refines a bend rather than discarding it — Affinity's
+// behaviour when you add a division, and the reason the control resamples
+// instead of resetting.
+//
+// Not lossless, and honestly so: a coarser lattice cannot hold everything a
+// finer one expressed, and the Catmull-Rom drawn through resampled nodes is a
+// close fit rather than the identical surface. What survives is the gesture,
+// which is what the hand was actually aiming at.
+export function resampleLattice(lattice, cells) {
+  if (cells === lattice.cells) return lattice
+  const surface = makeSurface(lattice)
+  const nodes = []
+  for (let j = 0; j <= cells; j++) {
+    for (let i = 0; i <= cells; i++) nodes.push(surface(i / cells, j / cells))
+  }
+  return { cells, nodes }
+}
+
+// Is the lattice at rest? Cheap enough to ask before every reset so an
+// already-flat sheet doesn't push a no-op onto the undo stack.
+export function isFlatLattice(lattice) {
+  const N = lattice.cells
+  for (let j = 0; j <= N; j++) {
+    for (let i = 0; i <= N; i++) {
+      const n = lattice.nodes[j * (N + 1) + i]
+      if (Math.abs(n.x - i / N) > 1e-9 || Math.abs(n.y - j / N) > 1e-9) return false
+    }
+  }
+  return true
+}
+
 // The control grid with one extrapolated ring around it, flattened to
 // [x,y,x,y,…] of side cells+3. Catmull-Rom reads one node beyond each end, so
 // without this ring the outermost cells could not be evaluated. Linear
@@ -211,30 +244,45 @@ export function makeSurface(lattice) {
 }
 
 // The master with an edge-repeat border, so the mesh has real pixels to read
-// wherever the sheet is pulled inward. Built once per session (the master
-// doesn't change mid-card) and handed to every render.
-export function makePaddedTexture(master) {
-  const W = master.width
-  const H = master.height
+// wherever the sheet is pulled inward.
+//
+// `scale` builds it at a FRACTION of the master — a mip level in all but name,
+// and it matters more than it looks. Every triangle blits with a drawImage,
+// and a drawImage that MINIFIES costs far more per output pixel than one that
+// copies about 1:1, because the browser filters the whole source box down each
+// time. Reading a master-sized texture into an artboard-sized preview pays
+// that ~1350 times a frame. Downscaling once here and blitting 1:1 afterwards
+// is both cheaper and better-looking — one clean resample instead of a
+// thousand independent ones. Hence one texture per preview tier, and the
+// master-sized one built only for the render that bakes.
+export function makePaddedTexture(master, scale = 1) {
+  const MW = master.width
+  const MH = master.height
+  const W = Math.max(1, Math.round(MW * scale))
+  const H = Math.max(1, Math.round(MH * scale))
   const padX = Math.round(W * TEXTURE_PAD)
   const padY = Math.round(H * TEXTURE_PAD)
   const el = document.createElement('canvas')
   el.width = W + padX * 2
   el.height = H + padY * 2
   const c = el.getContext('2d')
-  c.drawImage(master, padX, padY)
+  c.drawImage(master, padX, padY, W, H)
   // Four sides from the outermost row/column, then four corners from the
   // corner pixels — the standard clamp-to-edge, done once with drawImage
-  // stretches rather than per-pixel.
-  c.drawImage(master, 0, 0, 1, H, 0, padY, padX, H)
-  c.drawImage(master, W - 1, 0, 1, H, padX + W, padY, padX, H)
-  c.drawImage(master, 0, 0, W, 1, padX, 0, W, padY)
-  c.drawImage(master, 0, H - 1, W, 1, padX, padY + H, W, padY)
+  // stretches rather than per-pixel. Source rects are in the MASTER's pixels,
+  // destination rects in this texture's.
+  c.drawImage(master, 0, 0, 1, MH, 0, padY, padX, H)
+  c.drawImage(master, MW - 1, 0, 1, MH, padX + W, padY, padX, H)
+  c.drawImage(master, 0, 0, MW, 1, padX, 0, W, padY)
+  c.drawImage(master, 0, MH - 1, MW, 1, padX, padY + H, W, padY)
   c.drawImage(master, 0, 0, 1, 1, 0, 0, padX, padY)
-  c.drawImage(master, W - 1, 0, 1, 1, padX + W, 0, padX, padY)
-  c.drawImage(master, 0, H - 1, 1, 1, 0, padY + H, padX, padY)
-  c.drawImage(master, W - 1, H - 1, 1, 1, padX + W, padY + H, padX, padY)
-  return { canvas: el, padX, padY }
+  c.drawImage(master, MW - 1, 0, 1, 1, padX + W, 0, padX, padY)
+  c.drawImage(master, 0, MH - 1, 1, 1, 0, padY + H, padX, padY)
+  c.drawImage(master, MW - 1, MH - 1, 1, 1, padX + W, padY + H, padX, padY)
+  // width/height are THIS TEXTURE's sheet extent, not the padded canvas's and
+  // not necessarily the master's — the extent the sheet's [0,1]² maps onto.
+  // warpGeometry needs it kept apart from whatever size it draws at.
+  return { canvas: el, padX, padY, width: W, height: H }
 }
 
 // One textured triangle. `s*` index the source vertices, `d*` the destination
@@ -344,6 +392,15 @@ export function warpGeometry(lattice, W, H, texture, { sub = SUB } = {}) {
   for (let k = 0; k <= steps; k++) ts.push(k / steps)
   ts.push(1 + TEXTURE_PAD)
 
+  // SOURCE IS MEASURED IN THE TEXTURE, DESTINATION IN THE OUTPUT. They are two
+  // different rulers and the sheet is the only thing they share: (u,v) spans
+  // the master over there and spans `out` over here. Scaling the source by the
+  // OUTPUT size instead — which reads fine while the two happen to be equal —
+  // makes a preview at artboard scale sample only the master's top-left
+  // corner, so the piece appears zoomed and pinned to that corner.
+  const tw = texture.width
+  const th = texture.height
+
   const dx = new Float64Array(M * M)
   const dy = new Float64Array(M * M)
   const sx = new Float64Array(M * M)
@@ -351,8 +408,8 @@ export function warpGeometry(lattice, W, H, texture, { sub = SUB } = {}) {
   for (let j = 0; j < M; j++) {
     for (let i = 0; i < M; i++) {
       const k = j * M + i
-      sx[k] = texture.padX + ts[i] * W
-      sy[k] = texture.padY + ts[j] * H
+      sx[k] = texture.padX + ts[i] * tw
+      sy[k] = texture.padY + ts[j] * th
     }
   }
 

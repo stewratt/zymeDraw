@@ -15,7 +15,9 @@
 
 import {
   createLattice,
+  isFlatLattice,
   makeSurface,
+  resampleLattice,
   warpGeometry,
   TEXTURE_PAD
 } from './warpMesh.js'
@@ -28,7 +30,13 @@ const chk = (name, ok, extra = '') => {
 
 const W = 2400
 const H = 3000
-const TEX = { padX: Math.round(W * TEXTURE_PAD), padY: Math.round(H * TEXTURE_PAD) }
+// Stands in for makePaddedTexture's return: the MASTER's extent plus its pad.
+const TEX = {
+  padX: Math.round(W * TEXTURE_PAD),
+  padY: Math.round(H * TEXTURE_PAD),
+  width: W,
+  height: H
+}
 
 // --- the surface ---------------------------------------------------------
 console.log('\nsurface')
@@ -149,6 +157,107 @@ console.log('\nsource mapping')
     }
   chk('no zero-area source triangles (the affine solve never divides by 0)', degenerate === 0,
     degenerate ? `${degenerate} degenerate` : '')
+
+  // Source and destination are measured with DIFFERENT rulers: the texture is
+  // always the master, the output is whatever it is (the card previews at
+  // artboard scale and renders master only at commit). Scaling the source by
+  // the output size passes every check above — the two are equal there — and
+  // silently samples the master's top-left corner at any other size, which
+  // reads on screen as a zoomed piece pinned to that corner. Shipped exactly
+  // that way once, on 2026-08-13.
+  for (const out of [1, 2, 3]) {
+    const g2 = warpGeometry(createLattice(3), W / out, H / out, TEX)
+    const { M: M2, sx: s2x, sy: s2y, dx: d2x, dy: d2y } = g2
+    const near = M2 + 1 // sheet's first corner
+    const farI = (M2 - 2) * M2 + M2 - 2 // …and its last
+    chk(`source spans the whole master at 1/${out} output`,
+      Math.abs(s2x[near] - TEX.padX) < 1e-6 && Math.abs(s2y[near] - TEX.padY) < 1e-6 &&
+        Math.abs(s2x[farI] - (TEX.padX + W)) < 1e-6 && Math.abs(s2y[farI] - (TEX.padY + H)) < 1e-6,
+      `sheet reads ${(s2x[farI] - s2x[near]).toFixed(0)}×${(s2y[farI] - s2y[near]).toFixed(0)} of ${W}×${H}`)
+    chk(`destination fills the 1/${out} output`,
+      Math.abs(d2x[near]) < 1e-6 && Math.abs(d2y[near]) < 1e-6 &&
+        Math.abs(d2x[farI] - W / out) < 1e-6 && Math.abs(d2y[farI] - H / out) < 1e-6)
+  }
+
+  // What actually ships: a texture built to MATCH the output tier, so every
+  // triangle blits about 1:1. A minifying drawImage costs far more per output
+  // pixel than a copying one, and there are ~1350 of them per frame — so this
+  // ratio being 1 is a performance invariant, not a cosmetic one.
+  for (const out of [1, 2, 3]) {
+    const tier = {
+      padX: Math.round((W / out) * TEXTURE_PAD),
+      padY: Math.round((H / out) * TEXTURE_PAD),
+      width: W / out,
+      height: H / out
+    }
+    const g3 = warpGeometry(createLattice(3), W / out, H / out, tier)
+    const n3 = g3.M + 1
+    const f3 = (g3.M - 2) * g3.M + g3.M - 2
+    const ratio = (g3.sx[f3] - g3.sx[n3]) / (g3.dx[f3] - g3.dx[n3])
+    chk(`a tier-matched texture blits 1:1 at 1/${out}`, Math.abs(ratio - 1) < 1e-9,
+      `source:dest = ${ratio.toFixed(4)}`)
+  }
+}
+
+// --- resample (the grid control refines a bend, never discards it) --------
+console.log('\nresample')
+{
+  chk('same density is a no-op', resampleLattice(lat, 3) === lat)
+
+  const flat = resampleLattice(createLattice(3), 5)
+  chk('a flat lattice resamples flat', isFlatLattice(flat))
+  chk('isFlatLattice sees a bent one', !isFlatLattice(lat))
+
+  // Every new node must land where the OLD surface already was.
+  const fine = resampleLattice(lat, 5)
+  const before = makeSurface(lat)
+  let worst = 0
+  for (let j = 0; j <= 5; j++)
+    for (let i = 0; i <= 5; i++) {
+      const want = before(i / 5, j / 5)
+      const got = fine.nodes[j * 6 + i]
+      worst = Math.max(worst, Math.hypot(got.x - want.x, got.y - want.y))
+    }
+  chk('resampled nodes sit on the previous surface', worst < 1e-12, `max dev ${worst.toExponential(2)}`)
+
+  // A resample re-fits the surface rather than reproducing it, so some of the
+  // gesture is always lost. How much is worth pinning down, because the two
+  // directions are NOT alike: refining costs ~11% of the displacement, while
+  // coarsening costs ~80% — a 2× lattice has nodes only at 0, 0.5 and 1, so a
+  // bend sitting at a 3× interior node has nowhere to live. That asymmetry is
+  // the honest limit of the control, not a bug to fix.
+  const driftOf = (a, b) => {
+    const A = makeSurface(a)
+    const B = makeSurface(b)
+    let m = 0
+    for (let v = 0; v <= 1; v += 0.02)
+      for (let u = 0; u <= 1; u += 0.02) {
+        const p = A(u, v)
+        const q = B(u, v)
+        m = Math.max(m, Math.hypot(p.x - q.x, p.y - q.y))
+      }
+    return m
+  }
+  const D = 0.22 // how far the node is dragged, in normalized units
+  const bent = createLattice(3)
+  bent.nodes[5] = { x: 1 / 3 + D, y: 1 / 3 }
+  const up = driftOf(bent, resampleLattice(bent, 5))
+  const down = driftOf(bent, resampleLattice(bent, 2))
+  chk('refining keeps most of the bend', up < D * 0.15, `drift ${up.toFixed(4)} on a ${D} drag`)
+  chk('coarsening loses more than refining, as it must', down > up * 3, `drift ${down.toFixed(4)}`)
+  chk('drift scales with the gesture, not the canvas', (() => {
+    const small = createLattice(3)
+    small.nodes[5] = { x: 1 / 3 + D / 4, y: 1 / 3 }
+    return driftOf(small, resampleLattice(small, 5)) < up * 0.4
+  })())
+
+  const still = resampleLattice(fine, 3)
+  chk('coverage holds after a resample', (() => {
+    const ring = outerRing(warpGeometry(still, W, H, TEX))
+    for (let y = 1; y < H; y += H / 20)
+      for (let x = 1; x < W; x += W / 20) if (!inside(ring, x, y)) return false
+    return true
+  })())
 }
 
 console.log(fail ? `\n${fail} FAILED\n` : '\nall checks passed\n')
