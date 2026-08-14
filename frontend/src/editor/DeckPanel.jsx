@@ -37,8 +37,7 @@ function DeckPanel({
   controls,
   info,
   ready,
-  committed,
-  onGateCommit,
+  reviewing,
   committing,
   placementReady,
   placedLayers,
@@ -104,8 +103,7 @@ function DeckPanel({
           controls={controls}
           info={info}
           ready={ready}
-          committed={committed}
-          onGateCommit={onGateCommit}
+          reviewing={reviewing}
           committing={committing}
           deckView={deckView}
           onDeckAction={onDeckAction}
@@ -335,25 +333,20 @@ function CodaChoice({ state, onAcceptCoda, onDelayCoda }) {
 // The card in hand: its name and Tools stack above the pair, the face itself
 // lies in the dock beside the deck it came out of.
 //
-// A card may declare a commit gate (registry `commitGate`): its session runs
-// as usual, but it commits on the labelled button instead of on the deck
-// click. The button sits inside the tool area, under the card's description
-// and well clear of the dock — pinned at the panel foot it sat a few pixels
-// from the deck, and the near-miss dealt the next card instead. Until that
-// press the deck says plainly that drawing lets the card pass; after it the round rests
-// on its result and the deck is only the next deal. All of it reads from the
-// registry, so this is still a panel that knows nothing about any card.
+// A card may declare a post-commit review (registry `postCommitReview`, issue
+// #128): the deck commits it like any other card, and then the round holds
+// open on its result. While it does, the panel has no action of its own — the
+// Continue that ends the round lives in the canvas, where the result is — so
+// all this side does is say the piece is committed and the deck is inert.
 //
 // A card may also declare `dockCard` (Skim, issue #120): its round resolves at
 // the deck instead of over the canvas, so the dock turns the deck's own top
 // card face-up and Tools asks the question beside it. Read from the registry
 // like everything else here.
-function CardRevealed({ state, dockNotice, entry, controls, info, ready, committed, onGateCommit, committing, deckView, onDeckAction, onControlChange, onAdvance }) {
+function CardRevealed({ state, dockNotice, entry, controls, info, ready, reviewing, committing, deckView, onDeckAction, onControlChange, onAdvance }) {
   const card = state.currentCard
   const ToolsComponent = entry?.Tools
-  const gate = entry?.commitGate
   const topCard = entry?.dockCard?.(deckView) ?? null
-  const gateOpen = !!gate && !committed // the button is up; the deck would pass
   const commitDisabled = !ready || committing
   const [zoomed, setZoomed] = useState(false)
 
@@ -362,19 +355,13 @@ function CardRevealed({ state, dockNotice, entry, controls, info, ready, committ
       controls={controls}
       info={info}
       ready={ready}
-      committed={committed}
+      reviewing={reviewing}
       deckView={deckView}
       onDeckAction={onDeckAction}
       onControlChange={onControlChange}
     />
   ) : (
     <span className="hint">{T.toolsPlaceholder}</span>
-  )
-
-  const gateButton = gateOpen && (
-    <button type="button" className="primary" onClick={onGateCommit} disabled={commitDisabled}>
-      {gate.label}
-    </button>
   )
 
   return (
@@ -385,16 +372,7 @@ function CardRevealed({ state, dockNotice, entry, controls, info, ready, committ
       <div className="panel-scroll">
         <h2>{T.roundTitle}</h2>
         <p className="card-name">{card.label}</p>
-        <div className="tool-area">
-          {gateButton ? (
-            <div className="tool-gate">
-              {tools}
-              {gateButton}
-            </div>
-          ) : (
-            tools
-          )}
-        </div>
+        <div className="tool-area">{tools}</div>
       </div>
       <DeckDock
         card={card}
@@ -414,14 +392,13 @@ function CardRevealed({ state, dockNotice, entry, controls, info, ready, committ
                 T.deckHintTurned
               : !ready
               ? T.settingUp
-              : gateOpen
-                ? T.deckHintGate
-                : committed
-                  ? T.deckHintIdle
-                  : T.deckHintActive
+              : reviewing
+                ? T.deckHintReview
+                : T.deckHintActive
         }
-        actionLabel={gateOpen ? T.deckDrawGate : committed ? T.deckDrawIdle : T.deckDrawAction}
-        disabled={commitDisabled}
+        actionLabel={reviewing ? T.deckDrawReview : T.deckDrawAction}
+        // Under review the deck is inert: the round ends on the canvas.
+        disabled={commitDisabled || reviewing}
         delayHeld={state.delayHeld}
         notice={dockNotice}
         onDraw={onAdvance}

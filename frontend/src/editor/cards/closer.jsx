@@ -19,19 +19,17 @@ export const beginCloser = hooks.begin
 export const commitCloser = hooks.commit
 export const cleanupCloser = hooks.cleanup
 
-// `committed` flips once the Zoom In button has run the re-frame (issue #92):
+// `reviewing` flips once the deck click has run the re-frame (issue #128):
 // the description stands either way, but the round changes under it — before,
-// the frame is live and the draw would let the card pass; after, the re-frame
-// is in the piece and the draw is only the next deal.
-export function CloserTools({ ready, committed }) {
+// the frame is live and the deck would commit it; after, the crop is in the
+// piece and the round is waiting to be looked at.
+export function CloserTools({ ready, reviewing }) {
   if (!ready) return <span className="hint">{UI.shared.preparing}</span>
   return (
     <div className="card-tools">
       <p className="hint">
         {CARD_TEXT.closer.description}{' '}
-        {committed
-          ? UI.cardGate.committedNote
-          : `${UI.cardHints.closer.commitNote} ${UI.cardGate.passNote}`}
+        {reviewing ? UI.cardReview.committedNote : UI.cardHints.closer.commitNote}
       </p>
     </div>
   )

@@ -13,7 +13,12 @@
 
 import { CARD_TEXT } from '../cardText.js'
 import { UI } from '../../copy/uiText.js'
-import { makeFrameCardHooks } from './frameCardFactory.jsx'
+import { frameReview, makeFrameCardHooks } from './frameCardFactory.jsx'
+
+// The pair's review, plus the one thing Deeper alone has to say: the crop is
+// already on screen while the sidecar works, so the wait needs a reason next
+// to it. The models lazy-load, which makes the first one of these slow.
+export const deeperReview = { ...frameReview, waitNote: UI.cardHints.deeper.restoring }
 
 const hooks = makeFrameCardHooks({
   restore: (reframed, zoom) => (zoom > 1.05 ? restoreDetail(reframed, zoom) : reframed)
@@ -58,17 +63,15 @@ async function restoreDetail(reframed, zoom) {
   return out
 }
 
-// `committed` flips once the Zoom In button has run the re-frame (issue #92) —
+// `reviewing` flips once the deck click has run the re-frame (issue #128) —
 // see CloserTools; the pair reads the same.
-export function DeeperTools({ ready, committed }) {
+export function DeeperTools({ ready, reviewing }) {
   if (!ready) return <span className="hint">{UI.shared.preparing}</span>
   return (
     <div className="card-tools">
       <p className="hint">
         {CARD_TEXT.deeper.description}{' '}
-        {committed
-          ? UI.cardGate.committedNote
-          : `${UI.cardHints.deeper.commitNote} ${UI.cardGate.passNote}`}
+        {reviewing ? UI.cardReview.committedNote : UI.cardHints.deeper.commitNote}
       </p>
     </div>
   )

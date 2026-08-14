@@ -119,10 +119,9 @@
     "shatteredIntro": "This image {reading}.",
     "workGlance": "Image Status"
   },
-  "cardGate": {
-    "zoomIn": "Zoom In",
-    "passNote": "Draw from the deck instead and the card passes. It commits nothing.",
-    "committedNote": "The re-frame is committed; the piece now stands as you see it. Draw from the deck for the next card."
+  "cardReview": {
+    "continue": "Continue",
+    "committedNote": "Committed — the piece now stands as you see it. Press Continue on the canvas to turn the next card."
   },
   "brush": {
     "erase": "Paint over {subject} to erase it.",
@@ -193,10 +192,11 @@
       "toolSuffix": "Delay is now held: when the first Coda is dealt, you can set it aside once. Draw to end the round."
     },
     "deeper": {
-      "commitNote": "Zoom In commits the re-frame and restores detail into the enlargement; that takes a few seconds."
+      "commitNote": "Draw from the deck to commit the re-frame; restoring detail into the enlargement takes a few seconds.",
+      "restoring": "Restoring detail into the enlargement…"
     },
     "closer": {
-      "commitNote": "Zoom In commits the re-frame as it stands: no restoration, no waiting."
+      "commitNote": "Draw from the deck to commit the re-frame as it stands: no restoration, no waiting."
     },
     "char": {
       "subject": "the char"
@@ -420,8 +420,8 @@
     "deckDrawAction": "Commit this round and draw",
     "deckDrawIdle": "Draw the next card",
     "deckHintTurned": "The top card is turned over. Make the choice above; the deck deals again after.",
-    "deckHintGate": "Nothing is committed yet. Draw from the deck to let this card pass; the piece is left exactly as it stands.",
-    "deckDrawGate": "Let this card pass and draw",
+    "deckHintReview": "Committed. Look at what it did, then press Continue on the canvas; the next card follows.",
+    "deckDrawReview": "Continue on the canvas first",
     "codaTitle": "THE CODA",
     "codaHint": "The Coda has been dealt. Accepting it finishes the piece and ends the session. You still hold Delay: set the Coda aside and it shuffles back into the deck. It can come straight back on the very next draw, and Delay only works once.",
     "codaSetAside": "Not yet: set it aside",

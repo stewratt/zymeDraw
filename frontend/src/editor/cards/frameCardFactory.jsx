@@ -26,13 +26,13 @@ import * as fabric from 'fabric'
 import { showMaster } from '../masterRaster.js'
 import { UI } from '../../copy/uiText.js'
 
-// Both re-frame cards commit through this gate (issue #92): the frame is set
-// first, then the button commits it — so the re-frame is seen before the next
-// card is dealt. A round you would rather not re-frame at all is passed by
-// clicking the deck instead: nothing commits, the next card turns over. One
-// shared label for the pair; Editor/DeckPanel apply `commitGate` generically
-// (registry.jsx's header).
-export const frameCommitGate = { label: UI.cardGate.zoomIn }
+// Both re-frame cards commit on the deck like every other card, then hold the
+// round open on their result (issue #128): the crop is what the card is FOR,
+// so it is seen before the next card is dealt rather than after. The earlier
+// arrangement had this backwards — the deck passed the card uncommitted, which
+// is the one gesture the whole session teaches as "commit". Editor applies
+// `postCommitReview` generically (registry.jsx's header).
+export const frameReview = { label: UI.cardReview.continue }
 
 export function makeFrameCardHooks({ smoothing = () => true, restore = null } = {}) {
   function begin(ctx) {
@@ -53,6 +53,26 @@ export function makeFrameCardHooks({ smoothing = () => true, restore = null } = 
     })
     // Corners only, no side handles.
     rect.setControlsVisibility({ ml: false, mr: false, mt: false, mb: false })
+    // The frame tightens but never opens past the piece (issue #128). At full
+    // extent the re-frame is the identity, which is this card's null move now
+    // that the deck commits it instead of passing it — and the same cap keeps a
+    // stray outward drag from committing a zoom OUT, which would ring the piece
+    // in white and is not what either of these cards is for.
+    //
+    // Fabric has no max-scale, and clamping the scale alone is not enough:
+    // corner scaling pins the opposite corner by moving left/top, so a capped
+    // scale with an uncapped position walks the frame across the canvas. Keep
+    // the last legal placement instead and restore it the moment a drag would
+    // exceed the cap — the frame simply stops.
+    let lastLegal = { left: rect.left, top: rect.top }
+    rect.on('scaling', () => {
+      if (rect.scaleX <= 1 && rect.scaleY <= 1) {
+        lastLegal = { left: rect.left, top: rect.top }
+        return
+      }
+      rect.set({ scaleX: 1, scaleY: 1, ...lastLegal })
+      rect.setCoords()
+    })
     // Turn on native uniform scaling so corners keep the 4:5 ratio and pin the
     // opposite corner. Also disable the uniScaleKey so Shift can't opt out of
     // it. Both are restored when the card ends.
@@ -97,15 +117,19 @@ export function makeFrameCardHooks({ smoothing = () => true, restore = null } = 
     g.translate(-rect.left * proxyScale, -rect.top * proxyScale)
     g.drawImage(master, 0, 0)
 
-    let next = reframed
+    // Show the crop BEFORE the restore is asked for. The re-frame is already a
+    // correct result on its own, so there is no reason to hold it back for the
+    // seconds the sidecar takes — the round's answer lands at once and the
+    // detail arrives into it. (It also means the graceful-degradation path
+    // shows nothing different from the good one, just sooner.)
+    showMaster(ctx.canvas, reframed)
     if (restore) {
       try {
-        next = await restore(reframed, zoom)
+        showMaster(ctx.canvas, await restore(reframed, zoom))
       } catch {
         // sidecar down or upscale failed: the plain resample stands
       }
     }
-    showMaster(ctx.canvas, next)
   }
 
   function cleanup(ctx) {
