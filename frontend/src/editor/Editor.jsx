@@ -59,19 +59,19 @@ function Editor({ config, deckSpec, onBackToSetup }) {
   // can't bake a half-loaded arrangement.
   const [placementReady, setPlacementReady] = useState(true)
 
-  // The commit gate (registry `commitGate`, issue #92): a gated card begins
-  // at the deal like any other — its session is live the moment the card
-  // turns over — but it ENDS on its own button rather than on the deck click.
-  // The commit lands mid-round, so the result is on screen before the next
-  // card is dealt. This holds the CARD OBJECT that was committed rather than
-  // a boolean, so it resets itself the moment the next card turns over: the
-  // reducer hands out a distinct object per deal.
-  const [gateCommitted, setGateCommitted] = useState(null)
+  // The post-commit review (registry `postCommitReview`, issue #128): the card
+  // commits on the deck click like every other card, but the round then HOLDS
+  // OPEN on its result instead of dealing — the deck goes inert and the
+  // Continue button in the canvas area is what turns the next card. This holds
+  // the CARD OBJECT under review rather than a boolean, so it resets itself the
+  // moment the next card turns over: the reducer hands out a distinct object
+  // per deal.
+  const [reviewCard, setReviewCard] = useState(null)
 
-  // The one flag every generic consumer reads: has this card already been
-  // committed by its own button? Always false for a card with no gate, so
-  // nothing else in Editor needs to know that gates exist.
-  const cardCommitted = !!state.currentCard && gateCommitted === state.currentCard
+  // The one flag every generic consumer reads: is this card committed and
+  // waiting to be looked at? Always false for a card without the field, so
+  // nothing else in Editor needs to know that reviews exist.
+  const inReview = !!state.currentCard && reviewCard === state.currentCard
 
   // The images being placed this session, top-to-bottom, for the layers
   // panel. Each: { id, name, thumb, img (the Fabric object) }. Reordering
@@ -439,9 +439,9 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     const entry = cardRegistry[state.currentCard.id]
     if (!entry?.update) return
     if (!cardReady) return
-    // A gated card that already committed has no session left to update —
-    // the controls being cleared by the commit is what would fire this.
-    if (cardCommitted) return
+    // A card under review has no session left to update — the controls being
+    // cleared by the commit is what would fire this.
+    if (inReview) return
     const canvas = canvasStageRef.current?.getCanvas()
     if (!canvas) return
     entry.update({
@@ -452,7 +452,7 @@ function Editor({ config, deckSpec, onBackToSetup }) {
       canvasWidth: CANVAS_WIDTH,
       canvasHeight: CANVAS_HEIGHT
     })
-  }, [cardControls, state.currentCard, cardReady, cardCommitted])
+  }, [cardControls, state.currentCard, cardReady, inReview])
 
   // Keyboard: one persistent listener; the bindings it walks are rebuilt
   // every render (below, after the handlers they close over) so each run
@@ -474,12 +474,12 @@ function Editor({ config, deckSpec, onBackToSetup }) {
   // Commit hooks may be async (Deeper awaits the detail restore); the ref
   // is the re-entry guard, the state drives the "committing" UI.
   //
-  // The impure half only — the reducer's COMMIT is dispatched by the caller
-  // (handleAdvance), right beside the DEAL that follows it, so the round
-  // that ends and the card that turns over land in ONE render. Split apart,
-  // a slow commit hook would let React paint the empty in-between state.
-  // A gated card (`commitGate`) is the deliberate exception: handleGateCommit
-  // calls this mid-round precisely so the result is seen before the deal.
+  // The impure half only — the reducer's COMMIT is dispatched by the caller,
+  // right beside the DEAL that follows it, so the round that ends and the card
+  // that turns over land in ONE render. Split apart, a slow commit hook would
+  // let React paint the empty in-between state. A reviewing card
+  // (`postCommitReview`) delays that pair to its Continue, but still dispatches
+  // both together.
   async function commitCurrentCard() {
     if (!state.currentCard || committingRef.current) return
     const entry = cardRegistry[state.currentCard.id]
@@ -516,33 +516,15 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     setCardInfo({})
   }
 
-  // The commit gate's button (issue #92): the card ends here instead of on
-  // the deck click. Same commit path as any other card — hook, universal
-  // bake, state capture — but no COMMIT/DEAL dispatch, so the round stays in
-  // hand with its result on screen and the next card waits for the deck.
-  async function handleGateCommit() {
-    if (committingRef.current || !cardReady || cardCommitted) return
-    if (!state.currentCard) return
-    await commitCurrentCard()
-    setGateCommitted(state.currentCard)
-    // The bake left the viewport at identity; the camera's re-fit effect only
-    // runs at a deal, and this round is not over yet — re-fit by hand so what
-    // was just committed is framed the way every other round is.
-    navRef.current?.setZoomBounds()
-    navRef.current?.reset()
-  }
-
-  // The other side of the gate: drawing while a gated card is still in hand
-  // lets it pass. Its session DID begin at the deal, so the temp objects come
-  // off the canvas through the card's own cleanup hook — but nothing bakes,
-  // nothing is captured, and the piece stands exactly as it did.
-  function passCurrentCard() {
-    const canvas = canvasStageRef.current?.getCanvas()
-    const entry = cardRegistry[state.currentCard.id]
-    if (canvas) entry?.cleanup?.({ canvas, session: cardSessionRef.current })
-    cardSessionRef.current = null
-    setCardControls({})
-    setCardInfo({})
+  // The far side of the review (issue #128): the round has been committed and
+  // looked at, so now it ends. COMMIT and DEAL go together, exactly as they do
+  // on an ordinary deck click — the review moved WHEN this pair fires, not what
+  // it does.
+  function handleReviewContinue() {
+    if (committingRef.current || !inReview) return
+    setReviewCard(null)
+    dispatch({ type: 'COMMIT' })
+    dispatch({ type: 'DEAL' })
   }
 
   // The deck is the button (issue #87): one gesture finishes what is in hand
@@ -555,6 +537,9 @@ function Editor({ config, deckSpec, onBackToSetup }) {
   // with nothing to do.
   async function handleAdvance() {
     if (committingRef.current) return
+    // A committed card waiting to be seen owns the round: the deck is inert
+    // until Continue, so neither the click nor Enter can skip past the result.
+    if (inReview) return
     // Any draw is the next action: whatever the dock was announcing has been
     // seen by now.
     setDockNotice(null)
@@ -567,10 +552,17 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     if (state.phase !== 'WORKING') return
     if (state.currentCard) {
       if (!cardReady) return
-      // A gated card never commits on the deck click: it either already
-      // committed through its own button, or this draw is the pass.
-      if (!cardRegistry[state.currentCard.id]?.commitGate) await commitCurrentCard()
-      else if (!cardCommitted) passCurrentCard()
+      await commitCurrentCard()
+      // A reviewing card stops the round here, mid-way: committed and baked,
+      // but not dealt. The camera's re-fit effect only runs at a deal, and the
+      // bake left the viewport at identity — so re-fit by hand, or the result
+      // would be looked at framed differently from every other round.
+      if (cardRegistry[state.currentCard.id]?.postCommitReview) {
+        setReviewCard(state.currentCard)
+        navRef.current?.setZoomBounds()
+        navRef.current?.reset()
+        return
+      }
       dispatch({ type: 'COMMIT' })
     }
     dispatch({ type: 'DEAL' })
@@ -626,7 +618,7 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     cardSessionRef.current = null
     setCardControls({})
     setCardInfo({})
-    setGateCommitted(null)
+    setReviewCard(null)
     setPlacementReady(true)
     setDockNotice(null)
     setStates([])
@@ -645,9 +637,9 @@ function Editor({ config, deckSpec, onBackToSetup }) {
 
   const currentEntry = state.currentCard ? cardRegistry[state.currentCard.id] : null
   // Cards can declare a canvas-area overlay (Ghost's grid pick) — rendered
-  // generically, same props as Tools. Never after a gated card commits: the
+  // generically, same props as Tools. Never while a card is under review: the
   // overlay belongs to the session, and the session is over.
-  const CardOverlay = state.phase === 'WORKING' && !cardCommitted ? currentEntry?.Overlay : null
+  const CardOverlay = state.phase === 'WORKING' && !inReview ? currentEntry?.Overlay : null
 
   // What a deck-facing card may know and do (v4 Wave 2). deckView carries
   // selector outputs only — the legibility policy stays enforced in deck.js.
@@ -678,10 +670,10 @@ function Editor({ config, deckSpec, onBackToSetup }) {
   const cardUp = state.phase === 'WORKING' && !!state.currentCard
   // A card in hand whose session is actually live: everything that reaches
   // into the session (its accents, the brush and arrange grammars, its
-  // undo/redo) hangs off this, so a gated card that already committed binds
-  // nothing. Enter stays on cardUp — it is the deck click, and after the gate
-  // commits the deck click is simply the deal.
-  const cardLive = cardUp && !cardCommitted
+  // undo/redo) hangs off this, so a card under review binds nothing. Enter
+  // stays on cardUp — it is the deck click, and under review the deck click is
+  // a no-op, which is exactly what keeps Continue click-only.
+  const cardLive = cardUp && !inReview
 
   // Card accents (§5.4): declared in the registry (`hotkeys`), live for the
   // whole card — even before ready (Etch's Enter advances the frame stage).
@@ -841,6 +833,18 @@ function Editor({ config, deckSpec, onBackToSetup }) {
               onAck={() => dispatch({ type: 'ACK_STASH_RETURN' })}
             />
           )}
+          {/* The post-commit review (issue #128): the card is committed and
+              the canvas IS the result, so there is nothing to draw over it —
+              only a way to say it has been seen. Click-only, like the
+              stash-return beat, and in the canvas because that is where the
+              result is. Read from the registry: no card is named here. */}
+          {inReview && (
+            <div className="canvas-continue">
+              <button type="button" className="primary" onClick={handleReviewContinue}>
+                {currentEntry.postCommitReview.label}
+              </button>
+            </div>
+          )}
           {CardOverlay && (
             <CardOverlay
               controls={cardControls}
@@ -869,8 +873,7 @@ function Editor({ config, deckSpec, onBackToSetup }) {
             controls={cardControls}
             info={cardInfo}
             ready={cardReady}
-            committed={cardCommitted}
-            onGateCommit={handleGateCommit}
+            reviewing={inReview}
             committing={committing}
             placementReady={placementReady}
             placedLayers={placedLayers}

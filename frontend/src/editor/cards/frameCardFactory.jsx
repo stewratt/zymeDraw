@@ -26,13 +26,13 @@ import * as fabric from 'fabric'
 import { showMaster } from '../masterRaster.js'
 import { UI } from '../../copy/uiText.js'
 
-// Both re-frame cards commit through this gate (issue #92): the frame is set
-// first, then the button commits it — so the re-frame is seen before the next
-// card is dealt. A round you would rather not re-frame at all is passed by
-// clicking the deck instead: nothing commits, the next card turns over. One
-// shared label for the pair; Editor/DeckPanel apply `commitGate` generically
-// (registry.jsx's header).
-export const frameCommitGate = { label: UI.cardGate.zoomIn }
+// Both re-frame cards commit on the deck like every other card, then hold the
+// round open on their result (issue #128): the crop is what the card is FOR,
+// so it is seen before the next card is dealt rather than after. The earlier
+// arrangement had this backwards — the deck passed the card uncommitted, which
+// is the one gesture the whole session teaches as "commit". Editor applies
+// `postCommitReview` generically (registry.jsx's header).
+export const frameReview = { label: UI.cardReview.continue }
 
 export function makeFrameCardHooks({ smoothing = () => true, restore = null } = {}) {
   function begin(ctx) {

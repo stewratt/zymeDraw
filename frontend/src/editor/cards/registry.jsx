@@ -48,16 +48,17 @@
 //     through `onDeckAction`. Editor builds its fence from this list — a
 //     card can never dispatch a deck action it hasn't declared, and the
 //     reducer's legality guards remain the real gate.
-//   - `commitGate`: { label } — the card commits on its OWN button instead of
-//     on the deck click (the re-frame pair, issue #92). The session begins at
-//     the deal like any other card's; pressing the labelled button — rendered
-//     by DeckPanel at the foot of the description panel, above the deck dock —
-//     runs the whole commit (hook, universal bake, state capture) mid-round,
-//     so the result is on screen before the next card is dealt. The deck click
-//     then only deals. Drawing BEFORE that press is a pass: the card's cleanup
-//     hook takes its objects off the canvas, nothing bakes, nothing is
-//     captured. Tools get a `committed` prop (always false for an ungated
-//     card) so a card's own copy can speak to its two states.
+//   - `postCommitReview`: { label } — the card commits on the deck click like
+//     any other, but the round HOLDS OPEN on its result instead of dealing
+//     (the re-frame pair, issue #128). The commit runs in full (hook, universal
+//     bake, state capture); then the deck goes inert and Editor floats the
+//     labelled button in the canvas area, which is what deals the next card.
+//     For a card whose whole point is the transformation — a crop you would
+//     otherwise meet already framing the next round — this is how the result
+//     gets looked at. Deliberately click-only, like the stash-return beat: no
+//     Enter binding, so a fast double-press can't blow through the result.
+//     Tools get a `reviewing` prop (always false for a card without the field)
+//     so a card's own copy can speak to its two states.
 //   - `hotkeys`: keyboard accents [{ key|code, shift?, run(ctx, e) }]
 //     (hotkeys.md §5.4). Editor dispatches them ahead of the shared scopes
 //     (keymap.js); run gets { controls, setControl, info, session, canvas }
@@ -83,7 +84,7 @@ import { RailsTools, beginRails, cleanupRails, commitRails, updateRails } from '
 import { CharTools, beginChar, cleanupChar, commitChar, updateChar } from './char.jsx'
 import { DeeperTools, beginDeeper, cleanupDeeper, commitDeeper } from './deeper.jsx'
 import { CloserTools, beginCloser, cleanupCloser, commitCloser } from './closer.jsx'
-import { frameCommitGate } from './frameCardFactory.jsx'
+import { frameReview } from './frameCardFactory.jsx'
 import { LiftTools, beginLift, cleanupLift, commitLift, liftHotkeys } from './lift.jsx'
 import { FractureTools, beginFracture, cleanupFracture, commitFracture, updateFracture } from './fracture.jsx'
 import { GwarpTools, beginGwarp, cleanupGwarp, commitGwarp, gwarpHotkeys, updateGwarp } from './gwarp.jsx'
@@ -184,14 +185,15 @@ export const cardRegistry = {
   },
 
   // ---- Re-frame (the master itself is the object) ----
-  // Both end on the gate button (issue #92): the frame is offered, not
-  // imposed — draw instead of pressing it and the card passes, uncommitted.
+  // Both commit on the deck and then hold open on the crop (issue #128): the
+  // new frame is the round's whole result, so it is looked at before the next
+  // card turns over.
 
   deeper: {
     controls: [],
     defaultControls: {},
     Tools: DeeperTools,
-    commitGate: frameCommitGate,
+    postCommitReview: frameReview,
     begin: beginDeeper,
     commit: commitDeeper,
     cleanup: cleanupDeeper
@@ -201,7 +203,7 @@ export const cardRegistry = {
     controls: [],
     defaultControls: {},
     Tools: CloserTools,
-    commitGate: frameCommitGate,
+    postCommitReview: frameReview,
     begin: beginCloser,
     commit: commitCloser,
     cleanup: cleanupCloser

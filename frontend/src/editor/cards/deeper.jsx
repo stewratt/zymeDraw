@@ -58,17 +58,15 @@ async function restoreDetail(reframed, zoom) {
   return out
 }
 
-// `committed` flips once the Zoom In button has run the re-frame (issue #92) —
+// `reviewing` flips once the deck click has run the re-frame (issue #128) —
 // see CloserTools; the pair reads the same.
-export function DeeperTools({ ready, committed }) {
+export function DeeperTools({ ready, reviewing }) {
   if (!ready) return <span className="hint">{UI.shared.preparing}</span>
   return (
     <div className="card-tools">
       <p className="hint">
         {CARD_TEXT.deeper.description}{' '}
-        {committed
-          ? UI.cardGate.committedNote
-          : `${UI.cardHints.deeper.commitNote} ${UI.cardGate.passNote}`}
+        {reviewing ? UI.cardReview.committedNote : UI.cardHints.deeper.commitNote}
       </p>
     </div>
   )

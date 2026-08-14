@@ -349,6 +349,21 @@
   background: var(--surface-2);
 }
 
+/* The post-commit review's Continue (issue #128). Unlike every other
+   canvas-area overlay this covers nothing: the committed result IS the canvas,
+   so the button floats in the corner of the area and the piece stays whole.
+   Bottom-right for the same reason the stash-return page puts its confirm
+   there — it is the far end of a page you read, not a tool. */
+.canvas-continue {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  z-index: 5;
+}
+.canvas-continue button.primary {
+  padding: 12px 32px;
+}
+
 /* The work, glanced at while choosing (Searcher): its remains view covers the
    canvas, so the piece stands beside the decision instead. (Skim no longer
    needs this — it resolves at the dock, with the canvas itself in view.)
@@ -1185,19 +1200,6 @@
 .tool-area .card-tools {
   align-self: stretch;
   width: 100%;
-}
-/* A gated card's commit button stacks under its description inside the tool
-   area — far from the dock, so a miss can't deal the next card. */
-.tool-gate {
-  align-self: stretch;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-}
-.tool-gate button.primary {
-  padding: 12px 32px;
 }
 .undo-row {
   display: flex;
