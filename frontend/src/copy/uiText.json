@@ -412,7 +412,7 @@
     "viewDeck": "View the deck",
     "delayHeld": "held: the first Coda can be set aside",
     "delaySpent": "Delay is spent — the next Coda ends the piece.",
-    "actTwoBegins": "Act II. The opening is behind you; what's on the canvas is the material now.",
+    "actTwoBegins": "Act II. The last rounds before the Coda is shuffled into the deck.",
     "codaInDeck": "The Coda is in the deck. Any draw from here could finish the piece.",
     "deckHintPlacement": "Draw from the deck when the arrangement is right: it bakes in for good, and the next card turns over.",
     "deckHintActive": "Draw from the deck when this round is done: it bakes in for good, and the next card turns over.",
@@ -511,7 +511,7 @@
         "placement": "**Placement**: arrange the image. Drag to move, handles to scale and rotate, the mask brush to erase what shouldn't survive.",
         "actOne": "**Act I**: a handful of rounds, one dealt card each.",
         "stash": "**The stash returns**: its card is shuffled into the deck as soon as you stash, and the image you held back comes home when that card is drawn. That could be the very first round, much later, or never, if the Coda arrives first.",
-        "actTwo": "**Act II**: the Coda is shuffled into the deck. Deal by deal, it is coming.",
+        "actTwo": "**Act II**: a few more rounds, and then the Coda is shuffled into the deck. From there, any deal could be the last.",
         "coda": "**The Coda**: the piece is finished, and writes to your output folder at full resolution."
       },
       "commitment": {
