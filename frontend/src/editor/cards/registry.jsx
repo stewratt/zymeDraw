@@ -58,7 +58,11 @@
 //     gets looked at. Deliberately click-only, like the stash-return beat: no
 //     Enter binding, so a fast double-press can't blow through the result.
 //     Tools get a `reviewing` prop (always false for a card without the field)
-//     so a card's own copy can speak to its two states.
+//     so a card's own copy can speak to its two states. An optional `waitNote`
+//     on the same object is shown in that corner while the commit is still
+//     running — for a card whose commit takes real time (Deeper's sidecar
+//     pass), the reason for the wait belongs beside the canvas, not in a
+//     spinner.
 //   - `hotkeys`: keyboard accents [{ key|code, shift?, run(ctx, e) }]
 //     (hotkeys.md §5.4). Editor dispatches them ahead of the shared scopes
 //     (keymap.js); run gets { controls, setControl, info, session, canvas }
@@ -82,7 +86,7 @@ import { stainCard } from './stain.jsx'
 import { graftControls } from './graftCardFactory.jsx'
 import { RailsTools, beginRails, cleanupRails, commitRails, updateRails } from './rails.jsx'
 import { CharTools, beginChar, cleanupChar, commitChar, updateChar } from './char.jsx'
-import { DeeperTools, beginDeeper, cleanupDeeper, commitDeeper } from './deeper.jsx'
+import { DeeperTools, beginDeeper, cleanupDeeper, commitDeeper, deeperReview } from './deeper.jsx'
 import { CloserTools, beginCloser, cleanupCloser, commitCloser } from './closer.jsx'
 import { frameReview } from './frameCardFactory.jsx'
 import { LiftTools, beginLift, cleanupLift, commitLift, liftHotkeys } from './lift.jsx'
@@ -193,7 +197,7 @@ export const cardRegistry = {
     controls: [],
     defaultControls: {},
     Tools: DeeperTools,
-    postCommitReview: frameReview,
+    postCommitReview: deeperReview,
     begin: beginDeeper,
     commit: commitDeeper,
     cleanup: cleanupDeeper

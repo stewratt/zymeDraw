@@ -833,6 +833,12 @@ function Editor({ config, deckSpec, onBackToSetup }) {
               onAck={() => dispatch({ type: 'ACK_STASH_RETURN' })}
             />
           )}
+          {/* A slow commit says so where the result will appear (`waitNote`).
+              Deeper's crop is already on the canvas by now — this is only the
+              detail pass still running, so it is a line, never a block. */}
+          {committing && currentEntry?.postCommitReview?.waitNote && (
+            <p className="canvas-wait">{currentEntry.postCommitReview.waitNote}</p>
+          )}
           {/* The post-commit review (issue #128): the card is committed and
               the canvas IS the result, so there is nothing to draw over it —
               only a way to say it has been seen. Click-only, like the

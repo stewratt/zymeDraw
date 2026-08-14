@@ -53,6 +53,26 @@ export function makeFrameCardHooks({ smoothing = () => true, restore = null } = 
     })
     // Corners only, no side handles.
     rect.setControlsVisibility({ ml: false, mr: false, mt: false, mb: false })
+    // The frame tightens but never opens past the piece (issue #128). At full
+    // extent the re-frame is the identity, which is this card's null move now
+    // that the deck commits it instead of passing it — and the same cap keeps a
+    // stray outward drag from committing a zoom OUT, which would ring the piece
+    // in white and is not what either of these cards is for.
+    //
+    // Fabric has no max-scale, and clamping the scale alone is not enough:
+    // corner scaling pins the opposite corner by moving left/top, so a capped
+    // scale with an uncapped position walks the frame across the canvas. Keep
+    // the last legal placement instead and restore it the moment a drag would
+    // exceed the cap — the frame simply stops.
+    let lastLegal = { left: rect.left, top: rect.top }
+    rect.on('scaling', () => {
+      if (rect.scaleX <= 1 && rect.scaleY <= 1) {
+        lastLegal = { left: rect.left, top: rect.top }
+        return
+      }
+      rect.set({ scaleX: 1, scaleY: 1, ...lastLegal })
+      rect.setCoords()
+    })
     // Turn on native uniform scaling so corners keep the 4:5 ratio and pin the
     // opposite corner. Also disable the uniScaleKey so Shift can't opt out of
     // it. Both are restored when the card ends.
@@ -97,15 +117,19 @@ export function makeFrameCardHooks({ smoothing = () => true, restore = null } = 
     g.translate(-rect.left * proxyScale, -rect.top * proxyScale)
     g.drawImage(master, 0, 0)
 
-    let next = reframed
+    // Show the crop BEFORE the restore is asked for. The re-frame is already a
+    // correct result on its own, so there is no reason to hold it back for the
+    // seconds the sidecar takes — the round's answer lands at once and the
+    // detail arrives into it. (It also means the graceful-degradation path
+    // shows nothing different from the good one, just sooner.)
+    showMaster(ctx.canvas, reframed)
     if (restore) {
       try {
-        next = await restore(reframed, zoom)
+        showMaster(ctx.canvas, await restore(reframed, zoom))
       } catch {
         // sidecar down or upscale failed: the plain resample stands
       }
     }
-    showMaster(ctx.canvas, next)
   }
 
   function cleanup(ctx) {

@@ -192,7 +192,8 @@
       "toolSuffix": "Delay is now held: when the first Coda is dealt, you can set it aside once. Draw to end the round."
     },
     "deeper": {
-      "commitNote": "Draw from the deck to commit the re-frame; restoring detail into the enlargement takes a few seconds."
+      "commitNote": "Draw from the deck to commit the re-frame; restoring detail into the enlargement takes a few seconds.",
+      "restoring": "Restoring detail into the enlargement…"
     },
     "closer": {
       "commitNote": "Draw from the deck to commit the re-frame as it stands: no restoration, no waiting."

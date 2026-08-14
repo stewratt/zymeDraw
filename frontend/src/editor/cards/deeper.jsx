@@ -13,7 +13,12 @@
 
 import { CARD_TEXT } from '../cardText.js'
 import { UI } from '../../copy/uiText.js'
-import { makeFrameCardHooks } from './frameCardFactory.jsx'
+import { frameReview, makeFrameCardHooks } from './frameCardFactory.jsx'
+
+// The pair's review, plus the one thing Deeper alone has to say: the crop is
+// already on screen while the sidecar works, so the wait needs a reason next
+// to it. The models lazy-load, which makes the first one of these slow.
+export const deeperReview = { ...frameReview, waitNote: UI.cardHints.deeper.restoring }
 
 const hooks = makeFrameCardHooks({
   restore: (reframed, zoom) => (zoom > 1.05 ? restoreDetail(reframed, zoom) : reframed)

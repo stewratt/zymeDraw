@@ -354,7 +354,8 @@
    so the button floats in the corner of the area and the piece stays whole.
    Bottom-right for the same reason the stash-return page puts its confirm
    there — it is the far end of a page you read, not a tool. */
-.canvas-continue {
+.canvas-continue,
+.canvas-wait {
   position: absolute;
   right: 20px;
   bottom: 20px;
@@ -362,6 +363,17 @@
 }
 .canvas-continue button.primary {
   padding: 12px 32px;
+}
+/* The same corner, holding the reason for a wait until the button can take
+   its place: a slow commit reads as one continuous beat, not two widgets. */
+.canvas-wait {
+  margin: 0;
+  padding: 12px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text-dim);
+  font-size: 0.8rem;
 }
 
 /* The work, glanced at while choosing (Searcher): its remains view covers the
