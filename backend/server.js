@@ -573,9 +573,22 @@ app.get('/api/ml/health', async (req, res) => {
   }
 })
 
+// Splatt's pre-warm: no body, no waiting — the sidecar answers at once and
+// loads the model on its own thread. Declared before the :op route below
+// only for legibility; the paths don't collide.
+app.post('/api/ml/splat/warm', async (req, res) => {
+  try {
+    const r = await fetch(`${mlBase()}/splat/warm`, { method: 'POST', signal: AbortSignal.timeout(1500) })
+    res.status(r.status).json(await r.json())
+  } catch {
+    res.status(503).json({ ok: false, error: 'ML sidecar unavailable.' })
+  }
+})
+
 // Body is the image itself (blob), not JSON — hence express.raw here.
 // Generous timeout: a cold model load + CPU inference can take minutes.
-app.post('/api/ml/:op(cutout|upscale|style)', express.raw({ type: '*/*', limit: '64mb' }), async (req, res) => {
+// Responses are buffered whole: PNGs are MBs, a splat .ply is tens of MBs.
+app.post('/api/ml/:op(cutout|upscale|style|splat)', express.raw({ type: '*/*', limit: '64mb' }), async (req, res) => {
   try {
     const query = req.originalUrl.includes('?') ? '?' + req.originalUrl.split('?')[1] : ''
     const r = await fetch(`${mlBase()}/${req.params.op}${query}`, {

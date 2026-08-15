@@ -108,8 +108,9 @@ Check it's alive at <http://localhost:5174/api/ml/health>.
 
 Notes:
 
-- Everything runs **CPU-only**; no GPU or CUDA setup needed. An upscale of
-  a working-canvas-sized image takes a few seconds.
+- These two cards run **CPU-only**; no GPU or CUDA setup needed. An upscale
+  of a working-canvas-sized image takes a few seconds. (The optional Splatt
+  extra below is the one part that uses a GPU when there is one.)
 - The Real-ESRGAN weights ship with the repo
   (`backend/ml/models/realesr-general-x4v3.onnx`, ~5 MB, converted from the
   official release — provenance in `backend/ml/tools/`).
@@ -117,6 +118,42 @@ Notes:
   cutout, so the first Stamp on a fresh machine is slow. Once.
 - The venv lives at `backend/ml/.venv` on every machine (gitignored,
   repo-relative — no hardcoded paths anywhere).
+
+### The Splatt extra (optional, per machine)
+
+**Splatt** casts the composition into gaussian splats with Apple's SHARP
+model. It installs separately because it's heavy — one command, into the
+**same** venv, after the steps above:
+
+**Mac / Linux**
+
+```
+cd backend/ml
+./.venv/bin/pip install -r requirements-splat.txt
+```
+
+**Windows** (cmd or PowerShell)
+
+```
+cd backend\ml
+.venv\Scripts\pip install -r requirements-splat.txt
+```
+
+Notes:
+
+- On an **NVIDIA** machine install the CUDA torch wheel first (see
+  <https://pytorch.org/get-started/locally/>); pip then leaves it alone.
+  The plain wheel above is the right one for Macs and CPU-only boxes.
+- Devices: **CUDA** and **Apple Silicon (MPS)** both run it; CPU works but
+  is slow. `/api/ml/health` reports which one this machine picked
+  (`splatDevice`), alongside `splatAvailable` and `splatLoaded`.
+- The model (~2.7 GB) downloads on first use into `~/.cache/torch` — too
+  big to ship in the repo, so the first Splatt on a fresh machine waits for
+  it. Once. A session that has `splatt` in its deck pre-warms the model at
+  the start.
+- Without this extra nothing else changes: the sidecar starts normally and
+  reports `splatAvailable: false`, and the Deck editor marks Splatt
+  unavailable on this machine.
 
 ## Build & package
 

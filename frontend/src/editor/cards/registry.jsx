@@ -89,6 +89,14 @@ import { CharTools, beginChar, cleanupChar, commitChar, updateChar } from './cha
 import { DeeperTools, beginDeeper, cleanupDeeper, commitDeeper, deeperReview } from './deeper.jsx'
 import { CloserTools, beginCloser, cleanupCloser, commitCloser } from './closer.jsx'
 import { frameReview } from './frameCardFactory.jsx'
+import {
+  SplattOverlay,
+  SplattTools,
+  beginSplatt,
+  cleanupSplatt,
+  commitSplatt,
+  splattReview
+} from './splatt.jsx'
 import { LiftTools, beginLift, cleanupLift, commitLift, liftHotkeys } from './lift.jsx'
 import { FractureTools, beginFracture, cleanupFracture, commitFracture, updateFracture } from './fracture.jsx'
 import { GwarpTools, beginGwarp, cleanupGwarp, commitGwarp, gwarpHotkeys, updateGwarp } from './gwarp.jsx'
@@ -211,6 +219,20 @@ export const cardRegistry = {
     begin: beginCloser,
     commit: commitCloser,
     cleanup: cleanupCloser
+  },
+
+  // The third re-frame: the new frame is chosen with a 3D camera. No controls
+  // — the round is the orbit, and the reset-view button is a Tools button, not
+  // a control key. It holds open on its result like its 2d siblings.
+  splatt: {
+    controls: [],
+    defaultControls: {},
+    Tools: SplattTools,
+    Overlay: SplattOverlay,
+    postCommitReview: splattReview,
+    begin: beginSplatt,
+    commit: commitSplatt,
+    cleanup: cleanupSplatt
   },
 
   rack: {

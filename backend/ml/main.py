@@ -7,12 +7,16 @@
 # Models lazy-load on first use and stay warm. rembg downloads its u2net
 # weights (~170 MB) to ~/.u2net on first cutout; the ESRGAN weights are
 # committed to the repo (see tools/convert_realesrgan_to_onnx.py).
+#
+# SHARP (Splatt's gaussian splats) is an optional extra on top of all this —
+# /splat answers 503 on a machine that didn't install it; see splatter.py.
 
 import threading
 
 from fastapi import FastAPI, Request, Response
 from starlette.concurrency import run_in_threadpool
 
+import splatter
 from styler import STYLES, Styler
 from upscaler import Upscaler
 
@@ -52,6 +56,11 @@ def health():
         "cutoutLoaded": _models["rembg"] is not None,
         "upscaleLoaded": _models["upscaler"] is not None,
         "styles": sorted(STYLES),
+        # Splatt is an opt-in extra (requirements-splat.txt); the frontend
+        # gates the card on this rather than meeting a dead card mid-session.
+        "splatAvailable": splatter.available(),
+        "splatLoaded": splatter.loaded(),
+        "splatDevice": splatter.device(),
     }
 
 
@@ -92,3 +101,22 @@ async def style(request: Request, style: str = "pointilism"):
     except ValueError as err:
         return Response(status_code=400, content=str(err))
     return Response(content=png, media_type="image/png")
+
+
+@app.post("/splat")
+async def splat(request: Request):
+    data = await request.body()
+    if not data:
+        return Response(status_code=400, content="Empty body.")
+    if not splatter.available():
+        return Response(status_code=503, content="Splat support is not installed on this machine.")
+    ply = await run_in_threadpool(lambda: splatter.predict_png(data))
+    return Response(content=ply, media_type="application/octet-stream")
+
+
+# Fire-and-forget: the first load downloads 2.7 GB, so the frontend pokes
+# this at session start and never waits on it.
+@app.post("/splat/warm")
+def splat_warm():
+    splatter.warm()
+    return {"ok": True}

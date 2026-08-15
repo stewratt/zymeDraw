@@ -376,6 +376,54 @@
   font-size: 0.8rem;
 }
 
+/* ---------- Splatt (the splat viewport, canvas-area overlay) ---------- */
+
+/* The viewport takes the canvas area for the round: the splat IS the piece
+   while the card is in hand. Its box must be EXACTLY the artboard's 4:5 —
+   splatView renders the commit frame from the on-screen box, so any other
+   ratio would commit a stretched frame. `height`/`max-width` can't state that
+   without breaking the ratio at one window shape or the other, so the box is
+   sized against the area itself: the largest 4:5 that fits, at every size. */
+.splatt-overlay {
+  position: absolute;
+  inset: 0;
+  container-type: size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+}
+.splatt-stage {
+  position: relative;
+  width: min(100cqw, 80cqh);
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: #1b1b1d; /* the studio void, same tone as the pasteboard */
+  border: 1px solid var(--border);
+}
+.splatt-mount {
+  position: absolute;
+  inset: 0;
+}
+/* While the cast runs there is nothing to orbit yet, so the piece stands in
+   the frame it is about to leave, with the reason for the wait under it. */
+.splatt-waiting-work {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.4;
+}
+.splatt-waiting-note {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+  margin: 0;
+  text-align: center;
+}
+
 /* The work, glanced at while choosing (Searcher): its remains view covers the
    canvas, so the piece stands beside the decision instead. (Skim no longer
    needs this — it resolves at the dock, with the canvas itself in view.)
