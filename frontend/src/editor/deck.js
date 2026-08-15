@@ -61,6 +61,10 @@ export const MOD_CARDS = [
   // in — the honest sibling (no detail restore, enlargement keeps its grain)
   // is now the default re-frame. Both stay in the pool.
   { id: 'closer', copies: 1, rarity: 'common' }, // Re-frame, inward, no restoration
+  // The pair's third sibling: the new frame is chosen with a 3D camera instead
+  // of a 2D crop. Pool-only, and it wants the sidecar's splat extra installed
+  // on the machine.
+  { id: 'splatt', copies: 0, rarity: 'scarce' }, // Re-frame × depth cast — orbit, then re-photograph
   // Rack retired (2026-07-05): flipping a piece you've worked several
   // rounds never felt worth doing. Card + registry entry stay in place;
   // re-add this line to deal it again.

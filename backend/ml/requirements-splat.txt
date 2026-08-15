@@ -1,0 +1,15 @@
+# The Splatt extra: SHARP gaussian-splat prediction (Apple's ml-sharp).
+#
+# Opt-in, and deliberately NOT in requirements.txt — it drags in torch
+# (~2 GB installed) and downloads a 2.7 GB checkpoint on first run, so
+# `npm run install:all` stays light and only a machine that wants the
+# Splatt card pays for it. Install into the SAME backend/ml/.venv; see
+# README ("The Splatt extra"). Without it the sidecar runs exactly as
+# before and /health reports splatAvailable: false.
+#
+# Bounds, not pins, as in requirements.txt. SHARP has no PyPI release — it
+# installs from Apple's repo and pulls torchvision/gsplat/timm with it; the
+# torch line is here only so its floor is explicit and so a CUDA machine
+# can install its own wheel first (pip then leaves that one alone).
+torch>=2.6,<3
+sharp @ git+https://github.com/apple/ml-sharp.git

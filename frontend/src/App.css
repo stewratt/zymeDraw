@@ -331,6 +331,17 @@ button.link:hover {
   font-size: 0.8rem;
 }
 
+/* Why a session was turned back to this room (a card the machine can't run). */
+.deck-notice {
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--sel-border);
+  border-radius: var(--radius);
+  background: var(--sel-bg);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
 /* The running count — the cap made visible. Sticks while the pool scrolls. */
 .deck-count {
   position: sticky;
@@ -399,6 +410,15 @@ button.link:hover {
 }
 .deck-pool li.excluded {
   opacity: 0.45;
+}
+/* A card this machine can't run: the pool is the same list everywhere, so the
+   card stays visible and says why instead of quietly vanishing. */
+.deck-pool li.unavailable {
+  opacity: 0.6;
+  border-style: dashed;
+}
+.deck-pool-unavailable {
+  color: var(--text-dim);
 }
 /* The name/stepper row + description, stacked to the right of the face icon. */
 .deck-pool-body {

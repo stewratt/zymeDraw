@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { MOD_CARDS } from './editor/deck.js'
+import { fetchCardAvailability } from './editor/cardAvailability.js'
 import { CARD_TEXT } from './editor/cardText.js'
 import Card from './editor/Card.jsx'
 import CardZoom from './editor/CardZoom.jsx'
@@ -57,7 +58,7 @@ function sameSpec(a, b) {
 // deck is assembled under the cap. Its entire output is a deck spec handed
 // back through onUse; saved decks persist per machine in ~/.deck-config.json
 // via POST /api/decks (the whole list, replaced on every save).
-function DeckEditor({ decks, active, onUse, onBack, onDecksSaved }) {
+function DeckEditor({ decks, active, blocked = [], onUse, onBack, onDecksSaved }) {
   const [counts, setCounts] = useState(() => specToCounts(active?.spec ?? HOUSE_SPEC))
   const [name, setName] = useState(active?.name && active.spec ? active.name : '')
   const [saveError, setSaveError] = useState(null)
@@ -68,11 +69,27 @@ function DeckEditor({ decks, active, onUse, onBack, onDecksSaved }) {
   // first visit, then lives behind the header's guide button.
   const [guideOpen, setGuideOpen] = useState(() => !guideSeen('deckEditor'))
 
+  // What this machine can run (cardAvailability.js). One fetch on open, never
+  // waited on: until it answers every card looks ordinary, which is what a
+  // machine with the whole pool installed sees for good. A card the sidecar
+  // can't confirm can't be added — the room only offers what it can stand behind.
+  const [availability, setAvailability] = useState({})
+  useEffect(() => {
+    fetchCardAvailability().then(setAvailability)
+  }, [])
+  const unavailable = (id) => id in availability && availability[id] !== true
+
   const total = useMemo(
     () => Object.values(counts).reduce((sum, n) => sum + n, 0),
     [counts]
   )
   const legal = total >= DECK_FLOOR && total <= DECK_CAP
+
+  // The notice a turned-away session arrives with. It clears itself once the
+  // card is out of the deck, so it reads as a thing to fix, not a banner.
+  const blockedNames = blocked
+    .filter((id) => counts[id] > 0)
+    .map((id) => MOD_CARDS.find((c) => c.id === id)?.label ?? id)
 
   function step(id, delta) {
     setCounts((c) => ({
@@ -131,6 +148,10 @@ function DeckEditor({ decks, active, onUse, onBack, onDecksSaved }) {
       </header>
       {guideOpen && <GuideSheet page="deckEditor" onClose={() => setGuideOpen(false)} />}
 
+      {blockedNames.length > 0 && (
+        <p className="deck-notice">{fmt(T.blockedNotice, { cards: blockedNames.join(', ') })}</p>
+      )}
+
       <div className={`deck-count ${legal ? '' : 'illegal'}`}>
         {fmt(T.countLine, { count: total, cap: DECK_CAP, floor: DECK_FLOOR })}
         {total < DECK_FLOOR && <span className="deck-count-note">{T.tooFew}</span>}
@@ -146,7 +167,12 @@ function DeckEditor({ decks, active, onUse, onBack, onDecksSaved }) {
 
       <ul className="deck-pool">
         {MOD_CARDS.map((card) => (
-          <li key={card.id} className={counts[card.id] === 0 ? 'excluded' : ''}>
+          <li
+            key={card.id}
+            className={`${counts[card.id] === 0 ? 'excluded' : ''} ${
+              unavailable(card.id) ? 'unavailable' : ''
+            }`.trim()}
+          >
             <Card
               id={card.id}
               label={card.label}
@@ -157,6 +183,9 @@ function DeckEditor({ decks, active, onUse, onBack, onDecksSaved }) {
               <div className="deck-pool-head">
                 <span className="deck-pool-name">{card.label}</span>
                 {card.family === 'deck' && <span className="deck-pool-tag">{T.deckCardTag}</span>}
+                {unavailable(card.id) && (
+                  <span className="deck-pool-tag">{T.unavailableTag}</span>
+                )}
                 <span className="deck-pool-stepper">
                   <button
                     type="button"
@@ -170,7 +199,7 @@ function DeckEditor({ decks, active, onUse, onBack, onDecksSaved }) {
                   <button
                     type="button"
                     onClick={() => step(card.id, 1)}
-                    disabled={counts[card.id] >= MAX_COPIES}
+                    disabled={counts[card.id] >= MAX_COPIES || unavailable(card.id)}
                     aria-label={`${card.label} +`}
                   >
                     +
@@ -178,6 +207,11 @@ function DeckEditor({ decks, active, onUse, onBack, onDecksSaved }) {
                 </span>
               </div>
               <small className="hint">{CARD_TEXT[card.id]?.description}</small>
+              {unavailable(card.id) && (
+                <small className="hint deck-pool-unavailable">
+                  {T.unavailableNote[card.id] ?? T.unavailableNoteDefault}
+                </small>
+              )}
             </div>
           </li>
         ))}

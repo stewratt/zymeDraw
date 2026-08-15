@@ -32,6 +32,10 @@
       "name": "Closer",
       "description": "Frame a region of the piece and crop to get closer into the image. No upscaling, faithful to the pixels."
     },
+    "splatt": {
+      "name": "Splatt",
+      "description": "The piece is cast into depth and re-photographed from a viewpoint you choose. Where the cast has nothing to show, the piece as it stood shows through."
+    },
     "rack": {
       "name": "Rack",
       "description": "The whole piece comes loose as one object: drag, scale, rotate, flip it. Whatever leaves the canvas is cut off; whatever the move uncovers stays white."
@@ -197,6 +201,13 @@
     },
     "closer": {
       "commitNote": "Draw from the deck to commit the re-frame as it stands: no restoration, no waiting."
+    },
+    "splatt": {
+      "casting": "Casting the piece into depth… the first cast on a machine loads the model and takes longer.",
+      "live": "Drag to orbit, scroll to move in and out. Draw from the deck to commit the view you are looking at.",
+      "reset": "Original view",
+      "rendering": "Re-photographing at full resolution…",
+      "unavailable": "The depth service is unavailable, so there is nothing to orbit and the piece is unchanged. Draw to move on."
     },
     "char": {
       "subject": "the char"
@@ -376,7 +387,13 @@
     "saveFailed": "Could not save: {message}",
     "use": "Use this deck",
     "back": "← back",
-    "deckCardTag": "deck card"
+    "deckCardTag": "deck card",
+    "unavailableTag": "not on this machine",
+    "unavailableNote": {
+      "splatt": "Needs the depth service, which isn't set up on this machine."
+    },
+    "unavailableNoteDefault": "Needs a service that isn't set up on this machine.",
+    "blockedNotice": "This deck holds {cards}, which this machine can't run. Take it out, then use the deck."
   },
   "editor": {
     "backToSetup": "← setup",
