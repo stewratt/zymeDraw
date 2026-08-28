@@ -41,3 +41,10 @@ debug_loop_screenshots/
 # backend/ml/models/ IS tracked — it ships with the repo.
 backend/ml/.venv/
 __pycache__/
+
+# Local spikes: the throwaway rigs a card was prototyped in, kept on disk
+# because they're still worth poking at, never shipped. Neither is a Vite
+# entry point (only index.html is), so ignoring them changes no build.
+# The shipped card lives in frontend/src/editor/cards/.
+splat_mvp/
+frontend/splat-spike.html
