@@ -139,6 +139,38 @@ cd backend\ml
 .venv\Scripts\pip install -r requirements-splat.txt
 ```
 
+**In an installed build** (dmg / AppImage / exe) there is no repo and no
+`backend/ml/.venv`. The app fetched its own Python under its user-data folder
+on first launch, so point pip at that one instead — run ZYME once before this
+or the folder won't exist yet. One command; it pulls torch in with it:
+
+**Mac**
+
+```bash
+"$HOME/Library/Application Support/zymedraw/ml/python/bin/python3" -m pip install \
+  "sharp @ https://github.com/apple/ml-sharp/archive/refs/heads/main.tar.gz"
+```
+
+**Linux**
+
+```bash
+"$HOME/.config/zymedraw/ml/python/bin/python3" -m pip install \
+  "sharp @ https://github.com/apple/ml-sharp/archive/refs/heads/main.tar.gz"
+```
+
+**Windows** (PowerShell)
+
+```powershell
+& "$env:APPDATA\zymedraw\ml\python\python.exe" -m pip install `
+  "sharp @ https://github.com/apple/ml-sharp/archive/refs/heads/main.tar.gz"
+```
+
+The tarball rather than `git+https://` deliberately: it installs the same
+thing without needing git on the machine. Restart ZYME afterwards and Splatt
+is in the Deck editor pool. **Intel Macs cannot run it at all** — PyPI has no
+macOS x86_64 torch wheel past 2.2.2 and this pins `torch>=2.6`. Issue #132
+replaces this whole dance with a button.
+
 Notes:
 
 - On an **NVIDIA** machine install the CUDA torch wheel first (see

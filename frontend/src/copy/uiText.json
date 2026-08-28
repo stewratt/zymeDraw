@@ -390,7 +390,7 @@
     "deckCardTag": "deck card",
     "unavailableTag": "not on this machine",
     "unavailableNote": {
-      "splatt": "Needs the depth service, which isn't set up on this machine."
+      "splatt": "Needs the depth service, a separate one-time install \u2014 see \"The Splatt extra\" in the README. Intel Macs can't run it."
     },
     "unavailableNoteDefault": "Needs a service that isn't set up on this machine.",
     "blockedNotice": "This deck holds {cards}, which this machine can't run. Take it out, then use the deck."
