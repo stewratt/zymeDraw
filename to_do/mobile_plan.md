@@ -368,7 +368,33 @@ this section's.
   load-bearing on the phone: a 3× DPR iPhone would otherwise triple the
   buffer. Already decided correctly; don't revisit.
 
-### 4.4 Wave 0 is the answer, not this section
+### 4.4 Wave 0's verdict (2026-08-29, measured on the iPhone 17)
+
+Stew ran the hosted proof rig. The findings, from the report:
+
+- **Memory is a non-issue.** The ceiling finder held **60 sheets at
+  2400×3000 ≈ 1.6 GB** and hit the rig's own cap without the browser
+  giving out — and that was inside the Claude app's constrained WebView,
+  not even Safari proper. **Decision: the pocket version runs the full
+  3× master.** Exports match the studio's 2400×3000; §4.2's
+  MASTER_SCALE parameterization is cancelled (its trigger never fired).
+- **Bake ×10 at 3×: avg 7.2 ms, max 13 ms.** Committing costs nothing.
+- **Touch works**: pinch transform registered, the second-finger stroke
+  cancel fired, no page errors (one benign ResizeObserver notice).
+- **`ctx.filter` supported** — Blur/Hue/Ghost are live.
+- **Intake**: `createImageBitmap` resize works; six camera-roll photos
+  decoded capped at 2400 (all square, so the EXIF question stays
+  technically open — re-check with a sideways photo in passing).
+- **Share caveat**: the run happened in the Claude app's in-app browser
+  (`Claude/…` in the UA), where file sharing is withheld and storage
+  quota reads ~100 MB — both embed limits, not platform ones. Re-test
+  the share sheet in real Safari; the long-press fallback exists either
+  way, and the shipped app will live in Safari/standalone.
+- **Still owed**: the zymebox leg (listing shape, CORS/taint) — runs
+  from `proof.html` on the home network. `frontend/src/proof/` stays in
+  the tree until that leg has run, then the wave closes and it goes.
+
+### 4.5 Wave 0 was the answer, not the arithmetic
 
 Every number above is an estimate. The spike (§7) measures the real
 ceiling on Stew's actual iPhone before a line of UI exists.
