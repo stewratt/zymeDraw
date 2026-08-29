@@ -639,5 +639,37 @@
   "plinth": {
     "leafHint": "C: step through earlier states",
     "stateCaption": "state {n} of {total} · {label}"
+  },
+  "mobile": {
+    "intakeSubtitle": "Where this session's images come from.",
+    "folderLabel": "Image folder",
+    "folderHint": "A zymebox folder, read straight from the phone.",
+    "folderPlaceholder": "https://zymebox…/images/",
+    "folderRead": "Read folder",
+    "folderReading": "Reading…",
+    "folderFound": "{count} in the folder · read from {via}",
+    "folderEmpty": "That folder holds no images.",
+    "photosLabel": "Photos on this phone",
+    "photosHint": "Nothing is uploaded — the pictures stay on the phone.",
+    "photosButton": "From photos",
+    "photosReading": "Opening photos…",
+    "photosAdded": "{count} from this phone",
+    "photosFailed": "Some photos would not open: {error}",
+    "poolEmpty": "No images yet.",
+    "poolLine": "{count} images ready",
+    "poolThin": "Fewer than {total} images: the opening deals a smaller grid.",
+    "needTwo": "Two images at least — the opening takes two.",
+    "begin": "Begin session",
+    "changeImages": "← images",
+    "dockCommit": "Commit and draw",
+    "dockDraw": "Draw the next card",
+    "toolsNone": "Nothing to set for this card. Draw when you're ready.",
+    "savingTitle": "THE PIECE IS FINISHED",
+    "sharing": "Handing the piece to the share sheet…",
+    "shared": "Sent to the share sheet.",
+    "shareDismissed": "Nothing saved yet — the piece is still here.",
+    "saveButton": "Save the piece",
+    "longPressCaption": "Press and hold the image, then Save to Photos.",
+    "longPressClose": "Done"
   }
 }
