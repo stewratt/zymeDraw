@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- viewport-fit=cover puts the page under the notch and the home bar (the
+         safe-area insets in mobile.css keep the dock clear of them);
+         user-scalable=no stops a double-tap or a stray pinch from zooming the
+         PAGE, which on a canvas app reads as the app breaking. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1"
+    />
+    <meta name="color-scheme" content="dark" />
+    <title>ZYME</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/mobile/main.jsx"></script>
+  </body>
+</html>

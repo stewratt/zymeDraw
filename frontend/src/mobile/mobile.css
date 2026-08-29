@@ -1,0 +1,420 @@
+/* The pocket version's own layout.
+ *
+ * The shared component stylesheet (editor/editor.css) comes first and keeps
+ * owning what the reused components look like — cards, the grid picker, the
+ * control rows, the brush blocks. Everything here is either the phone's own
+ * chrome (intake, the tools sheet, the dock, the finish screen) or an
+ * override where a desktop layout rule fights a 400-pixel screen. Nothing in
+ * editor.css is edited: the desktop's shell is not this file's business.
+ *
+ * The platform plumbing that makes a canvas app behave on iOS Safari lives at
+ * the top (mobile_plan.md §3.3): dvh not vh, no overscroll rubber-banding, no
+ * touch-action on the canvas, no long-press callout, safe-area insets under
+ * the dock.
+ */
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  /* No page-level rubber-banding, and no page scroll at all: every scrolling
+     surface here is an inner one that says so for itself. */
+  overscroll-behavior: none;
+  overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ---------- the session shell: canvas · tools · dock ---------- */
+
+.m-shell {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.m-canvas {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  /* The canvas takes every touch itself — without this Safari scrolls or
+     zooms the page mid-stroke. */
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* A phase's or a card's full-screen view over the canvas (the opening pick,
+   the stash notice, a graft card's grid, the finish screen). The overlays
+   themselves are the shared components; this only gives them the screen. */
+.m-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  /* Overlays are ordinary UI again: their own scrollers may scroll. */
+  touch-action: manipulation;
+}
+.m-overlay > * {
+  flex: 1;
+  min-width: 0;
+}
+
+/* The image grids. The desktop fits every cell into the canvas area with a
+   container query and never scrolls; a phone is narrow enough that a fixed
+   column count is the wrong answer for both 24 opening images and a card's 8,
+   so the columns fill to whatever the width allows and the grid scrolls if it
+   must. Cells stay square (.grid-thumb's own aspect-ratio). */
+.m-overlay .grid-picker {
+  padding: 12px;
+  gap: 10px;
+}
+.m-overlay .grid-thumbs-fit {
+  container-type: normal;
+  align-items: stretch;
+  overflow-y: auto;
+  touch-action: pan-y;
+}
+.m-overlay .grid-thumbs {
+  width: 100%;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)) !important;
+  grid-template-rows: none !important;
+  grid-auto-rows: auto;
+  align-content: start;
+}
+.m-overlay .grid-picker-foot {
+  flex-wrap: wrap;
+}
+
+/* ---------- the tools sheet ---------- */
+
+.m-tools {
+  flex: none;
+  max-height: 40dvh;
+  overflow-y: auto;
+  touch-action: pan-y;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+/* A round with nothing to set (a phase that owns the screen) leaves the
+   canvas the space instead of an empty box. */
+.m-tools--empty {
+  display: none;
+}
+.m-tools .card-tools,
+.m-tools .brush-tools {
+  width: 100%;
+}
+.m-tools .hint {
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* ---------- controls, sized for a thumb ---------- */
+
+.m-shell .ctrl,
+.m-intake .ctrl {
+  grid-template-columns: 54px 1fr 52px;
+  gap: 8px;
+}
+.m-shell input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 30px;
+  background: transparent;
+}
+.m-shell input[type='range']::-webkit-slider-runnable-track {
+  height: 3px;
+  background: var(--border-strong);
+}
+.m-shell input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  margin-top: -11px;
+  border-radius: 50%;
+  background: var(--text);
+}
+.m-shell input[type='range']::-moz-range-track {
+  height: 3px;
+  background: var(--border-strong);
+}
+.m-shell input[type='range']::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: var(--text);
+}
+.m-shell .mode-toggle button {
+  padding: 12px 4px;
+}
+.m-shell .undo-row button {
+  padding: 12px;
+}
+
+.m-shell button.primary,
+.m-intake button.primary,
+.m-shell button.secondary,
+.m-intake button.secondary {
+  min-height: 46px;
+  width: 100%;
+  padding: 12px;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+}
+.m-shell button.primary,
+.m-intake button.primary {
+  background: var(--fill);
+  color: var(--text);
+  border: none;
+}
+.m-shell button.secondary,
+.m-intake button.secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+}
+.m-shell button:disabled,
+.m-intake button:disabled {
+  color: var(--text-mute);
+  border-color: var(--border);
+  background: var(--surface-2);
+}
+
+/* ---------- the deck dock ---------- */
+
+.m-dock {
+  flex: none;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+}
+.m-dock-notice {
+  margin: 0 0 6px;
+  line-height: 1.4;
+}
+/* The deck IS the button, so the whole bar is the target. */
+.m-deck {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 78px;
+  padding: 4px 2px;
+  background: none;
+  border: none;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.m-deck:disabled {
+  opacity: 0.45;
+  background: none;
+  border: none;
+}
+.m-deck-stack {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 46px;
+}
+.m-deck-face {
+  display: block;
+  flex: none;
+  width: 46px;
+}
+.m-deck-stack .card,
+.m-deck-face .card {
+  width: 100%;
+}
+.m-deck-under {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.m-deck-under--1 {
+  transform: translate(-2px, 3px);
+}
+.m-deck-under--2 {
+  transform: translate(-4px, 6px);
+}
+.m-deck-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.m-deck-action {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+.m-deck-card-name {
+  font-size: 0.95rem;
+  color: var(--text-title);
+}
+.m-deck-meta,
+.m-deck-hint {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  line-height: 1.35;
+}
+
+/* ---------- intake ---------- */
+
+.m-intake {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: calc(20px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  background: var(--bg);
+}
+.m-intake-head h1 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 300;
+  letter-spacing: 0.3em;
+  color: var(--text-title);
+}
+.m-intake-head .hint {
+  margin: 6px 0 0;
+}
+.m-intake-leg {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.m-intake-leg h2 {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+.m-intake-leg .hint,
+.m-intake-foot .hint {
+  margin: 0;
+  line-height: 1.45;
+}
+.m-intake input[type='url'] {
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  /* 16px or larger, or iOS zooms the page when the field takes focus. */
+  padding: 12px;
+}
+.m-intake input[type='url']:focus {
+  outline: none;
+  border-color: var(--border-strong);
+}
+/* The file input is the button's business, never its own control. */
+.m-file-input {
+  display: none;
+}
+.m-intake-foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ---------- the finish screen and the long press ---------- */
+
+.m-finish {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+  background: var(--bg);
+  overflow-y: auto;
+  touch-action: pan-y;
+}
+.m-finish h2 {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  color: var(--text-heading);
+}
+.m-finish-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.m-finish-thumb {
+  max-width: 100%;
+  max-height: 48dvh;
+  object-fit: contain;
+  border: 1px solid var(--border);
+}
+.m-finish-body .hint,
+.m-finish-body .error {
+  text-align: center;
+}
+.m-finish-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+.m-finish-actions button.link {
+  font-size: 0.75rem;
+}
+
+/* The save-by-long-press view: the piece, big, on black, with the one
+   sentence that says what to do with it. The image is deliberately NOT
+   touch-callout-suppressed — the callout IS the save. */
+.m-press {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+  background: #000;
+  overflow-y: auto;
+  touch-action: pan-y;
+}
+.m-press-image {
+  max-width: 100%;
+  max-height: 70dvh;
+  object-fit: contain;
+  -webkit-touch-callout: default;
+  -webkit-user-select: auto;
+  user-select: auto;
+}
+.m-press-caption {
+  margin: 0;
+  text-align: center;
+}
+.m-press button.secondary {
+  width: auto;
+  min-width: 140px;
+}
