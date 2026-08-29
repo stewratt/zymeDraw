@@ -10,6 +10,14 @@
 > Companion to CLAUDE.md (read that first) and a sibling of
 > `app_plan.md` / `cards_plan.md`. §7 is the wave map; §8 holds the
 > questions owed to Stew before any wave opens.
+>
+> **2026-08-29, Stew's answers**: target device **iPhone 17 (non-Pro),
+> iOS 26.6.1** — comfortably above every floor here; **1600×2000 export
+> approved**; and one requirement raised to first priority: **the pocket
+> version must pull images from the zymebox server** (the studio's
+> always-on ComfyUI recursion box, `server_plan.md`'s v1 — gallery over
+> Tailscale). The phone's own photo library is the secondary source.
+> §2.2 is the new zymebox track; §8 is updated accordingly.
 
 ---
 
@@ -128,8 +136,8 @@ else — no deck logic crosses the wire.
 
 | Desktop endpoint | What it's for | Mobile replacement |
 |---|---|---|
-| `/api/images` + `/sample` | list/sample the input folder | **the session pool**: photo picker (`<input type="file" accept="image/*" multiple>` opens the iOS photo sheet) → object URLs; `sampleImages`'s existing client-side shuffle does the rest |
-| `/api/images/<file>` | serve one image | object URL from the pool (see the seam, §2.1) |
+| `/api/images` + `/sample` | list/sample the input folder | **the zymebox folder, read directly from the phone** (§2.2 — primary), with the photo picker as the secondary source; `sampleImages`'s existing client-side shuffle does the rest |
+| `/api/images/<file>` | serve one image | a zymebox URL or an object URL from the picked pool (the seam, §2.1) |
 | `/api/export` | write PNG to the output folder | `master.toBlob()` → **Web Share API** (`navigator.share({ files })` → "Save Image" lands it in Photos); download-link fallback |
 | `/api/config`, `/api/pick-folder`, `/api/open-output` | per-machine folders | gone — there are no folders |
 | `/api/decks` | saved deck specs | `localStorage` (a later wave; v1 is the fixed mobile deck) |
@@ -157,6 +165,60 @@ the pattern exists; this wave just finishes it. The refactor lands on
 `main` first, desktop passes through unchanged, and every card file
 stops knowing where images come from. (This is Wave 1, and it's the only
 place mobile work touches desktop code paths.)
+
+With the zymebox requirement the store has **three flavors**, and a
+session pool may mix the last two:
+
+- **served** (desktop): `/api/images/<f>`, exactly today;
+- **remote** (mobile, primary): filenames listed from a zymebox HTTP
+  folder, URLs resolved against it (§2.2);
+- **local** (mobile, secondary): object URLs from the photo picker.
+
+### 2.2 The zymebox connection — the primary image source
+
+Zymebox is the studio's always-on recursion server: it already serves a
+gallery page over Tailscale, and the *desktop* app already reads HTTP
+image folders — `backend/image-source.js` lists a remote folder by
+trying `index.json`, then a JSON autoindex, then plain directory-page
+hrefs. The mobile version needs the same read **without the backend in
+the middle**, and the desktop code documents exactly why the backend was
+in the middle: *"a cross-origin image taints the canvas and
+`toDataURL()` throws"* — which on mobile would mean a session that works
+perfectly until export fails at the Coda. The worst possible failure
+shape for a commitment-based tool. So the zymebox track is three small
+problems, none of them hard:
+
+1. **Origin.** Two clean solutions, either acceptable:
+   - **Host the pocket app on zymebox itself** (recommended): the static
+     build is just files; the box already serves a gallery page. App and
+     images share an origin — CORS and tainting vanish entirely, and
+     "the pocket version's URL" is a zymebox URL. One server owns the
+     whole experience.
+   - **CORS headers on the image folder** (`Access-Control-Allow-Origin:
+     *` on the folder route — one line of nginx/Caddy config), with the
+     app hosted anywhere and images loaded `crossOrigin: 'anonymous'`.
+2. **Secure context.** Plain `http://` over the tailnet is not a secure
+   context, which quietly disables the Share API (export to Photos) and
+   service workers. **Tailscale Serve** solves this in one command: it
+   fronts a local port with a valid HTTPS cert at
+   `https://zymebox.<tailnet>.ts.net` — full secure context, no cert
+   management. The fallback if HTTPS is deferred: export renders the
+   PNG into an `<img>` for long-press → Save to Photos, which works on
+   plain http. Wave 0 measures both paths.
+3. **The listing, client-side.** Port `image-source.js`'s listing logic
+   (`namesFromJson` / `namesFromHtml` / `keepImages`, ~80 lines, almost
+   dependency-free) into the shared frontend so the remote flavor of the
+   image store reads the same folder shapes the desktop does — same
+   `index.json` contract, same autoindex fallbacks, same 30s listing
+   TTL spirit. One convention, both apps (the vat's §1 folder contract
+   holds: nothing couples beyond "images appear in a folder").
+
+Reachability falls out of what already works: the gallery is reachable
+from the phone over Tailscale today, so "on the go" means the Tailscale
+app on the phone — at home, away, anywhere. When zymebox is unreachable
+the photo picker is the session's source; the store's remote flavor
+degrades exactly like `image-source.js` does (a listing you have beats a
+dead deck; a broken image is one broken tile).
 
 ---
 
@@ -327,10 +389,12 @@ real design fork — flagged in §8 Q6 rather than decided here, because
 extracting it touches the desktop's most central file and deserves its
 own conversation.
 
-**Deploy**: static host serving the built `mobile.html` at its own URL
-(free tiers all suffice; HTTPS comes with them and the Share API
-requires it). Add-to-home-screen via the PWA manifest; a service worker
-for offline opening can come last — it's dressing, not structure.
+**Deploy**: the recommendation moved with the zymebox requirement —
+**serve the built `mobile.html` from zymebox itself**, fronted by
+Tailscale Serve for HTTPS (§2.2): same-origin images, secure context,
+one box owning the whole experience, reachable anywhere the phone's
+Tailscale is on. The public-static-host + CORS route stays as the
+documented alternative.
 
 ---
 
@@ -353,13 +417,18 @@ suggested order and the *first wave is a gate* — if Wave 0 fails on the
 target device, we stop and rethink resolution before any UI exists.
 
 - **Wave 0 — the on-device proof.** A single throwaway page (no deck,
-  no shell): photo picker → place two images with touch → mask-brush a
-  few strokes → universal bake at the mobile master → repeat the bake
-  ~10× (a session's worth) → export via the share sheet into Photos.
-  Instrument canvas allocation; try 2× and 3× masters. **Answers, on
-  Stew's iPhone: the memory ceiling, EXIF behavior, `ctx.filter`, and
+  no shell): photo picker **and a zymebox folder URL field** → place two
+  images with touch → mask-brush a few strokes → universal bake at the
+  mobile master → repeat the bake ~10× (a session's worth) → export via
+  the share sheet into Photos (long-press fallback beside it).
+  Instrument canvas allocation; try 2× and 3× masters. For the zymebox
+  leg, the page lists the folder client-side, loads an image, and
+  **reports in plain words whether the canvas is tainted** — the
+  CORS/origin answer that shapes §2.2's deployment choice. **Answers,
+  on Stew's iPhone: the memory ceiling, zymebox reachability + taint,
+  EXIF behavior, `ctx.filter`, share-sheet availability over http, and
   whether touch + Fabric feel right.** Everything else in this plan is
-  contingent on this wave's numbers.
+  contingent on this wave's findings.
 - **Wave 1 — the seams (lands on `main`).** `imageStore.js` replacing
   the ~8 hardcoded `/api/images` sites; an export provider (served /
   share-sheet); verify master-dims threading. Desktop verified unchanged
@@ -385,12 +454,19 @@ target device, we stop and rethink resolution before any UI exists.
 
 ## 8. Questions owed to Stew (before the wave that needs each)
 
-1. **The target device** (before Wave 0): which iPhone and iOS version?
-   The memory budget and the iOS-18 floor are set by the actual phone,
-   not the market.
-2. **Export resolution** (after Wave 0's numbers): is a 1600×2000
-   export acceptable for the pocket version, or must it match the
-   desktop's 2400×3000 (possibly gated on newer devices)?
+Answered 2026-08-29:
+
+1. ~~**The target device**~~ — **iPhone 17 (non-Pro), iOS 26.6.1.**
+   Far above the iOS-18 floor; the memory arithmetic in §4 has real
+   headroom, but Wave 0 still measures rather than assumes.
+2. ~~**Export resolution**~~ — **1600×2000 approved** for the pocket
+   version.
+7. ~~**Photo intake shape**~~ — superseded by the zymebox requirement
+   (§2.2): **zymebox is the primary source**, the photo picker the
+   secondary; a session pool may mix both.
+
+Still open:
+
 3. **The mobile house deck** (Wave 4): which kept cards, how many
    copies? Same acts tuning (4+2), or shorter sessions for the bus?
 4. **Stamp's fate** — your "(stamp?)": on the phone Stamp *always* runs
@@ -402,9 +478,15 @@ target device, we stop and rethink resolution before any UI exists.
    orchestrator (duplicating ~Editor's wiring, zero desktop risk), or
    extract a shared headless session hook first (less duplication,
    touches the desktop's core file)?
-7. **Photo intake shape** (Wave 2): re-pick photos each session (purest,
-   zero persistence), or a persisted pool the session samples from
-   (closer to the desktop's input folder)? Either stays on-device.
 8. **The name and face**: what does the pocket version call itself?
    (Tone rules apply; "Deck" and the zyme register travel — the answer
    here is copy, not code.)
+9. **The zymebox folder URL and its server** (before Wave 2 hardens
+   §2.2): what serves the image folder today (nginx? Caddy? the gallery
+   app?), what does its listing look like (`index.json`? autoindex?),
+   and is Tailscale Serve acceptable on that box for HTTPS? Wave 0's
+   URL field will answer the listing-shape part empirically.
+10. **Zymebox hosting of the app itself** (Wave 5): confirm the
+    recommendation — the pocket app served from zymebox behind
+    Tailscale Serve — once Wave 0 reports on taint and share-sheet
+    behavior.
