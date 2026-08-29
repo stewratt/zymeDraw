@@ -18,7 +18,7 @@
 import * as fabric from 'fabric'
 import { createMaskSession } from '../brushCore.js'
 import { CardGridPicker } from '../GridPicker.jsx'
-import { sampleImages } from '../sampling.js'
+import { imageUrl, sampleImages } from '../imageStore.js'
 import { ArrangeMaskControls, maskHint } from './maskControls.jsx'
 import { UI } from '../../copy/uiText.js'
 
@@ -41,7 +41,7 @@ export function makeGraftCard(config) {
       ctx.report({ stage: 'pick', gridFiles: files, pick: resolve })
     })
 
-    const img = await fabric.FabricImage.fromURL(`/api/images/${encodeURIComponent(chosen)}`)
+    const img = await fabric.FabricImage.fromURL(imageUrl(chosen))
     if (ctx.isCancelled?.()) return null
     const original = img.getElement()
     const filtered = document.createElement('canvas')

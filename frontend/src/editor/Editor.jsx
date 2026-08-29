@@ -9,7 +9,8 @@ import { TUNING, deckReducer, findableCounts, initialState, remainingCounts } fr
 import { cardRegistry } from './cards/registry.jsx'
 import { StashReturnPreview } from './cards/stashReturn.jsx'
 import { placeImages, layerThumbUrl } from './placement.js'
-import { sampleImages } from './sampling.js'
+import { listImages, sampleImages } from './imageStore.js'
+import { exportMaster } from './exportSink.js'
 import { createMaskSession } from './brushCore.js'
 import { attachCanvasNav } from './canvasNav.js'
 import { attachArtboardMatte } from './artboardMatte.js'
@@ -23,7 +24,6 @@ import {
   createMaster,
   fillMaster,
   masterThumbDataUrl,
-  masterToPngDataUrl,
   showMaster
 } from './masterRaster.js'
 import './editor.css'
@@ -202,10 +202,9 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     error: null
   })
 
-  // Fetch input folder once.
+  // Read the pool once. Where it comes from is imageStore.js's business.
   useEffect(() => {
-    fetch('/api/images')
-      .then((r) => r.json())
+    listImages()
       .then((data) => {
         if (data.ok) setImageList({ status: 'ready', filenames: data.filenames, error: null })
         else setImageList({ status: 'error', filenames: [], error: data.error })
@@ -214,7 +213,7 @@ function Editor({ config, deckSpec, onBackToSetup }) {
   }, [])
 
   // The reducer never touches the filesystem: when the opening grid is
-  // needed, Editor samples the input folder (sampling.js) and reports it
+  // needed, Editor samples the pool (imageStore.js) and reports it
   // back via SET_GRID. Waits for the folder listing so the loading/error
   // states in DeckPanel get their moment instead of a dangling fetch.
   useEffect(() => {
@@ -317,7 +316,8 @@ function Editor({ config, deckSpec, onBackToSetup }) {
 
   // When a death card is dealt (phase → COMPLETE), write the master out —
   // it already holds the true pixels at 2400×3000, so export is a direct
-  // read with no multiplier render. Runs exactly once per transition.
+  // read with no multiplier render. Runs exactly once per transition. WHERE
+  // it goes is exportSink.js's business; this owns only the FINISHED state.
   useEffect(() => {
     if (state.phase !== 'COMPLETE') return
     const master = masterRef.current
@@ -326,15 +326,9 @@ function Editor({ config, deckSpec, onBackToSetup }) {
     setExportState({ status: 'exporting', savedPath: null, error: null, thumbDataUrl: null })
     ;(async () => {
       try {
-        const pngBase64 = masterToPngDataUrl(master)
         // A tiny thumbnail for the FINISHED screen. ~320×400 — cheap.
         const thumbDataUrl = masterThumbDataUrl(master)
-        const res = await fetch('/api/export', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pngBase64 })
-        })
-        const data = await res.json()
+        const data = await exportMaster(master)
         if (cancelled) return
         if (data.ok) {
           setExportState({ status: 'done', savedPath: data.savedPath, error: null, thumbDataUrl })

@@ -29,6 +29,7 @@
 import { useState } from 'react'
 import Card from '../Card.jsx'
 import CardZoom from '../CardZoom.jsx'
+import { imageUrl } from '../imageStore.js'
 import { UI } from '../../copy/uiText.js'
 
 const T = UI.deckPanel
@@ -49,7 +50,7 @@ export function StashReturnPreview({ files = [], onAck }) {
           <img
             key={f}
             className="stash-preview"
-            src={`/api/images/${encodeURIComponent(f)}`}
+            src={imageUrl(f)}
             alt={f}
           />
         ))}

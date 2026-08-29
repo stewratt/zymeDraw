@@ -8,7 +8,7 @@
 import * as fabric from 'fabric'
 import { createMaskSession } from '../brushCore.js'
 import { CARD_TEXT } from '../cardText.js'
-import { sampleImages } from '../sampling.js'
+import { imageUrl, sampleImages } from '../imageStore.js'
 import { READING_LABEL, computeLum, maskFor, maskToCanvas, pickMostShattered } from '../shatter.js'
 import { ArrangeMaskControls } from './maskControls.jsx'
 import { UI, fmt } from '../../copy/uiText.js'
@@ -28,7 +28,7 @@ function tint(tinted, maskCanvas, color) {
 export async function beginRails(ctx) {
   const [file] = await sampleImages(1, ctx.imageList)
   ctx.report({ stage: 'shattering' })
-  const img = await fabric.FabricImage.fromURL(`/api/images/${encodeURIComponent(file)}`)
+  const img = await fabric.FabricImage.fromURL(imageUrl(file))
   if (ctx.isCancelled?.()) return null
   const el = img.getElement()
 

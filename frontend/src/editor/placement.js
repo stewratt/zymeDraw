@@ -8,6 +8,7 @@
 
 import * as fabric from 'fabric'
 import { ARTBOARD_WIDTH, ARTBOARD_HEIGHT } from './CanvasStage.jsx'
+import { imageUrl } from './imageStore.js'
 
 export async function placeImages(canvas, filenames, isCancelled = () => false) {
   // Fit/center against the ARTBOARD, not the buffer: in pasteboard `fill` mode
@@ -17,7 +18,7 @@ export async function placeImages(canvas, filenames, isCancelled = () => false) 
   const H = ARTBOARD_HEIGHT
 
   const imgs = await Promise.all(
-    filenames.map((f) => fabric.FabricImage.fromURL(`/api/images/${encodeURIComponent(f)}`))
+    filenames.map((f) => fabric.FabricImage.fromURL(imageUrl(f)))
   )
   if (isCancelled()) return []
 

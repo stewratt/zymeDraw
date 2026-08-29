@@ -11,6 +11,7 @@
 
 import { useEffect, useState } from 'react'
 import { isFormTarget } from './keymap.js'
+import { imageUrl } from './imageStore.js'
 import { UI, fmt } from '../copy/uiText.js'
 import { rich } from '../copy/rich.jsx'
 
@@ -78,7 +79,7 @@ function GridPicker({ grid, onConfirm }) {
                 className={`grid-thumb ${selection[f] || ''}`}
                 onClick={() => cycle(f)}
               >
-                <img src={`/api/images/${encodeURIComponent(f)}`} alt={f} loading="lazy" />
+                <img src={imageUrl(f)} alt={f} loading="lazy" />
                 {selection[f] && (
                   <span className="thumb-badge">{selection[f] === 'place' ? T.badgePlace : T.badgeStash}</span>
                 )}
@@ -118,8 +119,8 @@ function gridShape(n) {
 // Single-pick variant for cards that deal their own grid (Ghost, Stamp).
 // No stash: click an image to take it (click again to put it back), then
 // confirm. `fileUrl` maps an entry to its image URL — Deck's default is the
-// input folder; Foundry's panel pick passes its own (mixed input/output
-// sources, panelArt.js).
+// session's image store; Foundry's panel pick passes its own (mixed
+// input/output sources, panelArt.js).
 //
 // Two confirm shapes: pass `confirmLabel` for a self-owned foot button, OR
 // pass `onChoose` to lift the selection out (Foundry drives the take from
@@ -131,7 +132,7 @@ export function CardGridPicker({
   confirmLabel,
   onConfirm,
   onChoose,
-  fileUrl = (f) => `/api/images/${encodeURIComponent(f)}`
+  fileUrl = imageUrl
 }) {
   const [chosen, setChosen] = useState(null)
   const shape = gridShape(files.length)

@@ -12,7 +12,7 @@ import { BRUSH_SIZE_MAX, BRUSH_SIZE_MIN, createStampSession } from '../brushCore
 import { CARD_TEXT } from '../cardText.js'
 import { UI } from '../../copy/uiText.js'
 import { CardGridPicker } from '../GridPicker.jsx'
-import { sampleImages } from '../sampling.js'
+import { imageUrl, sampleImages } from '../imageStore.js'
 import { fetchCutoutUrl } from './stamp.jsx'
 
 const GRID_SIZE = 6
@@ -46,7 +46,7 @@ export async function beginReverberate(ctx) {
     return null
   }
 
-  const stampEl = await loadBitmap(url ?? `/api/images/${encodeURIComponent(chosen)}`)
+  const stampEl = await loadBitmap(url ?? imageUrl(chosen))
   if (url) URL.revokeObjectURL(url)
   if (ctx.isCancelled?.()) return null
 

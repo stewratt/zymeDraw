@@ -326,6 +326,30 @@ pocket version — or whether new-enough iPhones should get the full 3× —
 is Stew's call (§8 Q2), *informed by Wave 0's measurements, not
 guessed*.
 
+**Wave 1 finding — "a constructor argument" is half true.** The master's
+*dimensions* are already a parameter (Foundry passes its own), but
+`MASTER_SCALE = 3` is a shared module constant, and the seating and
+cropping math reads it rather than deriving it from the master it was
+handed: `showMaster` seats the base image at `1 / MASTER_SCALE`, and
+`bake` computes the crop as `src.width / MASTER_SCALE` and renders with
+`toCanvasElement(MASTER_SCALE)`. Three other modules import the constant
+too (`liftSession`, `fractureField`, `etch`). So a 1600×2000 master under
+today's code would seat and crop against a 3× divisor and shrink the
+scene-unit artboard to 533⅓×666⅔ — the piece would bake wrong, silently,
+in the desktop's own filter-flush way.
+
+The fix is small and mechanical (derive the scale from `master.width /
+CANVAS_WIDTH`, or thread it through the master object the way dimensions
+already are), but it is **deliberately not done in Wave 1**, because it
+may never be needed: the target is an iPhone 17, and if Wave 0 measures
+the full 3× master as comfortable on that device, the mobile shell runs
+the desktop's numbers unchanged and this constant stays a constant.
+
+**Trigger condition:** parameterize `MASTER_SCALE` only if Wave 0 reports
+that a 2400×3000 master cannot hold a session on the target phone. If it
+can, close this note. Either way the decision is Wave 0's to make, not
+this section's.
+
 ### 4.3 The floor and the traps
 
 - **iOS 18 is the floor**: 2d `ctx.filter` (Blur / Hue / Ghost's

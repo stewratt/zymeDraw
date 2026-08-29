@@ -25,7 +25,7 @@
 import * as fabric from 'fabric'
 import { applyMaskOp, clearLayer, createStrokeEngine, makeLayer, snapshotMaskSettings } from '../brushCore.js'
 import { CardGridPicker } from '../GridPicker.jsx'
-import { sampleImages } from '../sampling.js'
+import { imageUrl, sampleImages } from '../imageStore.js'
 import { READING_LABEL, computeLum, maskFor, maskToCanvas, pickMostShattered } from '../shatter.js'
 import { fetchStyledCanvas } from '../styleTransfer.js'
 import { ArrangeMaskControls, maskHint } from './maskControls.jsx'
@@ -57,7 +57,7 @@ export async function beginShatteredTransfer(ctx) {
   })
   ctx.report({ stage: 'shattering', gridFiles: null, pick: null })
 
-  const img = await fabric.FabricImage.fromURL(`/api/images/${encodeURIComponent(chosen)}`)
+  const img = await fabric.FabricImage.fromURL(imageUrl(chosen))
   if (ctx.isCancelled?.()) return null
   const el = img.getElement()
 

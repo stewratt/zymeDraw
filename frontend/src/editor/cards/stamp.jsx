@@ -17,7 +17,7 @@ import { createMaskSession } from '../brushCore.js'
 import { CARD_TEXT } from '../cardText.js'
 import { UI } from '../../copy/uiText.js'
 import { CardGridPicker } from '../GridPicker.jsx'
-import { sampleImages } from '../sampling.js'
+import { imageUrl, sampleImages } from '../imageStore.js'
 import { ArrangeMaskControls, maskHint } from './maskControls.jsx'
 
 const GRID_SIZE = 6
@@ -29,7 +29,7 @@ const GRID_SIZE = 6
 export async function fetchCutoutUrl(filename) {
   const health = await fetch('/api/ml/health').then((r) => r.json())
   if (!health.ok) throw new Error('sidecar down')
-  const src = await fetch(`/api/images/${encodeURIComponent(filename)}`)
+  const src = await fetch(imageUrl(filename))
   if (!src.ok) throw new Error('image fetch failed')
   const blob = await src.blob()
   const r = await fetch('/api/ml/cutout', {
@@ -59,9 +59,7 @@ export async function beginStamp(ctx) {
     return null
   }
 
-  const img = await fabric.FabricImage.fromURL(
-    url ?? `/api/images/${encodeURIComponent(chosen)}`
-  )
+  const img = await fabric.FabricImage.fromURL(url ?? imageUrl(chosen))
   if (url) URL.revokeObjectURL(url)
   if (ctx.isCancelled?.()) return null
 
