@@ -368,11 +368,40 @@ export function createStrokeEngine(canvas, { states, resolveTarget, getControls,
     notify()
   }
 
+  // Drop the stroke under the pointer WITHOUT locking it in: the scratch mask
+  // is cleared and the composite rebuilt from the committed layer, so the
+  // in-progress marks vanish and nothing reaches `strokes` or the undo stack.
+  // The phone's second finger is what needs this (mobile_plan.md §3.2) — the
+  // gesture must cancel the stroke, not commit-then-undo it, which would flash
+  // a stroke the user never chose. Desktop-unused: nothing in the desktop shell
+  // or in any card calls it, or reads the registry below.
+  function cancelStroke() {
+    if (!drawing) return false
+    const { img } = drawing
+    drawing = null
+    endSizing()
+    if (img) {
+      const s = states.get(img)
+      clearLayer(s.strokeMask)
+      s.recomposite(null)
+    }
+    return true
+  }
+
+  // Published on the canvas, the same explicit canvas-level convention as
+  // canvasNav's __navPanArmed: the touch module can't know which consumer owns
+  // the live stroke — the standing mask brush, a graft card's own session, a
+  // reveal card's — so every engine registers its canceller here and the
+  // gesture cancels them all. Read in exactly one place: canvasNavTouch.js.
+  const cancellers = canvas.__brushCancels || (canvas.__brushCancels = new Set())
+  cancellers.add(cancelStroke)
+
   canvas.on('mouse:down', onMouseDown)
   canvas.on('mouse:move', onMouseMove)
   canvas.on('mouse:up', onMouseUp)
 
   return {
+    cancelStroke,
     setActive(next) {
       if (next === active) return
       active = next
@@ -420,6 +449,7 @@ export function createStrokeEngine(canvas, { states, resolveTarget, getControls,
 
     dispose() {
       cursor.dispose()
+      cancellers.delete(cancelStroke)
       canvas.off('mouse:down', onMouseDown)
       canvas.off('mouse:move', onMouseMove)
       canvas.off('mouse:up', onMouseUp)
