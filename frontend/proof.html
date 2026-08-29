@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- viewport-fit=cover so the safe-area insets are ours to spend (mobile_plan.md §3.3) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <meta name="color-scheme" content="dark" />
+    <title>Wave 0 — on-device proof</title>
+  </head>
+  <body>
+    <!--
+      Wave 0 throwaway spike (to_do/mobile_plan.md §7). A dev-only second entry:
+      Vite serves any .html at the project root, and this file is NOT a build
+      input, so `vite build` never sees it. Delete the whole spike — this file
+      and src/proof/ — when the wave closes.
+    -->
+    <main id="proof">
+      <header class="head">
+        <h1>Wave 0 — on-device proof</h1>
+        <p class="sub">A test rig, not the tool. Work through the controls top to bottom, then send back the report at the foot of the page.</p>
+      </header>
+
+      <section class="panel">
+        <h2>1 · Intake</h2>
+        <div class="row">
+          <label class="btn" for="file-input">Open photos</label>
+          <input id="file-input" type="file" accept="image/*" multiple hidden />
+        </div>
+        <div class="row">
+          <input id="folder-url" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="http://zymebox:9000/favorites/" />
+          <button id="folder-read" class="btn" type="button">Read folder</button>
+        </div>
+        <p id="intake-note" class="note">Both legs land in the strip below. Tap a thumbnail to place it on the artboard.</p>
+        <div id="strip" class="strip" aria-label="picked images"></div>
+      </section>
+
+      <div id="stage-wrap" class="stage-wrap">
+        <canvas id="stage"></canvas>
+      </div>
+
+      <section class="panel">
+        <h2>2 · Master scale</h2>
+        <div class="row">
+          <button id="scale-2" class="btn btn--on" type="button">2× · 1600×2000</button>
+          <button id="scale-3" class="btn" type="button">3× · 2400×3000</button>
+        </div>
+        <p class="note">Switching clears the artboard and builds a fresh master at that size.</p>
+      </section>
+
+      <section class="panel">
+        <h2>3 · Brush</h2>
+        <div class="row">
+          <button id="brush-toggle" class="btn" type="button">Brush: off</button>
+          <label class="slider">Size <input id="brush-size" type="range" min="20" max="400" value="140" /></label>
+        </div>
+        <p class="note">On holds three master-sized layers at once — a reveal card's real memory load.</p>
+      </section>
+
+      <section class="panel">
+        <h2>4 · Bake</h2>
+        <div class="row">
+          <button id="bake-1" class="btn" type="button">Bake</button>
+          <button id="bake-10" class="btn" type="button">Bake ×10</button>
+        </div>
+        <p class="note">The real universal bake from the studio code, timed.</p>
+      </section>
+
+      <section class="panel">
+        <h2>5 · Export</h2>
+        <div class="row">
+          <button id="export-share" class="btn" type="button">Export — share sheet</button>
+          <button id="export-hold" class="btn" type="button">Export — long-press</button>
+        </div>
+      </section>
+
+      <section class="panel panel--warn">
+        <h2>6 · Ceiling finder</h2>
+        <p class="note">This deliberately allocates master-sized canvases until the browser gives out. <strong>It may reload or drop this tab</strong> — copy the report first, and run it last.</p>
+        <button id="ceiling" class="btn btn--warn" type="button">Find the ceiling (may crash the tab)</button>
+      </section>
+
+      <section class="panel">
+        <h2>Report</h2>
+        <button id="copy-report" class="btn" type="button">Copy report</button>
+        <pre id="report" class="report"></pre>
+      </section>
+
+      <footer class="foot">
+        <p>How to run: <code>cd frontend &amp;&amp; npm run dev -- --host</code>, then open <code>http://&lt;network-ip&gt;:5173/proof.html</code> on the phone (same LAN, or over Tailscale to the desktop). Vite prints the network URL when it starts.</p>
+      </footer>
+    </main>
+
+    <div id="hold-overlay" class="hold-overlay" hidden>
+      <p class="hold-caption">Long-press the image → <strong>Save to Photos</strong>.</p>
+      <img id="hold-image" alt="the baked master" />
+      <button id="hold-close" class="btn" type="button">Close</button>
+    </div>
+
+    <script type="module" src="/src/proof/main.js"></script>
+  </body>
+</html>
