@@ -96,13 +96,8 @@ body {
 
 .m-tools {
   flex: none;
-  max-height: 40dvh;
-  overflow-y: auto;
-  touch-action: pan-y;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 10px 12px;
   background: var(--surface);
   border-top: 1px solid var(--border);
 }
@@ -110,6 +105,60 @@ body {
    canvas the space instead of an empty box. */
 .m-tools--empty {
   display: none;
+}
+
+/* The grab handle: the whole header is the target, and it is the only thing
+   left when the sheet is closed. */
+.m-tools-handle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  color: var(--text-heading);
+  text-align: left;
+  cursor: pointer;
+}
+.m-tools-grip {
+  flex: none;
+  width: 34px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-strong);
+}
+.m-tools-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.m-tools-body {
+  max-height: 40dvh;
+  overflow-y: auto;
+  touch-action: pan-y;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 12px 10px;
+  transition: max-height 180ms ease, padding-bottom 180ms ease;
+}
+.m-tools--collapsed .m-tools-body {
+  max-height: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+}
+@media (prefers-reduced-motion: reduce) {
+  .m-tools-body {
+    transition: none;
+  }
 }
 .m-tools .card-tools,
 .m-tools .brush-tools {
@@ -207,12 +256,35 @@ body {
   margin: 0 0 6px;
   line-height: 1.4;
 }
+.m-dock-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+/* The way home from a free camera: always in the same place, always one tap,
+   and deliberately small beside the deck — it is a utility, not a move. */
+.m-fit {
+  flex: none;
+  min-width: 54px;
+  min-height: 54px;
+  padding: 4px;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
 /* The deck IS the button, so the whole bar is the target. */
 .m-deck {
   display: flex;
   align-items: center;
   gap: 12px;
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   min-height: 78px;
   padding: 4px 2px;
   background: none;

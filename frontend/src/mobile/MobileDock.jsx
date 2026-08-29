@@ -10,45 +10,56 @@
 // because its two-column layout is a sidebar's shape, not a bar's — but
 // nothing about the mechanic differs, and the copy is the shared copy.
 
+// The FIT button sits beside the deck, outside it: with a free camera (Wave 3)
+// a two-finger gesture can carry the page anywhere, and the way home has to be
+// one tap and always in the same place. Plainly named, per the legibility
+// clause — a navigation utility, not a card.
+
 import Card from '../editor/Card.jsx'
 import { UI, fmt } from '../copy/uiText.js'
 
 const T = UI.deckPanel
+const M = UI.mobile
 
-function MobileDock({ card, deckCount, stashCount = 0, progress, hint, notice, actionLabel, disabled, onDraw }) {
+function MobileDock({ card, deckCount, stashCount = 0, progress, hint, notice, actionLabel, disabled, onDraw, onFit }) {
   return (
     <div className="m-dock">
       {notice && <p className="hint m-dock-notice">{notice}</p>}
-      <button
-        type="button"
-        className="m-deck"
-        onClick={onDraw}
-        disabled={disabled}
-        aria-label={actionLabel}
-      >
-        <span className="m-deck-stack" aria-hidden="true">
-          <span className="m-deck-under m-deck-under--2">
+      <div className="m-dock-row">
+        <button
+          type="button"
+          className="m-deck"
+          onClick={onDraw}
+          disabled={disabled}
+          aria-label={actionLabel}
+        >
+          <span className="m-deck-stack" aria-hidden="true">
+            <span className="m-deck-under m-deck-under--2">
+              <Card faceDown size="tile" />
+            </span>
+            <span className="m-deck-under m-deck-under--1">
+              <Card faceDown size="tile" />
+            </span>
             <Card faceDown size="tile" />
           </span>
-          <span className="m-deck-under m-deck-under--1">
-            <Card faceDown size="tile" />
+          <span className="m-deck-face">
+            {card && <Card id={card.id} label={card.label} kind={card.kind} variant={card.variant} size="tile" />}
           </span>
-          <Card faceDown size="tile" />
-        </span>
-        <span className="m-deck-face">
-          {card && <Card id={card.id} label={card.label} kind={card.kind} variant={card.variant} size="tile" />}
-        </span>
-        <span className="m-deck-text">
-          <span className="m-deck-action">{actionLabel}</span>
-          {card && <span className="m-deck-card-name">{card.label}</span>}
-          <span className="m-deck-meta">
-            {fmt(T.cardsRemain, { count: deckCount, plural: deckCount === 1 ? '' : 's' })}
-            {stashCount > 0 ? ` ${fmt(T.stashedSuffix, { count: stashCount })}` : ''}
-            {progress ? ` · ${progress}` : ''}
+          <span className="m-deck-text">
+            <span className="m-deck-action">{actionLabel}</span>
+            {card && <span className="m-deck-card-name">{card.label}</span>}
+            <span className="m-deck-meta">
+              {fmt(T.cardsRemain, { count: deckCount, plural: deckCount === 1 ? '' : 's' })}
+              {stashCount > 0 ? ` ${fmt(T.stashedSuffix, { count: stashCount })}` : ''}
+              {progress ? ` · ${progress}` : ''}
+            </span>
+            {hint && <span className="m-deck-hint">{hint}</span>}
           </span>
-          {hint && <span className="m-deck-hint">{hint}</span>}
-        </span>
-      </button>
+        </button>
+        <button type="button" className="m-fit" onClick={onFit} aria-label={M.fitHint} title={M.fitHint}>
+          {M.fitLabel}
+        </button>
+      </div>
     </div>
   )
 }

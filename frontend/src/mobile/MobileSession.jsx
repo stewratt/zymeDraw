@@ -41,6 +41,8 @@ import { listImages, sampleImages } from '../editor/imageStore.js'
 import { exportMaster } from '../editor/exportSink.js'
 import { createMaskSession } from '../editor/brushCore.js'
 import { attachCanvasNav } from '../editor/canvasNav.js'
+import { attachCanvasNavTouch } from '../editor/canvasNavTouch.js'
+import { attachArtboardMatte } from '../editor/artboardMatte.js'
 import { randomizeColors } from '../editor/colorSeed.js'
 import { bake, createMaster, masterThumbDataUrl, showMaster } from '../editor/masterRaster.js'
 import { UI } from '../copy/uiText.js'
@@ -60,7 +62,10 @@ function MobileSession({ onBackToIntake }) {
   const canvasStageRef = useRef(null)
   const cardSessionRef = useRef(null) // opaque per-card data the registry owns
   const masterRef = useRef(null) // the full-resolution truth (2400×3000)
-  const navRef = useRef(null) // canvasNav — used only for its fit (see below)
+  const navRef = useRef(null) // canvasNav — the fit, and the camera the touch grammar drives
+  const touchNavRef = useRef(null) // canvasNavTouch — two fingers: camera or object
+  const matteRef = useRef(null) // artboardMatte: the crop edge, screen-only
+  const canvasAreaRef = useRef(null) // the canvas zone; its box drives the re-fit
 
   const [cardControls, setCardControls] = useState({})
   const [cardInfo, setCardInfo] = useState({})
@@ -128,19 +133,34 @@ function MobileSession({ onBackToIntake }) {
     }
   }, [state.phase, state.grid.length, imageList])
 
-  // The master raster, and the camera. The camera is here for ONE thing this
-  // wave: reset() is the fit-and-center every phase change and every resize
-  // needs. Its desktop gestures (Ctrl+wheel zoom, Space-drag pan) are turned
-  // off — the touch grammar is Wave 3 — so nothing competes with a finger.
+  // The master raster, the camera, and the two lenses over it.
+  //
+  // canvasNav supplies reset() — the fit-and-center every phase change and
+  // every resize needs — and owns the viewportTransform. canvasNavTouch is the
+  // phone's gestures on that same camera (two fingers pan/zoom, or transform
+  // the image they both land on); attaching it suspends canvasNav's own
+  // keyboard/wheel gestures, so the two can never fight. artboardMatte is the
+  // crop edge: the artboard is a rectangle floating in the void here too, and
+  // at phone size the boundary needs saying out loud. Both are screen-only —
+  // they never touch an object, the master, or the bake.
   useEffect(() => {
     const canvas = canvasStageRef.current?.getCanvas()
     if (!canvas) return
     masterRef.current = createMaster()
     showMaster(canvas, masterRef.current)
     navRef.current = attachCanvasNav(canvas)
-    navRef.current.setEnabled(false)
+    touchNavRef.current = attachCanvasNavTouch(canvas, navRef.current)
+    matteRef.current = attachArtboardMatte(canvas)
     navRef.current.reset()
+    // A dev-only handle on the live canvas: the on-device console and the
+    // browser-driven checks both need to read the camera, and neither can
+    // reach a ref. Stripped from the built bundle.
+    if (import.meta.env.DEV) window.__deckCanvas = canvas
     return () => {
+      touchNavRef.current?.dispose()
+      touchNavRef.current = null
+      matteRef.current?.dispose()
+      matteRef.current = null
       navRef.current?.dispose()
       navRef.current = null
     }
@@ -152,22 +172,26 @@ function MobileSession({ onBackToIntake }) {
     navRef.current?.reset()
   }, [state.currentCard, state.phase])
 
-  // …and on every resize. CanvasStage's ResizeObserver matches the buffer to
-  // its box; the fit has to follow it, or a rotated phone (or the iOS URL bar
-  // sliding away) leaves the artboard off-center. A frame later, so the new
-  // buffer size is the one we fit against.
+  // …and whenever the canvas ZONE changes size. CanvasStage's ResizeObserver
+  // matches the buffer to its box; the fit has to follow it, or a rotated
+  // phone (or the iOS URL bar sliding away) leaves the artboard off-center.
+  // Watching the box rather than the window is what makes the tools sheet's
+  // collapse re-fit too — the observer fires through the whole transition, not
+  // just at its end, so the page tracks the space it is given. A frame later,
+  // so the new buffer size is the one we fit against.
   useEffect(() => {
     let frame = 0
     const refit = () => {
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(() => navRef.current?.reset())
     }
-    window.addEventListener('resize', refit)
+    const observer = new ResizeObserver(refit)
+    if (canvasAreaRef.current) observer.observe(canvasAreaRef.current)
     window.addEventListener('orientationchange', refit)
     window.visualViewport?.addEventListener('resize', refit)
     return () => {
       cancelAnimationFrame(frame)
-      window.removeEventListener('resize', refit)
+      observer.disconnect()
       window.removeEventListener('orientationchange', refit)
       window.visualViewport?.removeEventListener('resize', refit)
     }
@@ -437,7 +461,7 @@ function MobileSession({ onBackToIntake }) {
 
   return (
     <div className="m-shell">
-      <div className="m-canvas">
+      <div className="m-canvas" ref={canvasAreaRef}>
         <CanvasStage ref={canvasStageRef} fill />
 
         {state.phase === 'OPENING_PICK' && imageList.status === 'ready' && imageList.filenames.length > 0 && (
@@ -492,6 +516,7 @@ function MobileSession({ onBackToIntake }) {
           <MobileTools
             phase={state.phase}
             entry={currentEntry}
+            title={inPlacement ? T.placementTitle : (state.currentCard?.label ?? '')}
             controls={cardControls}
             info={cardInfo}
             ready={cardReady}
@@ -515,6 +540,7 @@ function MobileSession({ onBackToIntake }) {
             actionLabel={state.currentCard || inPlacement ? M.dockCommit : M.dockDraw}
             disabled={!canAdvance}
             onDraw={handleAdvance}
+            onFit={() => navRef.current?.reset()}
           />
         </>
       )}
