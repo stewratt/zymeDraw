@@ -49,10 +49,12 @@ function Sheet({ title, open, onToggle, children }) {
 function MobileTools({
   phase,
   entry,
+  cardKey,
   title,
   controls,
   info,
   ready,
+  reviewing = false,
   deckView,
   onDeckAction,
   onControlChange,
@@ -64,10 +66,13 @@ function MobileTools({
   onMaskRedo
 }) {
   const [open, setOpen] = useState(true)
-  // A new card (or a new phase) arrives with its tools open.
+  // A new card (or a new phase) arrives with its tools open. Keyed on the DEALT
+  // CARD, not on its registry entry: two Dusts in a row are two different deals
+  // but one entry object, and the second one's controls should be in front of
+  // you like the first one's were.
   useEffect(() => {
     setOpen(true)
-  }, [phase, entry])
+  }, [phase, cardKey])
 
   if (phase === 'PLACEMENT' || phase === 'STASH_RETURN') {
     const brushing = maskControls.mode !== 'arrange'
@@ -96,13 +101,32 @@ function MobileTools({
   const Tools = entry.Tools
   if (!Tools) return <div className="m-tools m-tools--empty" />
 
+  // The one-frame gap between a card turning over and its defaults arriving:
+  // the reducer changes currentCard in one render, and the effect that seeds
+  // the new card's controls runs after it — so for exactly one paint the NEW
+  // card's Tools would be handed the OLD (cleared) controls object and render
+  // sliders on undefined. Say "preparing" for that frame instead, which is what
+  // the same card says while its begin() is still running anyway. Read off the
+  // registry's own control list, so no card is named: a card that declares no
+  // controls (Closer, Skim) legitimately has an empty object and is unaffected.
+  // A card under review is exempt too — its controls were cleared BY the commit
+  // and its Tools has something to say about that (`reviewing`).
+  const seeded = reviewing || !entry.controls?.length || Object.keys(controls ?? {}).length > 0
+  if (!seeded) {
+    return (
+      <Sheet title={title} open={open} onToggle={() => setOpen((v) => !v)}>
+        <span className="hint">{UI.shared.preparing}</span>
+      </Sheet>
+    )
+  }
+
   return (
     <Sheet title={title} open={open} onToggle={() => setOpen((v) => !v)}>
       <Tools
         controls={controls}
         info={info}
         ready={ready}
-        reviewing={false}
+        reviewing={reviewing}
         deckView={deckView}
         onDeckAction={onDeckAction}
         onControlChange={onControlChange}

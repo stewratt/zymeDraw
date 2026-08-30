@@ -92,6 +92,109 @@ body {
   flex-wrap: wrap;
 }
 
+/* Searcher's remains (the one card overlay that is not a grid of images).
+   The desktop lays the work beside the cards in a wide row; 400 pixels has no
+   "beside", so the same two things stack — a small glance at the piece over a
+   scrolling shelf of faces. Cards shrink to a thumb-sized tile: a card face is
+   a known quantity, and there are at most a dozen. */
+.m-overlay .searcher-body {
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  touch-action: pan-y;
+}
+.m-overlay .work-glance {
+  flex: none;
+  width: 100%;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+.m-overlay .work-glance img {
+  width: 76px;
+  flex: none;
+  max-height: none;
+}
+.m-overlay .work-glance .hint {
+  text-align: left;
+}
+.m-overlay .searcher-row {
+  overflow: visible;
+  gap: 10px;
+}
+.m-overlay .searcher-row .deck-cell {
+  width: 82px;
+}
+
+/* The post-commit review's Continue and the wait line that precedes it
+   (editor.css owns the corner they sit in). Two overrides only: the shell's
+   full-width button rule has no business inside a floating corner, and the
+   corner itself comes in from the phone's edges. */
+.m-canvas .canvas-continue,
+.m-canvas .canvas-wait {
+  right: 12px;
+  bottom: 12px;
+  max-width: calc(100% - 24px);
+}
+.m-canvas .canvas-continue button.primary {
+  width: auto;
+  padding: 14px 28px;
+}
+
+/* ---------- the Coda, held (CODA_CHOICE) ---------- */
+/* The beat takes the tools sheet's and the dock's place at the foot of the
+   shell — the canvas keeps the rest of the screen, because the question is
+   about the piece. Both answers are here and the deck is gone: no third way
+   out to tap through. */
+
+.m-coda {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 62dvh;
+  overflow-y: auto;
+  touch-action: pan-y;
+  padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+  background: var(--surface);
+  border-top: 1px solid var(--border-strong);
+}
+.m-coda-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.m-coda-head .card {
+  flex: none;
+  width: 62px;
+}
+.m-coda-titles {
+  min-width: 0;
+}
+.m-coda h2 {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  color: var(--text-heading);
+}
+.m-coda-name {
+  margin: 4px 0 0;
+  font-size: 1.05rem;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  color: var(--text-title);
+}
+.m-coda > .hint {
+  margin: 0;
+  line-height: 1.45;
+}
+.m-coda-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 /* ---------- the tools sheet ---------- */
 
 .m-tools {
@@ -255,6 +358,46 @@ body {
 .m-dock-notice {
   margin: 0 0 6px;
   line-height: 1.4;
+}
+/* The standing right (Delay), beside the line that says what it buys. */
+.m-dock-delay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+}
+.m-dock-delay .hint {
+  line-height: 1.4;
+}
+.m-dock-delay .card {
+  flex: none;
+  width: 26px;
+}
+/* The deck's own top card, turned face-up where it lies (Skim): the face
+   replaces the top back inside the stack, and the name rides above the bar —
+   card art may bury its own name, and the choice has to know what it is
+   deciding on. The stack grows a little so the face is actually readable at
+   thumb scale; the bar's height already has the room. */
+.m-dock-turn {
+  margin: 0 0 6px;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  color: var(--text-title);
+}
+.m-deck--turned .m-deck-stack {
+  width: 62px;
+}
+/* The deck is disabled for the whole reveal — the round can't end until the
+   choice is made — but the turned card is the one thing that has to be
+   readable, so the bar dims and the face does not. */
+.m-deck--turned:disabled {
+  opacity: 1;
+}
+.m-deck--turned:disabled .m-deck-text,
+.m-deck--turned:disabled .m-deck-under {
+  opacity: 0.45;
 }
 .m-dock-row {
   display: flex;
