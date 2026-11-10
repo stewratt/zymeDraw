@@ -1,6 +1,6 @@
 # Casts the installers. Push a tag like v0.1.0 and each OS runner builds its
-# own native installer (Linux AppImage, Windows NSIS, Mac dmg ×2 arch) and
-# uploads it to a DRAFT GitHub release — nothing goes public until Stew
+# own native installer (Linux AppImage + the Zyme OS .deb, Windows NSIS, Mac
+# dmg ×2 arch) and uploads it to a DRAFT GitHub release — nothing goes public until Stew
 # reviews the draft and publishes it (as a pre-release for testing rounds).
 # workflow_dispatch exists so a failed leg can be retried without re-tagging.
 # Two guards bracket the build, because electron-builder refuses an upload
@@ -74,7 +74,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           case "${{ runner.os }}" in
-            Linux)   expected="ZYME-$VERSION.AppImage latest-linux.yml" ;;
+            Linux)   expected="ZYME-$VERSION.AppImage zyme-draw_${VERSION}_amd64.deb latest-linux.yml" ;;
             Windows) expected="ZYME-Setup-$VERSION.exe latest.yml" ;;
             macOS)   expected="ZYME-$VERSION-x64.dmg ZYME-$VERSION-arm64.dmg latest-mac.yml" ;;
           esac
