@@ -10,6 +10,21 @@ Choices: any decisions the executor made on its own.
 Files: the main files touched.
 ```
 
+## #133 — Package Draw as a .deb for Zyme OS (2026-11-09)
+What: electron-builder now casts a `zyme-draw` `.deb` beside the AppImage, so
+Zyme OS can offer the app as an extra; there it's called Draw (glyph `Dr`).
+Where: PR (infra/deb-package).
+Choices: the `.deb` is built here, not in zymeOS — this repo owns the Node and
+Electron build and its version, and zymeOS's zbuild just copies the release
+asset into its apt repo. `desktopName` sets Electron's Wayland app_id and the
+`.desktop` StartupWMClass to `zyme-draw`, which is how Zyme's taskbar matches a
+window to its glyph. Depends lists trixie's t64 names first, the old names as
+alternatives. productName stays ZYME (installers, `/opt/ZYME`); only the menu
+name is Draw. Arch can't run electron-builder's bundled fpm (no
+`libcrypt.so.1`), so locally the `.deb` was packed in a `debian:trixie`
+container with `--prepackaged`; CI's Ubuntu runner has the library.
+Files: package.json, .github/workflows/release.yml.
+
 ## [22] #123 — Smieer — the classic smudge brush, on the whole piece (2026-08-12)
 What: a new canvas card, `smieer`, and the new primitive under it: a smudge
 brush that drags the committed piece into itself. Nothing enters and nothing is
